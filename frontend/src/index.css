@@ -1,15 +1,18 @@
 @import "tailwindcss";
+@import "@fontsource-variable/plus-jakarta-sans";
 @import "@fontsource-variable/rubik";
 
 /*
  * Replisto design tokens.
  *
- * brand   violet from the logo tile; 600 is the exact logo colour and the primary
- *         (white text on it: 6.7:1). Lighter steps are tints for surfaces, darker for hover/text.
- * ink     the logo's outline black, tinted toward the brand; headings and dark surfaces.
- * accent  lime, the violet's complement. Used sparingly as a highlighter on violet/ink only.
+ * brand   deep teal; 600 is the primary (white text on it: 4.9:1). Lighter steps are tints for
+ *         surfaces, darker for hover and text.
+ * ink     a green-tinted near-black for headings and dark surfaces.
+ * accent  warm coral, the teal's complement: a highlighter on teal/ink, used sparingly.
  * status  success = emerald, warning = amber, error = red (Tailwind defaults).
  * neutral slate: text 800/600/500, borders 200, page 50.
+ *
+ * Type: Plus Jakarta Sans for Latin, Rubik for Arabic (the browser picks per character).
  *
  * Light/dark: components use these tokens as-is; `.dark` on <html> (see theme.tsx) swaps the
  * values of the neutrals, the text inks, the tints and the status shades further down. Colours
@@ -18,47 +21,48 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "Rubik Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans Variable", "Rubik Variable", ui-sans-serif, system-ui, sans-serif;
 
-  --color-brand-50: #f5f1fe;
-  --color-brand-100: #ebe3fd;
-  --color-brand-200: #d9cafc;
-  --color-brand-300: #bda3f9;
-  --color-brand-400: #9c72f4;
-  --color-brand-500: #8150ef;
-  --color-brand-600: #6b2de8;
-  --color-brand-700: #5a20cb;
-  --color-brand-800: #4a1ba4;
-  --color-brand-900: #3c1a80;
-  --color-brand-950: #230f4f;
+  --color-brand-50: #effaf8;
+  --color-brand-100: #d2f2ec;
+  --color-brand-200: #a5e5d9;
+  --color-brand-300: #6dd0c0;
+  --color-brand-400: #34b3a1;
+  --color-brand-500: #149887;
+  --color-brand-600: #0d7d70;
+  --color-brand-700: #0f655c;
+  --color-brand-800: #11514b;
+  --color-brand-900: #12433f;
+  --color-brand-950: #042825;
 
-  --color-ink-700: #3a3350;
-  --color-ink-800: #241d36;
-  --color-ink-900: #171126;
-  --color-ink-950: #0e0a19;
+  --color-ink-700: #33413f;
+  --color-ink-800: #1f2b2a;
+  --color-ink-900: #121c1b;
+  --color-ink-950: #0a1211;
 
   /* fixed darks for surfaces that stay dark in both themes */
-  --color-night-800: #241d36;
-  --color-night-900: #171126;
-  --color-night-950: #0e0a19;
+  --color-night-800: #1a2726;
+  --color-night-900: #0f1918;
+  --color-night-950: #081110;
   /* primary button hover, fixed in both themes */
-  --color-brand-deep: #5a20cb;
+  --color-brand-deep: #0f655c;
 
-  /* the panel's page background: white with a breath of brand */
-  --color-canvas: #f8f6fe;
+  /* the panel's page background: white with a breath of teal */
+  --color-canvas: #f4f8f7;
   /* cards, inputs, menus */
   --color-surface: #ffffff;
   /* hairline rings around cards, and the faint fill behind tabs/tracks */
-  --color-line: rgb(14 10 25 / 0.06);
-  --color-fill: rgb(14 10 25 / 0.05);
+  --color-line: rgb(10 18 17 / 0.07);
+  --color-fill: rgb(10 18 17 / 0.05);
 
-  --color-accent-200: #ecfbb5;
-  --color-accent-300: #dff78a;
-  --color-accent-400: #cdf05c;
+  --color-accent-200: #ffe2d6;
+  --color-accent-300: #ffc4ad;
+  --color-accent-400: #ff9b78;
+  --color-accent-500: #f2734b;
 
-  --shadow-soft: 0 1px 2px rgb(35 15 79 / 0.05), 0 4px 16px -4px rgb(35 15 79 / 0.08);
-  --shadow-lift: 0 2px 4px rgb(35 15 79 / 0.06), 0 16px 40px -12px rgb(35 15 79 / 0.22);
-  --shadow-float: 0 1px 1px rgb(14 10 25 / 0.08), 0 24px 64px -20px rgb(14 10 25 / 0.45);
+  --shadow-soft: 0 1px 2px rgb(4 40 37 / 0.05), 0 4px 16px -4px rgb(4 40 37 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(4 40 37 / 0.06), 0 16px 40px -12px rgb(4 40 37 / 0.22);
+  --shadow-float: 0 1px 1px rgb(10 18 17 / 0.08), 0 24px 64px -20px rgb(10 18 17 / 0.45);
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -100,39 +104,39 @@
 
 /*
  * Dark theme: the same token names with night values. Neutrals and inks invert, tints become
- * deep violet/red/amber/green washes, and the text shades of those hues lighten to stay legible.
+ * deep teal/red/amber/green washes, and the text shades of those hues lighten to stay legible.
  */
 .dark {
   color-scheme: dark;
 
-  --color-canvas: #0d0b14;
-  --color-surface: #16131f;
+  --color-canvas: #0a1110;
+  --color-surface: #121b1a;
   --color-line: rgb(255 255 255 / 0.08);
   --color-fill: rgb(255 255 255 / 0.06);
 
-  --color-slate-50: #1b1726;
-  --color-slate-100: #231e31;
-  --color-slate-200: #2e283e;
-  --color-slate-300: #3b3450;
-  --color-slate-400: #6f6884;
-  --color-slate-500: #938ca6;
-  --color-slate-600: #aea8bf;
-  --color-slate-700: #c8c3d6;
-  --color-slate-800: #dedae8;
-  --color-slate-900: #efedf5;
+  --color-slate-50: #172221;
+  --color-slate-100: #1d2a29;
+  --color-slate-200: #273634;
+  --color-slate-300: #344543;
+  --color-slate-400: #64787a;
+  --color-slate-500: #8a9c9d;
+  --color-slate-600: #a8b7b7;
+  --color-slate-700: #c5d1d0;
+  --color-slate-800: #dce5e4;
+  --color-slate-900: #eef3f2;
 
-  --color-ink-700: #aaa4bd;
-  --color-ink-800: #d3cfe0;
-  --color-ink-900: #e9e6f1;
-  --color-ink-950: #f6f4fa;
+  --color-ink-700: #a5b6b4;
+  --color-ink-800: #cfdbda;
+  --color-ink-900: #e6eeed;
+  --color-ink-950: #f4f8f7;
 
-  --color-brand-50: #1e1733;
-  --color-brand-100: #291f47;
-  --color-brand-200: #3a2b66;
-  --color-brand-300: #5a44a0;
-  --color-brand-700: #c3adff;
-  --color-brand-800: #d6c7ff;
-  --color-brand-900: #e6dcff;
+  --color-brand-50: #0f2a27;
+  --color-brand-100: #123632;
+  --color-brand-200: #17483f;
+  --color-brand-300: #1f6a5f;
+  --color-brand-700: #6fd9c7;
+  --color-brand-800: #a2e8db;
+  --color-brand-900: #cdf3ec;
 
   --color-red-50: #2a1418;
   --color-red-100: #3a1a20;
@@ -176,16 +180,16 @@
 }
 
 /*
- * Scrollbars: a slim violet-tinted thumb on a clear track, rounded, brighter on hover.
+ * Scrollbars: a slim teal-tinted thumb on a clear track, rounded, brighter on hover.
  * `scrollbar-color` covers Firefox and current Chrome/Edge; the ::-webkit rules cover Safari.
  */
 :root {
-  --scroll-thumb: #cdc1f2;
-  --scroll-thumb-hover: #9c72f4;
+  --scroll-thumb: #b9ddd6;
+  --scroll-thumb-hover: #34b3a1;
 }
 .dark {
-  --scroll-thumb: #3a3060;
-  --scroll-thumb-hover: #6a52b8;
+  --scroll-thumb: #22403c;
+  --scroll-thumb-hover: #1f6a5f;
 }
 /* on the always-dark sidebar and footer */
 .scroll-dark {
@@ -377,7 +381,7 @@ body {
   }
 }
 
-/* Subtle dot texture for violet surfaces */
+/* Subtle dot texture for brand-coloured surfaces */
 .dot-grid {
   background-image: radial-gradient(rgb(255 255 255 / 0.13) 1px, transparent 1.2px);
   background-size: 22px 22px;

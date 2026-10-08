@@ -175,7 +175,7 @@ export default function Dashboard() {
   );
 }
 
-/** Greeting and the bot's master switch, on the brand violet like the site's hero. */
+/** Greeting and the bot's master switch, on the brand colour. */
 function StatusHero({ name, on, username, toggle }: { name: string; on: boolean; username: string | null; toggle: ReactNode }) {
   const { t } = useI18n();
   return (

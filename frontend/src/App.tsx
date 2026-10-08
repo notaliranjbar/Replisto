@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 // so visitors don't download the whole panel.
 const Layout = lazy(() => import("./components/Layout"));
 const Account = lazy(() => import("./pages/Account"));
+const Help = lazy(() => import("./pages/Help"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Handoffs = lazy(() => import("./pages/Handoffs"));
 const Inbox = lazy(() => import("./pages/Inbox"));
@@ -87,6 +88,7 @@ export default function App() {
           <Route path="instagram" element={<Instagram />} />
           <Route path="instagram/callback" element={<InstagramCallback />} />
           <Route path="account" element={<Account />} />
+          <Route path="help" element={<Help />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

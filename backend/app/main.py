@@ -21,6 +21,7 @@ from app.api.routes import (
     instagram,
     knowledge,
     products,
+    site,
     teach,
     webhooks,
 )
@@ -93,6 +94,7 @@ def create_app() -> FastAPI:
         conversations,
         dashboard,
         billing,
+        site,
     ):
         app.include_router(module.router, prefix=api_prefix)
     return app

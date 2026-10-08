@@ -1085,6 +1085,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/site/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Chat
+         * @description The chat so far and today's allowance. The widget polls this while waiting.
+         */
+        get: operations["get_chat_api_v1_site_chat_get"];
+        put?: never;
+        /** Send */
+        post: operations["send_api_v1_site_chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1159,7 +1180,7 @@ export interface components {
          * @description Where a conversation happens. The bot itself is the same on every channel.
          * @enum {string}
          */
-        Channel: "instagram";
+        Channel: "instagram" | "web";
         /** ConnectUrlOut */
         ConnectUrlOut: {
             /** Url */
@@ -1772,6 +1793,32 @@ export interface components {
          * @enum {string}
          */
         ProposalStatus: "pending" | "applied" | "discarded";
+        /**
+         * QuotaOut
+         * @description Today's AI allowance, for the ring next to the chat.
+         */
+        QuotaOut: {
+            /**
+             * Tier
+             * @enum {string}
+             */
+            tier: "guest" | "member";
+            /** Used Tokens */
+            used_tokens: number;
+            /** Limit Tokens */
+            limit_tokens: number;
+            /** Left Percent */
+            left_percent: number;
+            /** Answers Left */
+            answers_left: number;
+            /** Exhausted */
+            exhausted: string | null;
+            /**
+             * Resets At
+             * Format: date-time
+             */
+            resets_at: string;
+        };
         /** RefreshRequest */
         RefreshRequest: {
             /** Refresh Token */
@@ -1920,6 +1967,43 @@ export interface components {
         SingleSectionUpdate: {
             /** Content */
             content: string;
+        };
+        /** SiteChatIn */
+        SiteChatIn: {
+            /** Visitor */
+            visitor: string;
+            /** Text */
+            text: string;
+        };
+        /** SiteChatOut */
+        SiteChatOut: {
+            /** Available */
+            available: boolean;
+            /** Messages */
+            messages: components["schemas"]["SiteMessageOut"][];
+            quota: components["schemas"]["QuotaOut"];
+            /** Waiting For Team */
+            waiting_for_team: boolean;
+        };
+        /** SiteMessageOut */
+        SiteMessageOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Sender
+             * @enum {string}
+             */
+            sender: "customer" | "bot" | "owner";
+            /** Text */
+            text: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** SourceOut */
         SourceOut: {
@@ -4027,6 +4111,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TransferOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_chat_api_v1_site_chat_get: {
+        parameters: {
+            query: {
+                visitor: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteChatOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_api_v1_site_chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteChatIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteChatOut"];
                 };
             };
             /** @description Validation Error */

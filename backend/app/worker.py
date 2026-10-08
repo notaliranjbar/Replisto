@@ -19,10 +19,11 @@ from app.core.database import SessionLocal
 from app.core.monitoring import setup_monitoring
 from app.core.queue import ArqQueue
 from app.core.timeutil import utcnow
-from app.models import InstagramAccount, ProposalStatus, TeachProposal
+from app.models import InstagramAccount, ProposalStatus, SiteChatUsage, TeachProposal
 from app.services import instagram_accounts, messaging, payments, posts, products
 from app.services.instagram import InstagramClient, InstagramError
 from app.services.llm import LLMError
+from app.services.notify import EmailNotifier
 from app.services.responder import get_responder
 from app.services.webhook import MessagingEvent
 
@@ -52,6 +53,7 @@ async def reply_conversation(ctx: dict[str, Any], conversation_id: str, trigger_
                 datetime.fromisoformat(trigger_at),
                 InstagramClient(ctx["http"]),
                 get_responder(db, ctx["http"]),
+                notifier=EmailNotifier(db),
             )
         except (InstagramError, LLMError) as exc:
             # Only retryable errors propagate out of reply_to_conversation.
@@ -102,6 +104,10 @@ async def drop_stale_proposals(ctx: dict[str, Any]) -> None:
                 TeachProposal.status == ProposalStatus.PENDING,
                 TeachProposal.created_at < utcnow() - PROPOSAL_LIFETIME,
             )
+        )
+        # The website chat's daily counters (they include visitors' IP addresses).
+        await db.execute(
+            delete(SiteChatUsage).where(SiteChatUsage.created_at < utcnow() - timedelta(days=7))
         )
         await db.commit()
 

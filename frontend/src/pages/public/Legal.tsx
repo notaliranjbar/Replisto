@@ -124,6 +124,12 @@ const privacy: Page = {
         </ul>
         <p>هذه البيانات ملك لذلك المتجر، ولا يراها إلا صاحبه في لوحته. ويتحمّل المتجر مسؤولية إعلام عملائه باستخدام مساعد ذكاء اصطناعي.</p>
 
+        <h3>المحادثة مع مساعد Replisto على موقعنا</h3>
+        <p>
+          إذا تحدثت مع مساعد Replisto على موقعنا، نخزّن نص الرسائل ومعرّفًا عشوائيًا يحتفظ به متصفحك (وحسابك إن كنت مسجّل الدخول)، لتستمر المحادثة ويتمكن
+          فريقنا من الرد على ما لا يعرفه المساعد. ولمنع إساءة الاستخدام نحسب الاستهلاك اليومي مع عنوان IP الخاص بك، ونحتفظ بهذه العدّادات 7 أيام كحد أقصى.
+        </p>
+
         <h2>3. كيف نستخدمها</h2>
         <ul>
           <li>لإنشاء الردود وإرسالها إلى العملاء نيابة عن المتجر، ولتحويل المحادثة إلى صاحب المتجر عندما لا يعرف البوت الإجابة.</li>
@@ -241,6 +247,13 @@ const privacy: Page = {
           <li>The shop account's ID and username, its posts (to show products), and an access token issued by Meta, which is stored encrypted.</li>
         </ul>
         <p>This data belongs to that shop and only that shop's owner sees it in their panel. The shop is responsible for letting its customers know an AI assistant is used.</p>
+
+        <h3>Chatting with the Replisto assistant on our website</h3>
+        <p>
+          If you chat with the Replisto assistant on our website, the messages, a random ID your browser keeps (and your account, if you're logged in) are stored so the
+          conversation can continue and our team can answer what the assistant doesn't know. To prevent abuse, daily usage is counted together with your IP address;
+          these counters are kept for at most 7 days.
+        </p>
 
         <h2>3. How we use it</h2>
         <ul>

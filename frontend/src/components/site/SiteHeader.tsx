@@ -7,10 +7,10 @@ import { Logo } from "../Logo";
 import ThemeToggle from "../ThemeToggle";
 import { buttonClass, cx } from "../ui";
 
-export const SECTIONS = ["roles", "channels", "how", "faq"] as const;
+export const SECTIONS = ["try", "features", "how", "pricing", "faq"] as const;
 
 /**
- * Public site header. Over the violet hero it starts transparent with white text and turns
+ * Public site header. Over a coloured hero it starts transparent with white text and turns
  * solid once the page scrolls; elsewhere (`overHero` off) it is always solid.
  */
 export default function SiteHeader({ overHero = false }: { overHero?: boolean }) {
@@ -35,8 +35,8 @@ export default function SiteHeader({ overHero = false }: { overHero?: boolean })
     };
   }, [overHero]);
 
-  const light = overHero && !scrolled; // white text on violet
-  const labels: Record<(typeof SECTIONS)[number], string> = { roles: L.roles, channels: L.channels, how: L.how, faq: L.faq };
+  const light = overHero && !scrolled; // white text on the coloured hero
+  const labels: Record<(typeof SECTIONS)[number], string> = { try: L.try, features: L.features, how: L.how, pricing: L.pricing, faq: L.faq };
   // the landing sections only exist for visitors; for a logged-in user "/" is the dashboard
   const sections = loggedIn ? [] : SECTIONS;
   const switchTo = otherLang(lang);

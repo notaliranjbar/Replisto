@@ -39,8 +39,13 @@ def usage_cost(prompt_tokens: int, completion_tokens: int) -> int:
     return max(math.ceil(round(cost, 6)), settings.usage_min_cents_per_reply)
 
 
+def is_house(shop: Shop) -> bool:
+    """Replisto's own shop (the website assistant): it answers for us and is never charged."""
+    return bool(shop.is_house)
+
+
 def can_spend(shop: Shop) -> bool:
-    return not enabled() or shop.balance_cents > 0
+    return not enabled() or is_house(shop) or shop.balance_cents > 0
 
 
 async def apply(
@@ -92,7 +97,7 @@ async def charge_usage(
     details: dict[str, Any] | None = None,
 ) -> bool:
     """Deduct one AI answer. Returns True when the owner should now be told the balance is low."""
-    if not enabled() or not (prompt_tokens or completion_tokens):
+    if not enabled() or is_house(shop) or not (prompt_tokens or completion_tokens):
         return False
     prompt, completion = prompt_tokens or 0, completion_tokens or 0
     cost = usage_cost(prompt, completion)
@@ -129,3 +134,36 @@ def usd(cents: int) -> str:
     """A cent amount as dollars: "$12.50"."""
     sign = "-" if cents < 0 else ""
     return f"{sign}${abs(cents) / 100:,.2f}"
+
+
+def house_facts() -> str:
+    """Live prices for Replisto's own assistant, so it never quotes stale numbers."""
+    settings = get_settings()
+    lines = ["CURRENT PRICES OF REPLISTO (always up to date; prefer these over any other numbers)"]
+    if not settings.billing_enabled:
+        lines.append("- Replisto is free to use right now.")
+        return "\n".join(lines)
+    lines.append(
+        f"- Pay as you go, no subscription: each bot answer costs about {usd(usage_cost(4000, 150))} "
+        f"(at least {usd(settings.usage_min_cents_per_reply)}), depending on how much text the AI "
+        "reads and writes. Off-topic questions customers ask are not charged."
+    )
+    methods = []
+    if settings.stripe_secret_key:
+        methods.append("card (Stripe)")
+    if settings.whish_account:
+        methods.append("Whish Money transfer")
+    if settings.omt_account:
+        methods.append("OMT transfer")
+    lines.append(
+        f"- Prepaid wallet, top-ups from {usd(settings.topup_min_cents)} to "
+        f"{usd(settings.topup_max_cents)}"
+        + (f" by {', '.join(methods)}" if methods else "")
+        + ". Credit is non-refundable."
+    )
+    if settings.signup_credit_cents:
+        lines.append(
+            f"- New shops get {usd(settings.signup_credit_cents)} of free credit once their "
+            "mobile number is verified, once per person."
+        )
+    return "\n".join(lines)

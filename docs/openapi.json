@@ -2871,6 +2871,99 @@
           }
         ]
       }
+    },
+    "/api/v1/site/chat": {
+      "get": {
+        "tags": [
+          "site"
+        ],
+        "summary": "Get Chat",
+        "description": "The chat so far and today's allowance. The widget polls this while waiting.",
+        "operationId": "get_chat_api_v1_site_chat_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "visitor",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 36,
+              "title": "Visitor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteChatOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "site"
+        ],
+        "summary": "Send",
+        "operationId": "send_api_v1_site_chat_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteChatIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteChatOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3038,7 +3131,8 @@
       "Channel": {
         "type": "string",
         "enum": [
-          "instagram"
+          "instagram",
+          "web"
         ],
         "title": "Channel",
         "description": "Where a conversation happens. The bot itself is the same on every channel."
@@ -4924,6 +5018,62 @@
         ],
         "title": "ProposalStatus"
       },
+      "QuotaOut": {
+        "properties": {
+          "tier": {
+            "type": "string",
+            "enum": [
+              "guest",
+              "member"
+            ],
+            "title": "Tier"
+          },
+          "used_tokens": {
+            "type": "integer",
+            "title": "Used Tokens"
+          },
+          "limit_tokens": {
+            "type": "integer",
+            "title": "Limit Tokens"
+          },
+          "left_percent": {
+            "type": "integer",
+            "title": "Left Percent"
+          },
+          "answers_left": {
+            "type": "integer",
+            "title": "Answers Left"
+          },
+          "exhausted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exhausted"
+          },
+          "resets_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Resets At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tier",
+          "used_tokens",
+          "limit_tokens",
+          "left_percent",
+          "answers_left",
+          "exhausted",
+          "resets_at"
+        ],
+        "title": "QuotaOut",
+        "description": "Today's AI allowance, for the ring next to the chat."
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -5381,6 +5531,93 @@
           "content"
         ],
         "title": "SingleSectionUpdate"
+      },
+      "SiteChatIn": {
+        "properties": {
+          "visitor": {
+            "type": "string",
+            "maxLength": 36,
+            "minLength": 36,
+            "title": "Visitor"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 600,
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "visitor",
+          "text"
+        ],
+        "title": "SiteChatIn"
+      },
+      "SiteChatOut": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/SiteMessageOut"
+            },
+            "type": "array",
+            "title": "Messages"
+          },
+          "quota": {
+            "$ref": "#/components/schemas/QuotaOut"
+          },
+          "waiting_for_team": {
+            "type": "boolean",
+            "title": "Waiting For Team"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available",
+          "messages",
+          "quota",
+          "waiting_for_team"
+        ],
+        "title": "SiteChatOut"
+      },
+      "SiteMessageOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "sender": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "bot",
+              "owner"
+            ],
+            "title": "Sender"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sender",
+          "text",
+          "created_at"
+        ],
+        "title": "SiteMessageOut"
       },
       "SourceOut": {
         "properties": {

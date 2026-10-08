@@ -107,6 +107,30 @@ The first command attaches a fake Instagram account to the shop and turns the bo
 - Mobile numbers are stored in E.164 form. Lebanese numbers can be typed as people write them (`70 123 456`, `03 123 456`); other countries need their code (`DEFAULT_PHONE_COUNTRY_CODE`, 961 by default). Codes are sent with **Twilio** (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`), in the owner's language. Without Twilio the code is only written to the API log; without `SMTP_HOST` the email links are too.
 - Logging in is blocked for a while after 5 wrong passwords for one email (or 20 from one IP) within 15 minutes.
 
+## Off-topic questions
+
+A message that doesn't obviously look like a shopping question (no words like price, size, stock, *adde*, *قديش*, *combien*, or a product name) first goes through a small, cheap AI check. If it's unrelated to the shop (weather, homework, jokes), the customer gets a short reply in their own language and script ("I can only help with our products…"), with no full AI answer and **no charge to the shop**. After two in a row the bot stays quiet, without any AI call, until the customer asks about the shop again. Settings: `OFF_TOPIC_*`, and `LLM_TRIAGE_MODEL` for a cheaper model for the check.
+
+## "Ask Replisto" on the website
+
+Replisto's own shop answers visitors' questions about Replisto with the same bot: in the "Try it" section of the home page, and in the panel (a floating button on desktop, the "Ask about Replisto" page in the menu on phones). Create it once:
+
+```bash
+uv run python -m scripts.seed_house --email team@example.com
+```
+
+- If the account doesn't exist it is created and its password printed once. Log in with it to edit what the assistant knows; its chats appear in that account's inbox, questions it can't answer are emailed to it, and the team's reply appears in the visitor's chat window.
+- Prices come live from the server's settings. It isn't charged to any wallet.
+- **Anti-spam:** a daily token allowance per guest, per logged-in user, per IP and for all guests together (`SITE_CHAT_*`), at most 6 messages a minute and 600 characters a message. The allowance left is shown as a ring next to the chat; a guest who runs out is invited to create a free account.
+
+## Email
+
+Owners get emails with a button (right-to-left in Arabic) to confirm their address, to reset their password, when a customer is waiting for them and when their wallet runs low or out (`EMAIL_ALERTS`). Without `SMTP_HOST` emails are only written to the API log. Check the settings with:
+
+```bash
+uv run python -m scripts.send_test_email you@example.com
+```
+
 ## Tests
 
 ```bash

@@ -10,7 +10,7 @@ API = "/api/v1/auth/password"
 def outbox(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, str, str]]:
     sent: list[tuple[str, str, str]] = []
 
-    async def fake_send(to: str, subject: str, body: str) -> None:
+    async def fake_send(to: str, subject: str, body: str, html_body: str | None = None) -> None:
         sent.append((to, subject, body))
 
     monkeypatch.setattr(auth, "send_email", fake_send)

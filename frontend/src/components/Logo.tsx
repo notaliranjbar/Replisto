@@ -1,16 +1,11 @@
 import { useI18n } from "../i18n";
 import { cx } from "./ui";
 
-/**
- * The supplied Replisto logo tile, unaltered; only its corners are softened like an app icon.
- * `px` is the rendered size, so the browser picks the smallest file that is still sharp.
- */
+/** The Replisto mark: a reply arrow in a speech bubble, on a teal tile (vector, sharp at any size). */
 export function LogoMark({ px = 36, className, alt = "" }: { px?: number; className?: string; alt?: string }) {
   return (
     <img
-      src="/brand/replisto-logo-128.png"
-      srcSet="/brand/replisto-logo-128.png 128w, /brand/replisto-logo-192.png 192w, /brand/replisto-logo-512.png 512w"
-      sizes={`${px}px`}
+      src="/brand/replisto-mark.svg"
       width={px}
       height={px}
       alt={alt}

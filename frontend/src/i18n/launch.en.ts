@@ -8,6 +8,7 @@ const launch: Dict["launch"] = {
 
   channel: {
     instagram: "Instagram",
+    web: "Website",
     openIn: (channel) => `Open in ${channel}`,
   },
 
@@ -179,6 +180,27 @@ const launch: Dict["launch"] = {
       category: "Category",
       sku: "Code",
     },
+  },
+
+  ask: {
+    botName: "Replisto assistant",
+    status: "Online · the same assistant your shop gets",
+    empty: "Ask anything about Replisto, and see how it answers while you're at it.",
+    suggestions: ["What exactly does Replisto do?", "How much does it cost?", "How do I connect Instagram?", "What if it doesn't know the answer?"],
+    placeholder: "Type your question…",
+    send: "Send",
+    typing: "Typing",
+    team: "Replisto team",
+    waiting: "Your question went to the Replisto team; their answer will appear here.",
+    unavailable: "The assistant will be available here soon.",
+    ringLabel: (percent, answers) => `${percent}% of today's allowance left (about ${answers} more answers)`,
+    ringEmpty: "Today's allowance is used up",
+    guestHint: "As a guest you have a smaller daily allowance; a free account gives you more.",
+    guestLimit: "Today's guest allowance is used up. Create a free account (one minute) to continue.",
+    memberLimit: (time) => `You've used today's allowance; it opens again at ${time}.`,
+    signUp: "Create a free account",
+    logIn: "Log in",
+    launcher: "Ask about Replisto",
   },
 
   signupTerms: {

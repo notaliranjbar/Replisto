@@ -12,6 +12,8 @@ class Channel(enum.StrEnum):
     """Where a conversation happens. The bot itself is the same on every channel."""
 
     INSTAGRAM = "instagram"
+    # The chat widget on a website (today: Replisto's own assistant on our site).
+    WEB = "web"
     # WHATSAPP = "whatsapp"  # not built yet
 
 
@@ -87,5 +89,8 @@ class Message(UUIDPk, Timestamps, Base):
     # The owner dismissed it from the "unanswered questions" list (usually after adding the
     # missing information to the knowledge base).
     unanswered_resolved: Mapped[bool] = mapped_column(default=False, server_default="0")
+    # A bot reply to a question unrelated to the shop: a short canned "I only help with the
+    # shop" (no full AI answer, not charged). After a few in a row the bot stays silent.
+    off_topic: Mapped[bool] = mapped_column(default=False, server_default="0")
     prompt_tokens: Mapped[int | None] = mapped_column(Integer)
     completion_tokens: Mapped[int | None] = mapped_column(Integer)

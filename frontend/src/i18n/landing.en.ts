@@ -2,14 +2,17 @@ import type { Dict } from "./ar";
 
 const landing: Dict["landing"] = {
   meta: {
-    title: "Replisto — AI agent for your business",
-    description: "Replisto is an AI agent for your business: it talks to your customers using your own info and products, helps with sales and support, and works on your messaging channels.",
+    title: "Replisto — AI that answers your Instagram DMs",
+    description: "Replisto answers your customers' Instagram messages in seconds, day and night, using only your products and prices, and hands you what it doesn't know. Pay only for answers.",
   },
 
   nav: {
     roles: "Capabilities",
     channels: "Channels",
     how: "Setup",
+    features: "Features",
+    try: "Try it",
+    pricing: "Pricing",
     faq: "FAQ",
     login: "Log in",
     start: "Create account",
@@ -32,6 +35,50 @@ const landing: Dict["landing"] = {
     rolesLabel: "Replisto's roles",
     roles: ["Sales", "Support", "Advisor", "Assistant", "Follow-up"],
     channelsLabel: "On your channels",
+  },
+
+  home: {
+    eyebrow: "AI assistant for Instagram shops",
+    titleBefore: "Every DM answered, ",
+    titleMark: "in seconds",
+    titleAfter: "",
+    lead: "Replisto replies to your customers' Instagram messages day and night, using only your products and prices. Anything it doesn't know, it hands to you.",
+    primary: "Start free",
+    secondary: "Try it live",
+    perks: ["$5 free credit", "No subscription", "Ready in 15 minutes"],
+    languages: "Replies in English, Arabic, Arabizi and French",
+    tryEyebrow: "Try it yourself",
+    tryTitle: "Ask Replisto anything",
+    tryLead: "This chat is answered by the same assistant your shop gets. Ask about prices, setup or what it can do.",
+    tryPoints: [
+      "It answers only from what we've taught it; it never guesses",
+      "What it doesn't know reaches our team, and our answer appears right here",
+      "It politely turns away unrelated questions, so your credit isn't wasted",
+    ],
+    featuresEyebrow: "What it does",
+    featuresTitle: "A teammate that knows your shop",
+    tabs: ["Your info", "Your products", "Hands off to you", "Your rules"],
+    stepsEyebrow: "Setup",
+    stepsTitle: "Three steps and you're live",
+    steps: [
+      { title: "Connect Instagram", body: "Through Meta's official login. No passwords, ever." },
+      { title: "Teach it your shop", body: "Describe products in your own words, upload a file, or link a Google Sheet." },
+      { title: "Turn it on", body: "Try it as a customer on the test page, then switch it on." },
+    ],
+    pricingEyebrow: "Pricing",
+    pricingTitle: "Pay only for answers",
+    pricingLead: "No subscription, no seats. Top up a wallet and each answer costs about a cent.",
+    pricingPrice: "~$0.01",
+    pricingUnit: "per answer",
+    pricingPoints: [
+      "$5 free credit to start (about 500 answers)",
+      "Questions unrelated to your shop are free",
+      "Top up with Whish Money or OMT",
+      "No contract, stop any time",
+    ],
+    pricingCta: "Start free",
+    trust: ["Official Instagram login", "Encrypted data", "Never sold", "Delete any time"],
+    stickyCta: "Start free · $5 credit",
   },
 
   chat: {

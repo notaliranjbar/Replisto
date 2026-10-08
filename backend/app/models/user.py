@@ -77,6 +77,9 @@ class Shop(UUIDPk, Timestamps, Base):
     # The sign-up gift is given once, after the owner verifies their mobile number; see
     # services/gifts.py.
     signup_gift_at: Mapped[datetime | None] = mapped_column()
+    # Replisto's own shop: the assistant on our website ("Ask Replisto"). It answers about
+    # Replisto and is never charged. Set by scripts/seed_house.py; at most one.
+    is_house: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
 
     owner: Mapped[User] = relationship(back_populates="shop")
     instagram_account: Mapped["InstagramAccount | None"] = relationship(

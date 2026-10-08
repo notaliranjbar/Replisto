@@ -10,6 +10,7 @@ A new channel adds its own sender here and a branch in `sender_for`.
 """
 
 import logging
+import uuid
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Protocol
@@ -113,6 +114,24 @@ class InstagramSender:
         return SendError(exc, retryable=exc.retryable, endpoint_dead=exc.token_invalid)
 
 
+class WebSender:
+    """The website chat widget: nothing is pushed anywhere. Messages are stored like on any
+    channel, and the widget shows them (it asks for new ones while it's open)."""
+
+    channel = Channel.WEB
+    reply_window = None
+    max_text_length = 4000
+
+    async def send_text(self, text: str) -> str:
+        return f"web:{uuid.uuid4()}"
+
+    async def send_post(self, post: PostLink) -> str:
+        return f"web:{uuid.uuid4()}"
+
+    async def typing(self) -> None:
+        return None
+
+
 async def sender_for(
     db: AsyncSession, shop: Shop, conversation: Conversation, gateways: Gateways
 ) -> ChannelSender | None:
@@ -127,6 +146,9 @@ async def sender_for(
         if account is None or not account.is_active:
             return None
         return InstagramSender(db, account, gateways.instagram, conversation.customer_id)
+
+    if conversation.channel == Channel.WEB:
+        return WebSender()
 
     return None
 

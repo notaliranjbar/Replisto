@@ -25,7 +25,7 @@ const variants: Record<Variant, string> = {
   ghost: "text-slate-600 hover:bg-fill hover:text-ink-950",
   soft: "bg-brand-50 text-brand-700 hover:bg-brand-100",
   ink: "bg-night-900 text-white hover:bg-night-800 shadow-sm",
-  // for violet and ink surfaces
+  // for brand and ink surfaces
   inverse: "bg-surface text-ink-900 hover:bg-brand-50 shadow-[0_1px_0_rgb(14_10_25/0.25),0_8px_24px_-8px_rgb(14_10_25/0.45)]",
   outlineInverse: "text-white border border-white/35 hover:bg-white/10 hover:border-white/60",
   ghostInverse: "text-white/90 hover:bg-white/10 hover:text-white",
@@ -91,7 +91,7 @@ export function ExternalButton({ href, variant, size, icon, children, className 
 
 /**
  * Panel surfaces share the public site's card language: 2xl radius, a hairline ring instead
- * of a grey border, and a soft violet-tinted shadow.
+ * of a grey border, and a soft brand-tinted shadow.
  */
 export function Card({ className, children, danger }: { className?: string; children: ReactNode; danger?: boolean }) {
   return <div className={cx("rounded-2xl bg-surface shadow-soft ring-1", danger ? "ring-red-200" : "ring-line", className)}>{children}</div>;
@@ -129,7 +129,7 @@ export function CardHeader({ title, action, subtitle, icon }: { title: ReactNode
   );
 }
 
-/** Page title in the site's heading style, with the page's icon on a solid violet chip. */
+/** Page title in the site's heading style, with the page's icon on a solid brand chip. */
 export function PageHeader({ title, subtitle, action, icon }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode; icon?: ReactNode }) {
   return (
     <header className="animate-pop-in mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
@@ -211,7 +211,7 @@ export function PageLoading() {
   );
 }
 
-/** Friendly "nothing here" block: icon in a soft violet circle, bold line, optional detail. */
+/** Friendly "nothing here" block: icon in a soft brand circle, bold line, optional detail. */
 export function EmptyState({ icon, title, children }: { icon?: ReactNode; title: ReactNode; children?: ReactNode }) {
   return (
     <div className="animate-pop-in flex flex-col items-center justify-center px-6 py-14 text-center">

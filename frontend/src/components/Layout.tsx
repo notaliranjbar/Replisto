@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MessageCircleQuestion,
   Package,
   Settings,
   UserRound,
@@ -21,6 +22,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { keys, useDashboard, useMe } from "../api/queries";
+import { AskReplistoLauncher } from "./AskReplisto";
 import { useAuth } from "../auth/AuthContext";
 import { otherLang, useI18n } from "../i18n";
 import { useHandoffWatcher } from "../lib/notifications";
@@ -100,6 +102,7 @@ export default function Layout() {
         { to: "/billing", label: t.launch.nav.billing, icon: <Wallet /> },
         { to: "/instagram", label: t.nav.instagram, icon: <Camera />, tag: dash && !dash.setup.instagram_available ? t.launch.nav.soon : undefined },
         { to: "/account", label: t.nav.account, icon: <UserRound /> },
+        { to: "/help", label: t.launch.ask.launcher, icon: <MessageCircleQuestion /> },
       ],
     },
   ];
@@ -144,6 +147,12 @@ export default function Layout() {
         </div>
       </main>
 
+      {/* desktop only: on phones it's the "Ask Replisto" page in the menu, so nothing covers content */}
+      {!["/playground", "/help"].includes(location.pathname) && (
+        <div className="hidden lg:block">
+          <AskReplistoLauncher />
+        </div>
+      )}
       <BottomTabs handoffs={dash?.open_handoffs} onMore={() => setDrawer(true)} />
       <Drawer open={drawer} onClose={() => setDrawer(false)} groups={groups} />
     </div>

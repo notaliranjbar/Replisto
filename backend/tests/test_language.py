@@ -58,7 +58,7 @@ def _user_messages() -> list[tuple[str, str]]:
     for path in APP.rglob("*.py"):
         if path.name in _INTERNAL_FILES or path.name == "i18n.py":
             continue
-        for node in ast.walk(ast.parse(path.read_text())):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
                 continue
             name = node.func.id
@@ -140,7 +140,7 @@ async def test_emails_in_the_owners_language(
 
     sent: list[tuple[str, str, str]] = []
 
-    async def fake_send(to: str, subject: str, body: str) -> None:
+    async def fake_send(to: str, subject: str, body: str, html_body: str | None = None) -> None:
         sent.append((to, subject, body))
 
     monkeypatch.setattr(auth, "send_email", fake_send)
