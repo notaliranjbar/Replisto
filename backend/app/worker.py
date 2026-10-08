@@ -88,10 +88,10 @@ async def refresh_instagram_tokens(ctx: dict[str, Any]) -> None:
 
 
 async def reconcile_payments(ctx: dict[str, Any]) -> None:
-    """Credit Aban top-ups whose webhook never arrived (a safety net, not the main path)."""
+    """Credit top-ups whose webhook never arrived (a safety net, not the main path)."""
     async with SessionLocal() as db:
-        gateway = payments.AbanGateway(ctx["http"])
-        for payment in await payments.reconcile_aban(db, gateway):
+        gateway = payments.gateway_for(ctx["http"])
+        for payment in await payments.reconcile(db, gateway):
             logger.warning("payment %s credited by the periodic check", payment.id)
 
 

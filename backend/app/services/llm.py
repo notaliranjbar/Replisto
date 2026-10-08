@@ -1,6 +1,6 @@
 """Minimal client for OpenAI-compatible chat completion APIs.
 
-Works with OpenAI directly and with the Iranian gateways that proxy it (and Claude/Gemini)
+Works with OpenAI directly and with gateways that serve other models (Claude, Gemini, ...)
 behind the same API shape. Only `base_url`, key and model name change between them.
 """
 
@@ -102,8 +102,8 @@ class LLMClient:
                             "text": (
                                 "This image was uploaded by an online shop owner as information "
                                 "for their customer-support assistant. Transcribe ALL of its "
-                                "text and information faithfully in the original language "
-                                "(usually Persian). Keep prices, sizes, and numbers exact. Use "
+                                "text and information faithfully in the original language. "
+                                "Keep prices, sizes, and numbers exact. Use "
                                 "simple lines or a list for tables. Output only the content."
                             ),
                         },

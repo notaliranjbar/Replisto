@@ -17,7 +17,7 @@ def _payload(*messaging: dict[str, Any]) -> dict[str, Any]:
     return {"object": "instagram", "entry": [{"id": ACCOUNT, "time": 1, "messaging": messaging}]}
 
 
-def _incoming(mid: str, text: str = "سلام", ts: int = 1_790_000_000_000, **extra: Any):
+def _incoming(mid: str, text: str = "Hi", ts: int = 1_790_000_000_000, **extra: Any):
     return {
         "sender": {"id": CUSTOMER},
         "recipient": {"id": ACCOUNT},
@@ -54,7 +54,7 @@ async def test_receive_requires_valid_signature(client: AsyncClient, queue: Reco
 
 
 async def test_receive_enqueues_events(client: AsyncClient, queue: RecordingQueue) -> None:
-    body = json.dumps(_payload(_incoming("m1", "قیمت این مانتو چنده؟"))).encode()
+    body = json.dumps(_payload(_incoming("m1", "How much is this dress?"))).encode()
     resp = await client.post(
         "/webhooks/instagram", content=body, headers={"X-Hub-Signature-256": _sign(body)}
     )
@@ -66,7 +66,7 @@ async def test_receive_enqueues_events(client: AsyncClient, queue: RecordingQueu
     event = job.args[0]
     assert event.account_ig_id == ACCOUNT
     assert event.customer_igsid == CUSTOMER
-    assert event.text == "قیمت این مانتو چنده؟"
+    assert event.text == "How much is this dress?"
 
 
 async def test_receive_rejects_invalid_json(client: AsyncClient) -> None:
@@ -82,7 +82,7 @@ def test_parse_echo_uses_recipient_as_customer() -> None:
         "sender": {"id": ACCOUNT},
         "recipient": {"id": CUSTOMER},
         "timestamp": 1_790_000_000_000,
-        "message": {"mid": "e1", "text": "سلام، موجوده", "is_echo": True},
+        "message": {"mid": "e1", "text": "Hi, it's in stock", "is_echo": True},
     }
     [event] = parse_messaging_events(_payload(echo))
     assert event.is_echo
@@ -116,8 +116,8 @@ def test_verify_signature_edge_cases() -> None:
 
 
 def test_split_text() -> None:
-    assert split_text("کوتاه") == ["کوتاه"]
-    long = ("این یک جمله‌ی نسبتا بلند است. " * 80).strip()
+    assert split_text("Short") == ["Short"]
+    long = ("This is a fairly long sentence. " * 80).strip()
     chunks = split_text(long)
     assert len(chunks) > 1
     assert all(len(c) <= 1000 for c in chunks)

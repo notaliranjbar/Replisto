@@ -10,6 +10,6 @@ async def read_upload(file: UploadFile) -> bytes:
     if len(data) > limit:
         raise HTTPException(
             status.HTTP_413_CONTENT_TOO_LARGE,
-            f"حجم فایل بیشتر از {limit // (1024 * 1024)} مگابایت است.",
+            f"The file is larger than {limit // (1024 * 1024)} MB.",
         )
     return data

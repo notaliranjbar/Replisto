@@ -1,25 +1,25 @@
 import type { Section } from "../api/types";
 import type { Lang } from ".";
 
-// Section labels come from the API in Persian (docs/FRONTEND.md §4.3); the panel swaps in its
-// own translations. Unknown keys fall back to the API text.
+// Section labels come from the API in English; the panel swaps in its own translations.
+// Unknown keys fall back to the API text.
 type Copy = Record<string, Pick<Section, "label" | "hint" | "placeholder">>;
 
 const en: Copy = {
   about: {
     label: "About the shop",
     hint: "What does your shop sell, and what should customers know about it?",
-    placeholder: "e.g. Mahsa Boutique, making women's coats and blouses since 2019. Everything is sewn in-house.",
+    placeholder: "e.g. Layla Boutique, making women's dresses and blouses since 2019. Everything is sewn in-house.",
   },
   shipping: {
     label: "Shipping",
     hint: "Shipping methods, cost, delivery time, other cities and abroad",
-    placeholder: "e.g. Express post, 3–5 business days, 85,000 Toman. Free over 2 million.",
+    placeholder: "e.g. Express delivery, 3–5 business days, $8. Free on orders over $150.",
   },
   payment: {
     label: "Payment",
     hint: "Payment methods and how to place an order",
-    placeholder: "e.g. Card transfer or website checkout. Cash on delivery in Tehran only.",
+    placeholder: "e.g. Card payment on our website. Cash on delivery within the city only.",
   },
   returns: {
     label: "Returns & exchanges",
@@ -29,7 +29,7 @@ const en: Copy = {
   contact: {
     label: "Contact & opening hours",
     hint: "Website, phone, address, support hours",
-    placeholder: "e.g. mahsa.shop, support 10am–8pm, closed Fridays.",
+    placeholder: "e.g. layla.shop, support 10am–8pm, closed Fridays.",
   },
   faq: {
     label: "Frequently asked questions",
@@ -57,7 +57,7 @@ const ar: Copy = {
   shipping: {
     label: "الشحن",
     hint: "طرق الشحن والتكلفة ومدة التوصيل والمدن الأخرى والخارج",
-    placeholder: "مثلًا: بريد سريع، من 3 إلى 5 أيام عمل، 85,000 تومان. مجاني للطلبات فوق مليونين.",
+    placeholder: "مثلًا: توصيل سريع، من 3 إلى 5 أيام عمل، 30 درهمًا. مجاني للطلبات فوق 500 درهم.",
   },
   payment: {
     label: "الدفع",

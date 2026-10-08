@@ -4,7 +4,7 @@ A shop tops up its wallet; every AI answer is deducted from it by the tokens it 
 minimum per answer). When the balance runs out the bot stops answering (the customer gets the shop's fallback message and
 the conversation goes to the owner) until the owner tops up.
 
-All amounts are integer rials. Every change is a row in the ledger (`WalletEntry`).
+All amounts are integer US cents. Every change is a row in the ledger (`WalletEntry`).
 """
 
 import logging
@@ -32,48 +32,49 @@ def enabled() -> bool:
 def usage_cost(prompt_tokens: int, completion_tokens: int) -> int:
     settings = get_settings()
     cost = (
-        prompt_tokens * settings.usage_rial_per_1k_prompt_tokens
-        + completion_tokens * settings.usage_rial_per_1k_completion_tokens
+        prompt_tokens * settings.usage_cents_per_1k_prompt_tokens
+        + completion_tokens * settings.usage_cents_per_1k_completion_tokens
     ) / 1000
-    return max(math.ceil(cost), settings.usage_min_rial_per_reply)
+    # Rounded to 6 places first so float noise (0.30000000000000004) doesn't add a cent.
+    return max(math.ceil(round(cost, 6)), settings.usage_min_cents_per_reply)
 
 
 def can_spend(shop: Shop) -> bool:
-    return not enabled() or shop.balance_rial > 0
+    return not enabled() or shop.balance_cents > 0
 
 
 async def apply(
     db: AsyncSession,
     shop: Shop,
-    amount_rial: int,
+    amount_cents: int,
     kind: WalletEntryKind,
     description: str,
     details: dict[str, Any] | None = None,
 ) -> int:
-    """Change the balance by `amount_rial` (negative spends) atomically; returns the new one.
+    """Change the balance by `amount_cents` (negative spends) atomically; returns the new one.
 
     Commits. The UPDATE is done in SQL so two concurrent answers can't lose a deduction.
     """
     new_balance = await db.scalar(
         update(Shop)
         .where(Shop.id == shop.id)
-        .values(balance_rial=Shop.balance_rial + amount_rial)
-        .returning(Shop.balance_rial)
+        .values(balance_cents=Shop.balance_cents + amount_cents)
+        .returning(Shop.balance_cents)
         .execution_options(synchronize_session=False)
     )
     assert new_balance is not None
-    shop.balance_rial = new_balance
+    shop.balance_cents = new_balance
     db.add(
         WalletEntry(
             shop_id=shop.id,
             kind=kind,
-            amount_rial=amount_rial,
-            balance_after_rial=new_balance,
+            amount_cents=amount_cents,
+            balance_after_cents=new_balance,
             description=description[:255],
             details=details or {},
         )
     )
-    if amount_rial > 0 and new_balance >= get_settings().low_balance_rial:
+    if amount_cents > 0 and new_balance >= get_settings().low_balance_cents:
         # Topped up: warn again next time it runs low.
         shop.low_balance_notified_at = None
         shop.empty_wallet_notified_at = None
@@ -107,7 +108,7 @@ async def charge_usage(
 
 
 async def _crossed_low_balance(db: AsyncSession, shop: Shop, balance: int) -> bool:
-    if balance >= get_settings().low_balance_rial or shop.low_balance_notified_at is not None:
+    if balance >= get_settings().low_balance_cents or shop.low_balance_notified_at is not None:
         return False
     shop.low_balance_notified_at = utcnow()
     await db.commit()
@@ -124,6 +125,7 @@ async def should_remind_empty(db: AsyncSession, shop: Shop) -> bool:
     return True
 
 
-def toman(rial: int) -> str:
-    """Rial amount as a Persian-friendly toman string: "۱۲٬۵۰۰ تومان"."""
-    return f"{rial // 10:,} تومان".replace(",", "٬")
+def usd(cents: int) -> str:
+    """A cent amount as dollars: "$12.50"."""
+    sign = "-" if cents < 0 else ""
+    return f"{sign}${abs(cents) / 100:,.2f}"

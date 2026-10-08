@@ -23,16 +23,16 @@ def _token(body: str) -> str:
 
 
 async def test_reset_flow(client: AsyncClient, auth_headers: dict, outbox: list) -> None:
-    resp = await client.post(f"{API}/forgot", json={"email": " Owner@Shop.ir "})
+    resp = await client.post(f"{API}/forgot", json={"email": " Owner@Shop.com "})
     assert resp.status_code == 202
     [(to, _, body)] = outbox
-    assert to == "owner@shop.ir" and "https://panel.test/reset-password?token=" in body
+    assert to == "owner@shop.com" and "https://panel.test/reset-password?token=" in body
 
     token = _token(body)
     resp = await client.post(f"{API}/reset", json={"token": token, "new_password": "newpass123"})
     assert resp.status_code == 204
     login = await client.post(
-        "/api/v1/auth/login", json={"email": "owner@shop.ir", "password": "newpass123"}
+        "/api/v1/auth/login", json={"email": "owner@shop.com", "password": "newpass123"}
     )
     assert login.status_code == 200
 
@@ -42,15 +42,15 @@ async def test_reset_flow(client: AsyncClient, auth_headers: dict, outbox: list)
 
 
 async def test_unknown_email_looks_the_same(client: AsyncClient, outbox: list) -> None:
-    resp = await client.post(f"{API}/forgot", json={"email": "nobody@shop.ir"})
+    resp = await client.post(f"{API}/forgot", json={"email": "nobody@shop.com"})
     assert resp.status_code == 202 and outbox == []
 
 
 async def test_requests_are_throttled(
     client: AsyncClient, auth_headers: dict, outbox: list
 ) -> None:
-    await client.post(f"{API}/forgot", json={"email": "owner@shop.ir"})
-    await client.post(f"{API}/forgot", json={"email": "owner@shop.ir"})
+    await client.post(f"{API}/forgot", json={"email": "owner@shop.com"})
+    await client.post(f"{API}/forgot", json={"email": "owner@shop.com"})
     assert len(outbox) == 1
 
 

@@ -41,5 +41,5 @@ class TeachProposal(UUIDPk, Timestamps, Base):
     # Photo for the product(s) in this proposal.
     image_url: Mapped[str | None] = mapped_column(Text)
     applied_at: Mapped[datetime | None] = mapped_column()
-    # What applying did, for the owner ("۳ محصول اضافه شد").
+    # What applying did, for the owner ("3 products added").
     result: Mapped[str | None] = mapped_column(Text)

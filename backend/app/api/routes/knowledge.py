@@ -89,7 +89,7 @@ async def create_entry(body: EntryCreate, shop: CurrentShop, db: DbSession) -> K
     if not knowledge.SECTION_BY_KEY[body.section].multiple:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "این بخش فقط یک متن دارد؛ از PUT /knowledge/single/{section} استفاده کنید.",
+            "This section holds a single text; use PUT /knowledge/single/{section}.",
         )
     await _check_limit(db, shop, len(body.title) + len(body.content))
     entry = KnowledgeEntry(
@@ -106,7 +106,7 @@ async def set_single_section(
 ) -> KnowledgeEntry | None:
     """Set the text of a one-box section (about, shipping, ...). Empty content clears it."""
     if knowledge.SECTION_BY_KEY[section].multiple:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "این بخش چند موردی است.")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "This section holds several entries.")
     entry = await db.scalar(
         select(KnowledgeEntry).where(
             KnowledgeEntry.shop_id == shop.id, KnowledgeEntry.section == section
@@ -195,7 +195,7 @@ async def _entries(db: DbSession, shop: Shop) -> list[KnowledgeEntry]:
 async def _get_entry(db: DbSession, shop: Shop, entry_id: uuid.UUID) -> KnowledgeEntry:
     entry = await db.get(KnowledgeEntry, entry_id)
     if entry is None or entry.shop_id != shop.id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "مورد پیدا نشد")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Entry not found")
     return entry
 
 
@@ -207,5 +207,5 @@ async def _check_limit(db: DbSession, shop: Shop, growth: int) -> None:
     if used + growth > limit:
         raise HTTPException(
             status.HTTP_413_CONTENT_TOO_LARGE,
-            f"حجم اطلاعات از سقف مجاز ({limit:,} کاراکتر) بیشتر می‌شود.",
+            f"This would go over the limit of {limit:,} characters.",
         )

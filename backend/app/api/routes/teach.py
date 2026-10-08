@@ -24,13 +24,13 @@ class ProposalOut(BaseModel):
     source: str
     source_label: str
     status: ProposalStatus
-    # What the AI understood, in Persian, for the owner.
+    # What the AI understood, for the owner.
     summary: str
-    # The whole proposal as one readable Persian message.
+    # The whole proposal as one readable message.
     preview: str
     # products: [{action: create|update|delete, product_id, before, fields, locked}]
-    #   fields use the product field names (price in toman); locked rows come from a live
-    #   Google Sheet and won't be changed.
+    #   fields use the product field names (price in the shop's currency); locked rows come
+    #   from a live Google Sheet and won't be changed.
     # knowledge: [{section, title, content, mode: replace|add}]
     # questions: [str] the AI's questions to the owner
     # sheet (optional): {url, mapping, rows} connects a Google Sheet as a live source
@@ -78,7 +78,7 @@ def _error(exc: Exception) -> HTTPException:
     if isinstance(exc, LLMError):
         return HTTPException(
             status.HTTP_502_BAD_GATEWAY,
-            "سرویس هوش مصنوعی پاسخ نداد. چند لحظه بعد دوباره امتحان کنید.",
+            "The AI service didn't respond. Please try again in a moment.",
         )
     return HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc))
 
@@ -178,7 +178,7 @@ async def undo_proposal(proposal_id: uuid.UUID, shop: CurrentShop, db: DbSession
     """Remove the products an applied proposal added (e.g. a channel post read by mistake)."""
     proposal = await _get(db, shop, proposal_id)
     if proposal.status != ProposalStatus.APPLIED:
-        raise HTTPException(status.HTTP_409_CONFLICT, "فقط موارد ثبت‌شده را می‌شود برگرداند.")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Only applied changes can be undone.")
     await teach.undo(db, shop, proposal)
     return _out(proposal)
 
@@ -186,5 +186,5 @@ async def undo_proposal(proposal_id: uuid.UUID, shop: CurrentShop, db: DbSession
 async def _get(db: DbSession, shop: Shop, proposal_id: uuid.UUID) -> TeachProposal:
     proposal = await db.get(TeachProposal, proposal_id)
     if proposal is None or proposal.shop_id != shop.id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "پیدا نشد")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found")
     return proposal

@@ -1,6 +1,6 @@
 // Every request goes through `api()`. It adds the access token, and on a 401 it refreshes
 // the tokens once (shared by concurrent requests) and retries; if that fails the user is
-// logged out. See docs/FRONTEND.md §2–3.
+// logged out.
 
 export const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 const BASE = `${API_URL}/api/v1`;
@@ -49,7 +49,7 @@ export type FieldErrors = Record<string, string>;
 export class ApiError extends Error {
   /** 0 means the request never reached the server. */
   status: number;
-  /** Persian, ready to show — set when the server sent a string `detail`. */
+  /** Ready to show — set when the server sent a string `detail`. */
   detail: string | null;
   /** From FastAPI's automatic 422 list: field name → English validator message. */
   fields: FieldErrors;

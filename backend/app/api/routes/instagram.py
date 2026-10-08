@@ -165,13 +165,13 @@ async def sync_posts_now(shop: CurrentShop, db: DbSession, instagram: Instagram)
     """Read the page's posts again now (they are also refreshed daily)."""
     account = await db.scalar(select(InstagramAccount).where(InstagramAccount.shop_id == shop.id))
     if account is None or not account.is_active:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "اول پیج اینستاگرام را وصل کنید.")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Connect your Instagram account first.")
     try:
         await sync_posts(db, account, instagram)
     except InstagramError as exc:
         logger.warning("post sync failed for shop %s: %s", shop.id, exc)
         raise HTTPException(
             status.HTTP_502_BAD_GATEWAY,
-            "خواندن پست‌ها از اینستاگرام ممکن نشد. کمی بعد دوباره امتحان کنید.",
+            "Couldn't read your posts from Instagram. Please try again in a moment.",
         ) from None
     return await list_posts(shop, db)

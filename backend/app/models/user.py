@@ -20,8 +20,8 @@ class User(UUIDPk, Timestamps, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     # Set when the owner opened the link we emailed them.
     email_verified_at: Mapped[datetime | None] = mapped_column()
-    # A verified mobile number (+98912...), confirmed with an SMS code. One number belongs to
-    # one account.
+    # A verified mobile number in E.164 form (+14155550123), confirmed with an SMS code. One
+    # number belongs to one account.
     phone: Mapped[str | None] = mapped_column(String(20), unique=True)
     phone_verified_at: Mapped[datetime | None] = mapped_column()
     # The SMS code waiting to be typed in: the number it went to, its hash and lifetime.
@@ -48,14 +48,17 @@ class Shop(UUIDPk, Timestamps, Base):
     tone: Mapped[str] = mapped_column(String(16), default="friendly")  # friendly | formal
     use_emoji: Mapped[bool] = mapped_column(Boolean, default=True)
     fallback_message: Mapped[str] = mapped_column(
-        Text, default="سوالتون رو ثبت کردم، همکارم به زودی جواب میده 🙏"
+        Text, default="Thanks for your message! A teammate will get back to you shortly 🙏"
     )
     forbidden_rules: Mapped[str] = mapped_column(Text, default="")
     # How long the bot stays silent in a thread after the owner replies manually.
     handoff_pause_minutes: Mapped[int] = mapped_column(default=120)
 
-    # Billing: a prepaid wallet in rial. Every AI answer is deducted from it.
-    balance_rial: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
+    # The currency the shop's product prices are in (ISO 4217, e.g. USD, AED, SAR).
+    currency: Mapped[str] = mapped_column(String(3), default="USD", server_default="USD")
+
+    # Billing: a prepaid wallet in US cents. Every AI answer is deducted from it.
+    balance_cents: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
     # When we last told the owner the wallet is low / empty (so we don't repeat it).
     low_balance_notified_at: Mapped[datetime | None] = mapped_column()
     empty_wallet_notified_at: Mapped[datetime | None] = mapped_column()

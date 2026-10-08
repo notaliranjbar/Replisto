@@ -88,7 +88,7 @@ def _tokens_for(user: User) -> TokenPair:
 
 @router.post("/register", response_model=TokenPair, status_code=status.HTTP_201_CREATED)
 async def register(body: RegisterRequest, db: DbSession) -> TokenPair:
-    email_taken = HTTPException(status.HTTP_409_CONFLICT, "این ایمیل قبلا ثبت شده است")
+    email_taken = HTTPException(status.HTTP_409_CONFLICT, "This email is already registered")
     if await db.scalar(select(User.id).where(User.email == body.email)):
         raise email_taken
 
@@ -122,23 +122,22 @@ async def login(body: LoginRequest, request: Request, db: DbSession) -> TokenPai
             wait = minutes_text(throttle.retry_after(key))
             raise HTTPException(
                 status.HTTP_429_TOO_MANY_REQUESTS,
-                f"چند بار رمز اشتباه وارد شد. {wait} دیگر دوباره امتحان کنید "
-                "یا از «فراموشی رمز» استفاده کنید.",
+                f"Too many wrong passwords. Try again in {wait}, or use “Forgot password”.",
             )
     user = await db.scalar(select(User).where(User.email == body.email))
     if user is None or not verify_password(body.password, user.password_hash):
         _login_failures_email.hit(body.email)
         _login_failures_ip.hit(ip)
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "ایمیل یا رمز عبور اشتباه است")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Wrong email or password")
     if not user.is_active:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "حساب کاربری غیرفعال است")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "This account is disabled")
     _login_failures_email.reset(body.email)
     return _tokens_for(user)
 
 
 @router.post("/refresh", response_model=TokenPair)
 async def refresh(body: RefreshRequest, db: DbSession) -> TokenPair:
-    invalid = HTTPException(status.HTTP_401_UNAUTHORIZED, "توکن نامعتبر است")
+    invalid = HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
     try:
         user_id = decode_token(body.refresh_token, "refresh")
     except TokenError:
@@ -156,7 +155,7 @@ async def forgot_password(body: ForgotPasswordRequest, db: DbSession) -> ForgotP
     """Email a password reset link. Same answer whether or not the email is registered,
     so the endpoint doesn't reveal who has an account."""
     answer = ForgotPasswordOut(
-        message="اگر این ایمیل در Replisto ثبت شده باشد، لینک تغییر رمز برایش فرستاده شد."
+        message="If this email is registered with Replisto, a password reset link is on its way."
     )
     now = time.monotonic()
     if now - _last_reset_request.get(body.email, -_RESET_INTERVAL_SECONDS) < (
@@ -174,11 +173,11 @@ async def forgot_password(body: ForgotPasswordRequest, db: DbSession) -> ForgotP
     try:
         await send_email(
             user.email,
-            "تغییر رمز عبور Replisto",
-            "سلام،\n\nبرای انتخاب رمز عبور تازه روی این لینک بزنید:\n"
+            "Reset your Replisto password",
+            "Hi,\n\nOpen this link to choose a new password:\n"
             f"{link}\n\n"
-            f"این لینک {settings.password_reset_minutes} دقیقه و فقط یک بار کار می‌کند. "
-            "اگر شما درخواست نداده‌اید، این ایمیل را نادیده بگیرید.\n\nReplisto",
+            f"The link works once, for {settings.password_reset_minutes} minutes. "
+            "If you didn't ask for this, you can ignore this email.\n\nReplisto",
         )
     except Exception:
         logger.exception("could not send password reset email")
@@ -189,7 +188,7 @@ async def forgot_password(body: ForgotPasswordRequest, db: DbSession) -> ForgotP
 async def reset_password(body: ResetPasswordRequest, db: DbSession) -> None:
     invalid = HTTPException(
         status.HTTP_400_BAD_REQUEST,
-        "لینک تغییر رمز نامعتبر است یا منقضی شده. دوباره درخواست بدهید.",
+        "This reset link is invalid or has expired. Please ask for a new one.",
     )
     try:
         user_id, fingerprint = read_password_reset_token(body.token)
@@ -211,11 +210,11 @@ async def _send_verification(user: User) -> None:
     try:
         await send_email(
             user.email,
-            "تأیید ایمیل Replisto",
-            "سلام،\n\nبه Replisto خوش آمدید! برای تأیید ایمیلتان روی این لینک بزنید:\n"
+            "Confirm your Replisto email",
+            "Hi,\n\nWelcome to Replisto! Open this link to confirm your email:\n"
             f"{link}\n\n"
-            f"این لینک {settings.email_verify_days} روز کار می‌کند. اگر شما در Replisto "
-            "ثبت‌نام نکرده‌اید، این ایمیل را نادیده بگیرید.\n\nReplisto",
+            f"The link works for {settings.email_verify_days} days. If you didn't sign up "
+            "for Replisto, you can ignore this email.\n\nReplisto",
         )
     except Exception:
         logger.exception("could not send the verification email")
@@ -226,7 +225,7 @@ async def verify_email(body: VerifyEmailRequest, db: DbSession) -> None:
     """The link from the verification email (the panel's /verify-email page calls this)."""
     invalid = HTTPException(
         status.HTTP_400_BAD_REQUEST,
-        "لینک تأیید نامعتبر است یا منقضی شده. از پنل دوباره درخواست بدهید.",
+        "This confirmation link is invalid or has expired. Ask for a new one from the panel.",
     )
     try:
         user_id, fingerprint = read_email_verify_token(body.token)
@@ -243,15 +242,13 @@ async def verify_email(body: VerifyEmailRequest, db: DbSession) -> None:
 @router.post("/email/resend", status_code=status.HTTP_202_ACCEPTED)
 async def resend_verification(user: SignedInUser) -> ForgotPasswordOut:
     if user.email_verified_at is not None:
-        return ForgotPasswordOut(message="ایمیل شما قبلا تأیید شده است.")
+        return ForgotPasswordOut(message="Your email is already confirmed.")
     key = str(user.id)
     for throttle in (_verify_email_minute, _verify_email_day):
         if throttle.blocked(key):
             wait = minutes_text(throttle.retry_after(key))
-            raise HTTPException(
-                status.HTTP_429_TOO_MANY_REQUESTS, f"لطفا {wait} دیگر دوباره درخواست بدهید."
-            )
+            raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, f"Please try again in {wait}.")
     _verify_email_minute.hit(key)
     _verify_email_day.hit(key)
     await _send_verification(user)
-    return ForgotPasswordOut(message=f"لینک تأیید به {user.email} فرستاده شد.")
+    return ForgotPasswordOut(message=f"A confirmation link was sent to {user.email}.")

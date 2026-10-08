@@ -1,6 +1,6 @@
 """bale as a separate channel
 
-Bale (بله) bots and owner accounts live beside Telegram's (a platform column), with their
+Bale bots and owner accounts live beside Telegram's (a platform column), with their
 own on/off switch per shop; a shop may have its own bot on each messenger.
 
 Revision ID: a3599555eb9d

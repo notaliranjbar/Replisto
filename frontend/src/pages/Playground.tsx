@@ -245,7 +245,7 @@ function BotBubble({ turn }: { turn: Turn }) {
 }
 
 type Lookup = { tool?: string; arguments?: Record<string, unknown>; result?: { matches?: ProductInfo[]; other_in_stock_variants?: ProductInfo[] } };
-type ProductInfo = { name?: string; color?: string; size?: string; price_toman?: number; in_stock?: boolean; stock_count?: number; sku?: string };
+type ProductInfo = { name?: string; color?: string; size?: string; price?: number; in_stock?: boolean; stock_count?: number; sku?: string };
 
 /** "The bot checked these products" — shows owners why the bot said what it said. */
 function Lookups({ lookups }: { lookups: Record<string, unknown>[] }) {
@@ -298,6 +298,7 @@ function Lookups({ lookups }: { lookups: Record<string, unknown>[] }) {
 
 function ProductList({ items }: { items: ProductInfo[] }) {
   const { t, f } = useI18n();
+  const currency = useMe().data?.shop.currency ?? "USD";
   if (!items.length) return null;
   return (
     <ul className="divide-y divide-slate-100 rounded-lg bg-slate-50">
@@ -306,7 +307,7 @@ function ProductList({ items }: { items: ProductInfo[] }) {
           <span className="font-bold text-ink-900">{p.name}</span>
           {p.color && <span className="text-slate-500">{p.color}</span>}
           {p.size && <span className="num text-slate-500">{p.size}</span>}
-          {p.price_toman != null && <span className="num text-ink-800">{f.num(p.price_toman)}</span>}
+          {p.price != null && <span className="num text-ink-800">{f.money(p.price, currency)}</span>}
           {p.in_stock === false && <Badge tone="red">{t.products.outOfStock}</Badge>}
           {p.in_stock && p.stock_count != null && <span className="num font-semibold text-emerald-700">× {f.num(p.stock_count)}</span>}
         </li>

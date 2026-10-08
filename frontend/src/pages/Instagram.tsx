@@ -6,7 +6,7 @@ import { keys } from "../api/queries";
 import type { InstagramStatus, Posts } from "../api/types";
 import { PostCard } from "../components/PostCard";
 import { useToast } from "../components/toast";
-import { Alert, Badge, Button, Card, CardHeader, ConfirmDialog, LinkButton, PageHeader, PageLoading, cx } from "../components/ui";
+import { Alert, Badge, Button, Card, CardHeader, ConfirmDialog, PageHeader, PageLoading, cx } from "../components/ui";
 import { useI18n } from "../i18n";
 import { errorMessage } from "../lib/errors";
 
@@ -50,9 +50,6 @@ export default function Instagram() {
         <Card className="p-6">
           <h2 className="text-lg font-extrabold text-ink-950">{t.launch.instagramSoon.title}</h2>
           <p className="mt-2 max-w-xl text-sm leading-7 text-slate-600">{t.launch.instagramSoon.body}</p>
-          <LinkButton to="/telegram" className="mt-4">
-            {t.launch.instagramSoon.action}
-          </LinkButton>
         </Card>
       </>
     );

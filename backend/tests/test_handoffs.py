@@ -28,7 +28,7 @@ CUSTOMER = "998877"
 
 
 class ScriptedResponder:
-    """Answers when it "knows" the question, otherwise hands off with a Persian reason."""
+    """Answers when it "knows" the question, otherwise hands off with a reason."""
 
     def __init__(self, known: dict[str, str]) -> None:
         self.known = known
@@ -38,7 +38,9 @@ class ScriptedResponder:
         if last in self.known:
             return Reply(text=self.known[last])
         return Reply(
-            text=shop.fallback_message, unanswered=True, handoff_reason="سوال خارج از اطلاعات"
+            text=shop.fallback_message,
+            unanswered=True,
+            handoff_reason="A question outside the shop information",
         )
 
 
@@ -49,7 +51,7 @@ async def shop(client: AsyncClient, auth_headers: dict, sessions: async_sessionm
         shop = await db.scalar(select(Shop))
         assert shop is not None
         shop.bot_enabled = True
-        shop.fallback_message = "همکارم جواب میده"
+        shop.fallback_message = "A teammate will reply soon"
         shop.handoff_pause_minutes = 0  # keep the bot active after owner replies, to test that
         db.add(
             InstagramAccount(
@@ -115,34 +117,42 @@ async def test_full_handoff_lifecycle(
     queue: RecordingQueue,
     fake_meta: FakeMeta,
 ) -> None:
-    bot = ScriptedResponder({"ارسال چطوره؟": "با پست پیشتاز"})
+    bot = ScriptedResponder({"How's shipping?": "By express post"})
 
     # 1. A question the bot knows: no handoff.
-    await _customer(db, queue, fake_meta, "ارسال چطوره؟", bot)
+    await _customer(db, queue, fake_meta, "How's shipping?", bot)
     assert (await _conversation(db)).handoff_at is None
 
     # 2. One it doesn't: the customer gets the fallback once, the owner gets a handoff.
-    await _customer(db, queue, fake_meta, "فاکتور رسمی میدید؟", bot)
+    await _customer(db, queue, fake_meta, "Do you issue formal invoices?", bot)
     conversation = await _conversation(db)
     assert conversation.handoff_open
-    assert conversation.handoff_reason == "سوال خارج از اطلاعات"
-    assert conversation.handoff_question == "فاکتور رسمی میدید؟"
-    assert [m["message"]["text"] for m in fake_meta.sent] == ["با پست پیشتاز", "همکارم جواب میده"]
+    assert conversation.handoff_reason == "A question outside the shop information"
+    assert conversation.handoff_question == "Do you issue formal invoices?"
+    assert [m["message"]["text"] for m in fake_meta.sent] == [
+        "By express post",
+        "A teammate will reply soon",
+    ]
 
     # 3. While waiting, the customer writes again: no second fallback, question grows,
     #    and a known question still gets answered.
-    await _customer(db, queue, fake_meta, "کد اقتصادی لازمه؟", bot)
-    await _customer(db, queue, fake_meta, "ارسال چطوره؟", bot)
-    assert [m["message"]["text"] for m in fake_meta.sent][2:] == ["با پست پیشتاز"]
+    await _customer(db, queue, fake_meta, "Do you need our VAT number?", bot)
+    await _customer(db, queue, fake_meta, "How's shipping?", bot)
+    assert [m["message"]["text"] for m in fake_meta.sent][2:] == ["By express post"]
     conversation = await _conversation(db)
-    assert conversation.handoff_question == "فاکتور رسمی میدید؟\nکد اقتصادی لازمه؟"
+    assert (
+        conversation.handoff_question
+        == "Do you issue formal invoices?\nDo you need our VAT number?"
+    )
 
     # The panel shows it.
     page = (await client.get("/api/v1/handoffs", headers=auth_headers)).json()
     assert page["total"] == 1
     [item] = page["items"]
     assert item["handoff"]["status"] == "open"
-    assert item["handoff"]["question"] == "فاکتور رسمی میدید؟\nکد اقتصادی لازمه؟"
+    assert (
+        item["handoff"]["question"] == "Do you issue formal invoices?\nDo you need our VAT number?"
+    )
     dashboard = (await client.get("/api/v1/dashboard", headers=auth_headers)).json()
     assert dashboard["open_handoffs"] == 1
     needs_owner = await client.get(
@@ -151,7 +161,7 @@ async def test_full_handoff_lifecycle(
     assert needs_owner.json()["total"] == 1
 
     # 4. The owner answers on Instagram: the handoff closes by itself.
-    await _owner_replies(db, queue, "بله، فاکتور رسمی صادر می‌کنیم")
+    await _owner_replies(db, queue, "Yes, we issue formal invoices")
     conversation = await _conversation(db)
     assert not conversation.handoff_open
     assert conversation.handoff_resolved_by == HandoffResolution.OWNER_REPLY
@@ -163,11 +173,11 @@ async def test_full_handoff_lifecycle(
 
     # 5. A later unknown question starts a new handoff and gets the fallback again.
     sent_before = len(fake_meta.sent)
-    await _customer(db, queue, fake_meta, "شعبه حضوری دارید؟", bot)
+    await _customer(db, queue, fake_meta, "Do you have a physical store?", bot)
     assert len(fake_meta.sent) == sent_before + 1
     conversation = await _conversation(db)
     assert conversation.handoff_open
-    assert conversation.handoff_question == "شعبه حضوری دارید؟"
+    assert conversation.handoff_question == "Do you have a physical store?"
 
 
 async def test_resolve_from_panel(
@@ -178,7 +188,7 @@ async def test_resolve_from_panel(
     queue: RecordingQueue,
     fake_meta: FakeMeta,
 ) -> None:
-    await _customer(db, queue, fake_meta, "سوال سخت", PlaceholderResponder())
+    await _customer(db, queue, fake_meta, "A hard question", PlaceholderResponder())
     conversation = await _conversation(db)
     url = f"/api/v1/handoffs/{conversation.id}/resolve"
     assert (await client.post(url, headers=auth_headers)).status_code == 204
@@ -201,7 +211,7 @@ async def test_failed_send_is_retried_before_handing_off(
 
     fake_meta.send_error = (400, {"error": {"message": "rate limited", "code": 4}})
     with pytest.raises(InstagramError):
-        await _customer(db, queue, fake_meta, "سوال سخت", PlaceholderResponder())
+        await _customer(db, queue, fake_meta, "A hard question", PlaceholderResponder())
     assert not (await _conversation(db)).handoff_open
 
     fake_meta.send_error = None
@@ -213,16 +223,16 @@ async def test_failed_send_is_retried_before_handing_off(
         fake_meta.client(),
         PlaceholderResponder(),
     )
-    assert [m["message"]["text"] for m in fake_meta.sent] == ["همکارم جواب میده"]
+    assert [m["message"]["text"] for m in fake_meta.sent] == ["A teammate will reply soon"]
     db.expire_all()
     assert (await _conversation(db)).handoff_open
 
 
 async def test_handoff_is_private_to_shop(client: AsyncClient, shop: Shop, db, queue, fake_meta):
-    await _customer(db, queue, fake_meta, "سوال", PlaceholderResponder())
+    await _customer(db, queue, fake_meta, "Question", PlaceholderResponder())
     other = await client.post(
         "/api/v1/auth/register",
-        json={"email": "b@shop.ir", "password": "strongpass1", "shop_name": "B"},
+        json={"email": "b@shop.com", "password": "strongpass1", "shop_name": "B"},
     )
     headers = {"Authorization": f"Bearer {other.json()['access_token']}"}
     assert (await client.get("/api/v1/handoffs", headers=headers)).json()["total"] == 0
@@ -232,7 +242,7 @@ async def test_handoff_is_private_to_shop(client: AsyncClient, shop: Shop, db, q
 
 
 async def test_bot_messages_are_flagged(shop: Shop, db: AsyncSession, queue, fake_meta) -> None:
-    await _customer(db, queue, fake_meta, "سوال", PlaceholderResponder())
+    await _customer(db, queue, fake_meta, "Question", PlaceholderResponder())
     bot = await db.scalar(select(Message).where(Message.sender == MessageSender.BOT))
     assert bot is not None and bot.unanswered
 
@@ -240,8 +250,8 @@ async def test_bot_messages_are_flagged(shop: Shop, db: AsyncSession, queue, fak
 async def test_api_times_carry_timezone(
     client: AsyncClient, auth_headers: dict, shop: Shop, db: AsyncSession, queue, fake_meta
 ) -> None:
-    """Without an offset the browser would read UTC times as local time (off by 3.5h in Iran)."""
-    await _customer(db, queue, fake_meta, "سوال", PlaceholderResponder())
+    """Without an offset the browser would read UTC times as local time."""
+    await _customer(db, queue, fake_meta, "Question", PlaceholderResponder())
     [item] = (await client.get("/api/v1/handoffs", headers=auth_headers)).json()["items"]
     for value in (item["last_customer_message_at"], item["handoff"]["handed_off_at"]):
         assert value.endswith(("Z", "+00:00")), value
@@ -253,22 +263,22 @@ async def test_partial_answer_while_waiting_sends_only_the_known_part(
     class Partial:
         async def generate(self, shop: Shop, history: list[ChatTurn], **_: object) -> Reply:
             return Reply(
-                text=f"تعویض سایز تا ۷ روز هست.\n{shop.fallback_message}",
+                text=f"Size exchanges within 7 days.\n{shop.fallback_message}",
                 unanswered=True,
-                handoff_reason="بازپرداخت در اطلاعات نیست",
-                partial_answer="تعویض سایز تا ۷ روز هست.",
+                handoff_reason="Refunds aren't in the shop information",
+                partial_answer="Size exchanges within 7 days.",
             )
 
-    await _customer(db, queue, fake_meta, "فاکتور رسمی میدید؟", PlaceholderResponder())
-    await _customer(db, queue, fake_meta, "مرجوعی دارین؟", Partial())
+    await _customer(db, queue, fake_meta, "Do you issue formal invoices?", PlaceholderResponder())
+    await _customer(db, queue, fake_meta, "Can I return things?", Partial())
     # First: the fallback. Second (handoff already open): only the part it knew, no repeat.
     assert [m["message"]["text"] for m in fake_meta.sent] == [
-        "همکارم جواب میده",
-        "تعویض سایز تا ۷ روز هست.",
+        "A teammate will reply soon",
+        "Size exchanges within 7 days.",
     ]
     conversation = await _conversation(db)
     assert conversation.handoff_open
-    assert conversation.handoff_question == "فاکتور رسمی میدید؟\nمرجوعی دارین؟"
+    assert conversation.handoff_question == "Do you issue formal invoices?\nCan I return things?"
 
 
 async def test_retried_partial_answer_records_question_once(
@@ -278,12 +288,17 @@ async def test_retried_partial_answer_records_question_once(
 
     class Partial:
         async def generate(self, shop: Shop, history: list[ChatTurn], **_: object) -> Reply:
-            return Reply(text="x", unanswered=True, handoff_reason="r", partial_answer="تعویض هست.")
+            return Reply(
+                text="x",
+                unanswered=True,
+                handoff_reason="r",
+                partial_answer="Exchanges are possible.",
+            )
 
-    await _customer(db, queue, fake_meta, "فاکتور؟", PlaceholderResponder())
+    await _customer(db, queue, fake_meta, "Invoice?", PlaceholderResponder())
     fake_meta.send_error = (400, {"error": {"message": "rate limited", "code": 4}})
     with pytest.raises(InstagramError):
-        await _customer(db, queue, fake_meta, "مرجوعی؟", Partial())
+        await _customer(db, queue, fake_meta, "Returns?", Partial())
     fake_meta.send_error = None
     conversation = await _conversation(db)
     await reply_to_conversation(
@@ -294,5 +309,8 @@ async def test_retried_partial_answer_records_question_once(
         Partial(),
     )
     db.expire_all()
-    assert (await _conversation(db)).handoff_question == "فاکتور؟\nمرجوعی؟"
-    assert [m["message"]["text"] for m in fake_meta.sent] == ["همکارم جواب میده", "تعویض هست."]
+    assert (await _conversation(db)).handoff_question == "Invoice?\nReturns?"
+    assert [m["message"]["text"] for m in fake_meta.sent] == [
+        "A teammate will reply soon",
+        "Exchanges are possible.",
+    ]

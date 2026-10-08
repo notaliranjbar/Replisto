@@ -49,6 +49,6 @@ class Throttle:
 
 
 def minutes_text(seconds: int) -> str:
-    """'۳ دقیقه' style wait time for messages (at least one minute)."""
+    """'3 minutes' style wait time for messages (at least one minute)."""
     minutes = max(1, (seconds + 59) // 60)
-    return f"{minutes} دقیقه"
+    return "1 minute" if minutes == 1 else f"{minutes} minutes"

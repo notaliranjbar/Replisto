@@ -1,17 +1,11 @@
 import { ApiError } from "../api/client";
 import type { Dict } from "../i18n/ar";
 
-// Letters only Persian uses (Arabic writes ي and ك): the server still words its errors in Persian.
-const PERSIAN = /[پچژکگی]/;
-
-/** Server text still worded in Persian, which the site doesn't show. */
-export const isPersian = (text: string | null | undefined): boolean => !!text && PERSIAN.test(text);
-
-/** A message to show for any failed request (docs/FRONTEND.md §2). */
+/** A message to show for any failed request. */
 export function errorMessage(err: unknown, t: Dict): string {
   if (err instanceof ApiError) {
     if (err.status === 0) return t.errors.network;
-    if (err.detail && !isPersian(err.detail)) return err.detail;
+    if (err.detail) return err.detail;
     if (err.status === 502) return t.errors.ai;
     if (err.status === 422 || err.status === 400) return t.errors.invalid;
     if (err.status === 404) return t.errors.notFound;

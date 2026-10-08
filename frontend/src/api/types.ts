@@ -34,16 +34,13 @@ export type Posts = S["PostsOut"];
 
 export type ConversationFilter = "all" | "needs_owner" | "unanswered" | "paused";
 
-// Telegram, wallet, catalogue and "teach Replisto" (docs/FRONTEND.md §11)
+// Wallet, catalogue and "teach Replisto"
 export type Channel = Conversation["channel"];
 export type ProductOrigin = Product["origin"];
 export type ProductIn = S["ProductIn"];
 export type ProductPatch = S["ProductPatch"];
 export type ProductSummary = S["ProductSummary"];
-export type TelegramStatus = S["TelegramStatus"];
-export type TelegramLink = S["LinkOut"];
 export type Billing = S["BillingOut"];
-export type Plan = S["PlanOut"];
 export type WalletEntry = S["WalletEntryOut"];
 export type WalletEntryPage = S["WalletEntryPage"];
 export type Proposal = S["ProposalOut"];
@@ -64,4 +61,3 @@ export type ProposalChanges = {
   questions?: string[];
   sheet?: { url: string; mapping: Record<string, string>; rows: number };
 };
-export type BaleStatus = S["BaleStatus"];

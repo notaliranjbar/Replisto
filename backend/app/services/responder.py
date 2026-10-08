@@ -72,7 +72,7 @@ class PlaceholderResponder:
         self, shop: Shop, history: list[ChatTurn], *, channel: Channel = Channel.INSTAGRAM
     ) -> Reply | None:
         return Reply(
-            text=shop.fallback_message, unanswered=True, handoff_reason="هوش مصنوعی فعال نیست"
+            text=shop.fallback_message, unanswered=True, handoff_reason="The AI isn't set up"
         )
 
 
@@ -90,7 +90,7 @@ _SEARCH_TOOL = {
                 "query": {
                     "type": "string",
                     "description": "Product name, type or code in the customer's words, "
-                    "e.g. 'مانتو کتان' or 'M-101'. Leave out colour and size.",
+                    "e.g. 'linen dress' or 'M-101'. Leave out colour and size.",
                 },
                 "color": {"type": "string", "description": "Colour, only if asked."},
                 "size": {"type": "string", "description": "Size, only if asked."},
@@ -113,8 +113,8 @@ _HANDOFF_TOOL = {
             "properties": {
                 "reason": {
                     "type": "string",
-                    "description": "Short reason in Persian, shown to the shop owner, "
-                    "e.g. 'مشتری فاکتور رسمی می‌خواهد'.",
+                    "description": "Short reason in English, shown to the shop owner, "
+                    "e.g. 'The customer wants a formal invoice'.",
                 },
                 "message": {
                     "type": "string",
@@ -165,14 +165,18 @@ SHARING POSTS
 - Share when seeing the product really helps: you recommend or suggest products (shopping advice, gift ideas, "what do you have", comparing options), or the customer asks for photos or to see it.
 - Don't share for: follow-up questions about an item already discussed or shown (its price, size, stock), policy questions (shipping, payment, returns), or when the customer's message is about a post or story they're already looking at (it contains [share], [ig_post], [ig_reel], [story_reply] or [story_mention]).
 - Share only posts of products you actually mention, at most 3, most relevant first. Never share a post twice in one conversation.
-- Refer to them naturally in your message (e.g. "پستش رو برات فرستادم"); never write links yourself."""
+- Refer to them naturally in your message (e.g. "I've sent you its post"); never write links yourself."""
 
 _TONES = {
-    "friendly": "warm and friendly, like a helpful shop assistant, in colloquial Persian "
-    "(محاوره‌ای) as people write in chat messages",
-    "formal": "polite and respectful, in standard formal Persian (رسمی و مودبانه)",
+    "friendly": "warm and friendly, like a helpful shop assistant, in the casual style people "
+    "use in chat messages",
+    "formal": "polite and respectful, in a standard, formal register",
 }
 _CHANNEL_NAMES = {Channel.INSTAGRAM: "Instagram DM"}
+
+
+def _price_example(currency: str) -> str:
+    return "$1,250.00" if currency == "USD" else f"1,250 {currency}"
 
 
 def build_system_prompt(
@@ -188,8 +192,8 @@ def build_system_prompt(
         "the PRODUCT OVERVIEW. For a specific item's price, size, colour or availability, "
         "call search_products and answer only from its results.\n"
         "- If the requested variant is out of stock or missing, say so and name the in-stock "
-        'alternatives (other_in_stock_variants) in the same message. Say "ناموجود" / '
-        '"تموم شده" only for listed items with no stock; for things the shop doesn\'t sell, '
+        'alternatives (other_in_stock_variants) in the same message. Say "out of stock" / '
+        '"sold out" only for listed items with no stock; for things the shop doesn\'t sell, '
         "say you don't carry them.\n"
         "- Don't reveal exact stock counts unless the customer asks how many are left."
         if catalogue
@@ -203,10 +207,10 @@ def build_system_prompt(
     return f"""You are the {channel_name} assistant of the online shop "{shop.name}" and reply to customers on the shop's behalf.
 
 STYLE
-- Always reply in the customer's language (usually Persian; an English message gets an English reply, handoffs included). Tone: {_TONES.get(shop.tone, _TONES["friendly"])}.
+- Always reply in the language the customer writes in (an Arabic message gets an Arabic reply, an English one an English reply, handoffs included). If they switch language, switch with them. Tone: {_TONES.get(shop.tone, _TONES["friendly"])}.
 - {emoji}
 - Keep it short like a real chat message: usually 1-3 sentences. Plain text only: no markdown, no headings, no "*" or "#".
-- Write prices like "۱,۲۵۰,۰۰۰ تومان".
+- Product prices are in {shop.currency}. Write them with the currency, like "{_price_example(shop.currency)}".
 
 FACTS
 - Use ONLY the shop information below and search_products results. Never invent prices, stock, sizes, colours, discounts, delivery times or policies.
@@ -216,7 +220,7 @@ FACTS
 
 HANDING OFF
 - If a shop question isn't covered by that information, or the customer asks for a person, complains, or wants something only a human can do, call handoff_to_human instead of guessing.
-- Its message is sent to the customer: answer whatever part you can, then say naturally what you're passing to a colleague. Sound like a person, not a template. The shop's standard wording, for tone: «{fallback}»
+- Its message is sent to the customer: answer whatever part you can, then say naturally what you're passing to a colleague. Sound like a person, not a template. The shop's standard wording, for tone: "{fallback}"
 
 CONVERSATION
 - Greetings, thanks, small talk and questions unrelated to the shop (weather, jokes, general knowledge): reply briefly and warmly, then steer back to how you can help with the shop. Never hand these off.
@@ -281,7 +285,11 @@ class LLMResponder:
         self._already_shared = shared_post_keys([t.text for t in history])
         self._shared: list[PostLink] = []
 
-        catalogue = products.catalogue_overview(items, post_refs=refs) if items else ""
+        catalogue = (
+            products.catalogue_overview(items, post_refs=refs, currency=shop.currency)
+            if items
+            else ""
+        )
         system = build_system_prompt(
             shop,
             knowledge.render_for_prompt(entries),
@@ -358,7 +366,7 @@ class LLMResponder:
         return reply(
             shop.fallback_message,
             unanswered=True,
-            handoff_reason="ربات نتوانست جواب مناسبی پیدا کند",
+            handoff_reason="The bot couldn't find a suitable answer",
         )
 
     def _share(self, raw_refs: Any) -> dict[str, Any]:

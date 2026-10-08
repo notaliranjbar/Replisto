@@ -8,13 +8,13 @@ async def test_get_and_update_shop(client: AsyncClient, auth_headers: dict[str, 
     resp = await client.patch(
         "/api/v1/shop",
         headers=auth_headers,
-        json={"tone": "formal", "use_emoji": False, "forbidden_rules": "تخفیف نده"},
+        json={"tone": "formal", "use_emoji": False, "forbidden_rules": "No discounts"},
     )
     assert resp.status_code == 200
     body = resp.json()
     assert body["tone"] == "formal"
     assert body["use_emoji"] is False
-    assert body["forbidden_rules"] == "تخفیف نده"
+    assert body["forbidden_rules"] == "No discounts"
     assert body["name"] == shop["name"]  # untouched fields are kept
 
 

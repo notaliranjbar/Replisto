@@ -1091,8 +1091,8 @@ export interface components {
         BillingOut: {
             /** Enabled */
             enabled: boolean;
-            /** Balance Toman */
-            balance_toman: number;
+            /** Balance Cents */
+            balance_cents: number;
             /** Low Balance */
             low_balance: boolean;
             pricing: components["schemas"]["PricingOut"];
@@ -1100,10 +1100,10 @@ export interface components {
             topup_available: boolean;
             /** Gateway */
             gateway: string;
-            /** Topup Min Toman */
-            topup_min_toman: number;
-            /** Topup Max Toman */
-            topup_max_toman: number;
+            /** Topup Min Cents */
+            topup_min_cents: number;
+            /** Topup Max Cents */
+            topup_max_cents: number;
         };
         /** Body_import_file_api_v1_products_file_post */
         Body_import_file_api_v1_products_file_post: {
@@ -1111,7 +1111,7 @@ export interface components {
             file: string;
             /**
              * Column Mapping
-             * @description JSON object, e.g. {"name": "نام محصول"}
+             * @description JSON object, e.g. {"name": "Product name"}
              */
             column_mapping: string;
         };
@@ -1294,8 +1294,8 @@ export interface components {
          * @description The sign-up gift: given once the owner verifies their mobile number.
          */
         GiftStatus: {
-            /** Amount Toman */
-            amount_toman: number;
+            /** Amount Cents */
+            amount_cents: number;
             /** Granted */
             granted: boolean;
             /** Phone Verified */
@@ -1464,8 +1464,8 @@ export interface components {
         PhoneVerifiedOut: {
             /** Phone */
             phone: string;
-            /** Gift Toman */
-            gift_toman: number;
+            /** Gift Cents */
+            gift_cents: number;
         };
         /** PlaygroundIn */
         PlaygroundIn: {
@@ -1554,17 +1554,17 @@ export interface components {
         };
         /**
          * PricingOut
-         * @description What usage costs (toman). An answer costs by the AI tokens it used, with a minimum.
+         * @description What usage costs (US cents). An answer costs by the AI tokens it used, with a minimum.
          */
         PricingOut: {
-            /** Per 1K Prompt Tokens Toman */
-            per_1k_prompt_tokens_toman: number;
-            /** Per 1K Completion Tokens Toman */
-            per_1k_completion_tokens_toman: number;
-            /** Min Per Answer Toman */
-            min_per_answer_toman: number;
-            /** Typical Answer Toman */
-            typical_answer_toman: number;
+            /** Per 1K Prompt Tokens Cents */
+            per_1k_prompt_tokens_cents: number;
+            /** Per 1K Completion Tokens Cents */
+            per_1k_completion_tokens_cents: number;
+            /** Min Per Answer Cents */
+            min_per_answer_cents: number;
+            /** Typical Answer Cents */
+            typical_answer_cents: number;
         };
         /** ProductIn */
         ProductIn: {
@@ -1580,9 +1580,9 @@ export interface components {
             size?: string | null;
             /**
              * Price
-             * @description Toman
+             * @description In the shop's currency
              */
-            price?: number | null;
+            price?: number | string | null;
             /** Stock */
             stock?: number | null;
             /** Description */
@@ -1677,9 +1677,9 @@ export interface components {
             size?: string | null;
             /**
              * Price
-             * @description Toman
+             * @description In the shop's currency
              */
-            price?: number | null;
+            price?: number | string | null;
             /** Stock */
             stock?: number | null;
             /** Description */
@@ -1863,6 +1863,8 @@ export interface components {
             forbidden_rules: string;
             /** Handoff Pause Minutes */
             handoff_pause_minutes: number;
+            /** Currency */
+            currency: string;
         };
         /** ShopUpdate */
         ShopUpdate: {
@@ -1880,6 +1882,8 @@ export interface components {
             forbidden_rules?: string | null;
             /** Handoff Pause Minutes */
             handoff_pause_minutes?: number | null;
+            /** Currency */
+            currency?: string | null;
         };
         /** SingleSectionUpdate */
         SingleSectionUpdate: {
@@ -1941,8 +1945,8 @@ export interface components {
         };
         /** TopupIn */
         TopupIn: {
-            /** Amount Toman */
-            amount_toman: number;
+            /** Amount Cents */
+            amount_cents: number;
         };
         /** TopupOut */
         TopupOut: {
@@ -2026,10 +2030,10 @@ export interface components {
              */
             id: string;
             kind: components["schemas"]["WalletEntryKind"];
-            /** Amount Toman */
-            amount_toman: number;
-            /** Balance After Toman */
-            balance_after_toman: number;
+            /** Amount Cents */
+            amount_cents: number;
+            /** Balance After Cents */
+            balance_after_cents: number;
             /** Description */
             description: string;
             /** Details */
@@ -2053,8 +2057,8 @@ export interface components {
         WalletStatus: {
             /** Enabled */
             enabled: boolean;
-            /** Balance Toman */
-            balance_toman: number;
+            /** Balance Cents */
+            balance_cents: number;
             /** Low Balance */
             low_balance: boolean;
             gift: components["schemas"]["GiftStatus"];

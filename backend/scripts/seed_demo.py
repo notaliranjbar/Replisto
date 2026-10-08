@@ -2,11 +2,12 @@
 
   uv run python -m scripts.seed_demo
 
-Log in with  demo@shop.ir / demopass123 . Safe to re-run: it recreates the demo account.
+Log in with  demo@shop.com / demopass123 . Safe to re-run: it recreates the demo account.
 """
 
 import asyncio
 from datetime import timedelta
+from decimal import Decimal
 
 from sqlalchemy import select
 
@@ -32,57 +33,58 @@ from app.models import (
 )
 from app.services.accounts import delete_user
 
-EMAIL = "demo@shop.ir"
+EMAIL = "demo@shop.com"
 PASSWORD = "demopass123"
-# The same credit a new shop gets as its gift (50,000 toman by default).
-DEMO_CREDIT_RIAL = get_settings().signup_credit_rial
+# The same credit a new shop gets as its gift ($5 by default).
+DEMO_CREDIT_CENTS = get_settings().signup_credit_cents
 
 KNOWLEDGE = [
-    (KnowledgeSection.ABOUT, "", "مزون مهسا، تولیدکننده‌ی مانتو و شومیز زنانه از سال ۱۳۹۸."),
+    (KnowledgeSection.ABOUT, "", "Layla Boutique makes women's dresses and blouses since 2019."),
     (
         KnowledgeSection.SHIPPING,
         "",
-        "ارسال با پست پیشتاز ۳ تا ۵ روز کاری، هزینه ۸۵ هزار تومان. خرید بالای ۲ میلیون رایگان.",
+        "Express delivery in 3-5 business days for $8. Free on orders over $150.",
     ),
-    (KnowledgeSection.PAYMENT, "", "کارت‌به‌کارت یا درگاه سایت. پرداخت در محل فقط تهران."),
-    (KnowledgeSection.RETURNS, "", "تا ۷ روز بعد از تحویل امکان تعویض سایز هست."),
-    (KnowledgeSection.FAQ, "جنس پارچه؟", "کتان ترک درجه یک، بدون آبرفت."),
-    (KnowledgeSection.FAQ, "راهنمای سایز؟", "سایز ۳۸ تا ۴۴ معادل S تا XL."),
+    (KnowledgeSection.PAYMENT, "", "Card on our website. Cash on delivery within the city only."),
+    (KnowledgeSection.RETURNS, "", "Size exchanges within 7 days of delivery."),
+    (KnowledgeSection.FAQ, "What's the fabric?", "Premium linen, pre-washed so it won't shrink."),
+    (KnowledgeSection.FAQ, "Size guide?", "S to XL; S fits US 4-6, M fits 8-10, L fits 12-14."),
 ]
 PRODUCTS = [
-    ("M-101", "مانتو کتان", "مانتو", "مشکی", "40", 1250000, 4),
-    ("M-101", "مانتو کتان", "مانتو", "مشکی", "44", 1250000, 3),
-    ("M-101", "مانتو کتان", "مانتو", "سرمه‌ای", "44", 1250000, 0),
-    ("S-220", "شومیز حریر", "شومیز", "سفید", "آزاد", 890000, 7),
-    ("S-221", "شومیز لینن", "شومیز", "کرم", "آزاد", 950000, 2),
+    ("D-101", "Linen dress", "Dresses", "Black", "S", Decimal("49.90"), 4),
+    ("D-101", "Linen dress", "Dresses", "Black", "M", Decimal("49.90"), 3),
+    ("D-101", "Linen dress", "Dresses", "Navy", "M", Decimal("49.90"), 0),
+    ("B-220", "Silk blouse", "Blouses", "White", "One size", Decimal("35.00"), 7),
+    ("B-221", "Linen shirt", "Blouses", "Cream", "One size", Decimal("38.00"), 2),
 ]
+FALLBACK = "Thanks for your message! A teammate will get back to you shortly 🙏"
 # (username, [(sender, text, unanswered, minutes_ago)], paused)
 CONVERSATIONS = [
     (
         "sara.style",
         [
-            ("customer", "سلام، مانتو کتان مشکی سایز ۴۴ دارید؟", False, 42),
-            ("bot", "سلام عزیزم 🌸 بله موجوده، قیمتش ۱,۲۵۰,۰۰۰ تومانه.", False, 41),
-            ("customer", "ارسال به شیراز چقدر طول میکشه؟", False, 40),
-            ("bot", "با پست پیشتاز ۳ تا ۵ روز کاری میرسه و هزینه‌اش ۸۵ هزار تومانه.", False, 39),
+            ("customer", "Hi! Do you have the black linen dress in size M?", False, 42),
+            ("bot", "Hi there 🌸 Yes, it's in stock in M, and it's $49.90.", False, 41),
+            ("customer", "How long does shipping take?", False, 40),
+            ("bot", "Express delivery takes 3-5 business days and costs $8.", False, 39),
         ],
         False,
     ),
     (
-        "neda_k",
+        "noor.k",
         [
-            ("customer", "سلام", False, 15),
-            ("customer", "فاکتور رسمی برای شرکت میدید؟", False, 15),
-            ("bot", "سوالتون رو ثبت کردم، همکارم به زودی جواب میده 🙏", True, 14),
+            ("customer", "مرحبا", False, 15),
+            ("customer", "هل تصدرون فاتورة رسمية للشركات؟", False, 15),
+            ("bot", "شكرًا لرسالتك! سيتواصل معك أحد زملائي قريبًا 🙏", True, 14),
         ],
         False,
     ),
     (
-        "maryam.r",
+        "maya.r",
         [
-            ("customer", "سرمه‌ای ۴۴ کی موجود میشه؟", False, 8),
-            ("bot", "سوالتون رو ثبت کردم، همکارم به زودی جواب میده 🙏", True, 7),
-            ("owner", "سلام مریم جان، هفته‌ی بعد میرسه 🌷", False, 3),
+            ("customer", "When will the navy dress in M be back in stock?", False, 8),
+            ("bot", FALLBACK, True, 7),
+            ("owner", "Hi Maya, it's back next week 🌷", False, 3),
         ],
         True,
     ),
@@ -92,18 +94,28 @@ CONVERSATIONS = [
 POSTS = [
     (
         "17900000000000001",
-        "DEMOmanto01",
-        "مانتو کتان ترک 🖤 مشکی و سرمه‌ای، سایز ۴۰ تا ۴۴\nکد M-101 · دوخت خودمون",
+        "DEMOdress01",
+        "Linen dress 🖤 black and navy, sizes S to M\nCode D-101 · made in our studio",
         3,
     ),
-    ("17900000000000002", "DEMOharir02", "شومیز حریر سفید، سبک و خنک برای مهمونی‌ها 🤍 فری‌سایز", 9),
-    ("17900000000000003", "DEMOlinen03", "شومیز لینن کرم ☀️ مناسب تابستون", 15),
-    ("17900000000000004", "DEMOstudio4", "پشت صحنه‌ی عکاسی کالکشن جدید 📸", 20),
+    ("17900000000000002", "DEMOsilk002", "Silk blouse in white, light and breezy 🤍 one size", 9),
+    ("17900000000000003", "DEMOlinen03", "Linen shirt in cream ☀️ made for summer", 15),
+    ("17900000000000004", "DEMOstudio4", "Behind the scenes of our new collection shoot 📸", 20),
 ]
 # username -> (question, reason, handed off minutes ago, resolved minutes ago or None)
 HANDOFFS = {
-    "neda_k": ("سلام\nفاکتور رسمی برای شرکت میدید؟", "مشتری فاکتور رسمی می‌خواهد", 14, None),
-    "maryam.r": ("سرمه‌ای ۴۴ کی موجود میشه؟", "زمان موجود شدن کالا مشخص نیست", 7, 3),
+    "noor.k": (
+        "مرحبا\nهل تصدرون فاتورة رسمية للشركات؟",
+        "The customer wants a formal invoice for a company",
+        14,
+        None,
+    ),
+    "maya.r": (
+        "When will the navy dress in M be back in stock?",
+        "Restock date unknown",
+        7,
+        3,
+    ),
 }
 
 
@@ -117,13 +129,14 @@ async def main() -> None:
         user = User(
             email=EMAIL,
             password_hash=hash_password(PASSWORD),
-            full_name="مهسا",
+            full_name="Layla",
             email_verified_at=now,
         )
         user.shop = Shop(
-            name="مزون مهسا",
+            name="Layla Boutique",
             bot_enabled=True,
-            balance_rial=DEMO_CREDIT_RIAL,
+            fallback_message=FALLBACK,
+            balance_cents=DEMO_CREDIT_CENTS,
             signup_gift_at=now,
         )
         db.add(user)
@@ -134,7 +147,7 @@ async def main() -> None:
             InstagramAccount(
                 shop_id=shop_id,
                 ig_user_id="17840000000000000",
-                username="mahsa.boutique",
+                username="layla.boutique",
                 access_token_encrypted=encrypt_secret("demo-token"),
                 token_expires_at=now + timedelta(days=55),
                 posts_synced_at=now - timedelta(hours=2),
@@ -158,9 +171,9 @@ async def main() -> None:
             WalletEntry(
                 shop_id=shop_id,
                 kind=WalletEntryKind.BONUS,
-                amount_rial=DEMO_CREDIT_RIAL,
-                balance_after_rial=DEMO_CREDIT_RIAL,
-                description="هدیه‌ی شروع کار",
+                amount_cents=DEMO_CREDIT_CENTS,
+                balance_after_cents=DEMO_CREDIT_CENTS,
+                description="Welcome gift",
                 details={},
             )
         )

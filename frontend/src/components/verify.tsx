@@ -13,11 +13,7 @@ import { useToast } from "./toast";
 import { Alert, Badge, Button, Card, CardHeader, Field, IconChip, Input, LinkButton, Spinner, cx } from "./ui";
 
 type PhoneStart = { phone: string; minutes: number };
-type PhoneVerified = { phone: string; gift_toman: number };
-
-function localPhone(phone: string) {
-  return phone.startsWith("+98") ? "0" + phone.slice(3) : phone;
-}
+type PhoneVerified = { phone: string; gift_cents: number };
 
 /** "Resend the link" for an unverified email. */
 export function useResendEmail() {
@@ -148,7 +144,7 @@ function PhoneForm({ me }: { me: User }) {
     mutationFn: () => api<PhoneVerified>("/me/phone/verify", { method: "POST", json: { code } }),
     onSuccess: (r) => {
       toast.success(V.phoneDone(r.phone));
-      if (r.gift_toman) toast.success(V.giftReceived(f.num(r.gift_toman)));
+      if (r.gift_cents) toast.success(V.giftReceived(f.usd(r.gift_cents)));
       setSent(null);
       setEditing(false);
       qc.invalidateQueries({ queryKey: keys.me });
@@ -162,7 +158,7 @@ function PhoneForm({ me }: { me: User }) {
         <Smartphone className="size-5 text-slate-400" aria-hidden />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-ink-900">{V.phone}</div>
-          <div className="num ltr text-sm text-slate-500">{localPhone(me.phone)}</div>
+          <div className="num ltr text-sm text-slate-500">{me.phone}</div>
         </div>
         <Badge tone="green">
           <Check aria-hidden />
@@ -187,7 +183,7 @@ function PhoneForm({ me }: { me: User }) {
     <div className="space-y-4">
       {!sent ? (
         <form onSubmit={sendCode} className="flex flex-wrap items-end gap-3" noValidate>
-          <Field label={V.phone} className="min-w-48 flex-1" error={start.error ? errorMessage(start.error, t) : undefined}>
+          <Field label={V.phone} hint={V.phoneHint} className="min-w-48 flex-1" error={start.error ? errorMessage(start.error, t) : undefined}>
             {(id) => <Input id={id} type="tel" dir="ltr" inputMode="tel" autoComplete="tel" placeholder={V.phonePlaceholder} value={number} onChange={(e) => setNumber(e.target.value)} />}
           </Field>
           <Button type="submit" loading={start.isPending} disabled={!number.trim()}>
@@ -212,7 +208,6 @@ function PhoneForm({ me }: { me: User }) {
           </div>
         </form>
       )}
-      <p className="text-sm text-slate-500">{V.viaBot}</p>
     </div>
   );
 }
@@ -221,12 +216,9 @@ function PhoneForm({ me }: { me: User }) {
 export function GiftCard({ gift }: { gift: Dashboard["wallet"]["gift"] }) {
   const { t, f } = useI18n();
   const G = t.launch.gift;
-  if (gift.granted || !gift.amount_toman) return null;
+  if (gift.granted || !gift.amount_cents) return null;
   const steps = [
-    { done: gift.messenger_linked, label: G.stepLink, action: <LinkButton to="/telegram" size="sm" variant="secondary">{G.linkAction}</LinkButton> },
-    ...(gift.phone_required
-      ? [{ done: gift.phone_verified, label: G.stepPhone, action: <LinkButton to="/account#phone" size="sm" variant="secondary">{G.phoneAction}</LinkButton> }]
-      : []),
+    { done: gift.phone_verified, label: G.stepPhone, action: <LinkButton to="/account#phone" size="sm" variant="secondary">{G.phoneAction}</LinkButton> },
   ];
   return (
     <Card className="overflow-hidden ring-brand-200">
@@ -235,7 +227,7 @@ export function GiftCard({ gift }: { gift: Dashboard["wallet"]["gift"] }) {
           <Gift />
         </IconChip>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-extrabold text-ink-950">{G.title(f.num(gift.amount_toman))}</h2>
+          <h2 className="text-base font-extrabold text-ink-950">{G.title(f.usd(gift.amount_cents))}</h2>
           <p className="mt-1 text-sm text-slate-600">{G.body}</p>
           <ol className="mt-4 space-y-3">
             {steps.map((s) => (

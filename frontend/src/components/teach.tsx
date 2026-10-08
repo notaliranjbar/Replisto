@@ -111,14 +111,13 @@ export function TeachBox() {
           <Button type="submit" icon={<Sparkles className="size-4" />} loading={send.isPending} disabled={!ready}>
             {send.isPending ? T.thinking : T.understand}
           </Button>
-          <p className="min-w-0 flex-1 text-xs leading-5 text-slate-500">{T.telegramTip}</p>
         </div>
       </form>
     </Card>
   );
 }
 
-/** Proposals waiting for the owner's OK (from the panel or from Telegram). */
+/** Proposals waiting for the owner's OK. */
 export function PendingProposals() {
   const { t } = useI18n();
   const pending = useQuery({

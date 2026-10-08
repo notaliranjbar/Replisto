@@ -15,7 +15,7 @@ from app.api.deps import CurrentShop, DbSession, HttpClient
 from app.core.config import get_settings
 from app.models import Payment, PaymentStatus, WalletEntry, WalletEntryKind
 from app.services import billing, payments
-from app.services.payments import AbanGateway, PaymentError, Zarinpal
+from app.services.payments import PaymentError, Stripe
 
 logger = logging.getLogger(__name__)
 
@@ -23,27 +23,27 @@ router = APIRouter(prefix="/billing", tags=["billing"])
 
 
 class PricingOut(BaseModel):
-    """What usage costs (toman). An answer costs by the AI tokens it used, with a minimum."""
+    """What usage costs (US cents). An answer costs by the AI tokens it used, with a minimum."""
 
-    per_1k_prompt_tokens_toman: float
-    per_1k_completion_tokens_toman: float
-    min_per_answer_toman: float
+    per_1k_prompt_tokens_cents: float
+    per_1k_completion_tokens_cents: float
+    min_per_answer_cents: float
     # A typical answer for a shop with a mid-size catalogue, to set expectations.
-    typical_answer_toman: int
+    typical_answer_cents: int
 
 
 class BillingOut(BaseModel):
     # False while billing is switched off on the server (nothing is charged).
     enabled: bool
-    balance_toman: int
+    balance_cents: int
     low_balance: bool
     pricing: PricingOut
     # Whether online top-up (payment gateway) is available.
     topup_available: bool
-    # "aban" (card-to-card with automatic confirmation) or "zarinpal".
+    # "stripe"
     gateway: str
-    topup_min_toman: int
-    topup_max_toman: int
+    topup_min_cents: int
+    topup_max_cents: int
 
 
 class WalletEntryOut(BaseModel):
@@ -51,8 +51,8 @@ class WalletEntryOut(BaseModel):
 
     id: uuid.UUID
     kind: WalletEntryKind
-    amount_toman: float
-    balance_after_toman: float
+    amount_cents: int
+    balance_after_cents: int
     description: str
     details: dict[str, Any]
     created_at: datetime
@@ -64,25 +64,17 @@ class WalletEntryPage(BaseModel):
 
 
 class TopupIn(BaseModel):
-    amount_toman: int = Field(gt=0, le=10**9)
+    amount_cents: int = Field(gt=0, le=10**9)
 
 
 class TopupOut(BaseModel):
     # Send the browser here; after paying, the owner comes back to FRONTEND_URL/billing with
-    # ?payment=success, ?payment=pending (card-to-card not confirmed yet) or ?payment=failed.
+    # ?payment=success, ?payment=pending (not confirmed yet) or ?payment=failed.
     payment_url: str
 
 
-def get_gateway(http: HttpClient) -> AbanGateway | Zarinpal:
+def get_gateway(http: HttpClient) -> Stripe:
     return payments.gateway_for(http)
-
-
-def get_zarinpal(http: HttpClient) -> Zarinpal:
-    return Zarinpal(http)
-
-
-def get_aban(http: HttpClient) -> AbanGateway:
-    return AbanGateway(http)
 
 
 @router.get("", response_model=BillingOut)
@@ -91,18 +83,18 @@ async def get_billing(shop: CurrentShop, http: HttpClient) -> BillingOut:
     gateway = payments.gateway_for(http)
     return BillingOut(
         enabled=billing.enabled(),
-        balance_toman=shop.balance_rial // 10,
-        low_balance=billing.enabled() and shop.balance_rial < settings.low_balance_rial,
+        balance_cents=shop.balance_cents,
+        low_balance=billing.enabled() and shop.balance_cents < settings.low_balance_cents,
         pricing=PricingOut(
-            per_1k_prompt_tokens_toman=settings.usage_rial_per_1k_prompt_tokens / 10,
-            per_1k_completion_tokens_toman=settings.usage_rial_per_1k_completion_tokens / 10,
-            min_per_answer_toman=settings.usage_min_rial_per_reply / 10,
-            typical_answer_toman=billing.usage_cost(4000, 150) // 10,
+            per_1k_prompt_tokens_cents=settings.usage_cents_per_1k_prompt_tokens,
+            per_1k_completion_tokens_cents=settings.usage_cents_per_1k_completion_tokens,
+            min_per_answer_cents=settings.usage_min_cents_per_reply,
+            typical_answer_cents=billing.usage_cost(4000, 150),
         ),
         topup_available=gateway.configured,
         gateway=gateway.name,
-        topup_min_toman=settings.topup_min_rial // 10,
-        topup_max_toman=settings.topup_max_rial // 10,
+        topup_min_cents=settings.topup_min_cents,
+        topup_max_cents=settings.topup_max_cents,
     )
 
 
@@ -123,18 +115,7 @@ async def list_entries(
         query.order_by(WalletEntry.created_at.desc()).offset(offset).limit(limit)
     )
     return WalletEntryPage(
-        items=[
-            WalletEntryOut(
-                id=e.id,
-                kind=e.kind,
-                amount_toman=e.amount_rial / 10,
-                balance_after_toman=e.balance_after_rial / 10,
-                description=e.description,
-                details=e.details,
-                created_at=e.created_at,
-            )
-            for e in rows
-        ],
+        items=[WalletEntryOut.model_validate(e) for e in rows],
         total=total or 0,
     )
 
@@ -144,10 +125,10 @@ async def topup(
     body: TopupIn,
     shop: CurrentShop,
     db: DbSession,
-    gateway: AbanGateway | Zarinpal = Depends(get_gateway),
+    gateway: Stripe = Depends(get_gateway),
 ) -> TopupOut:
     try:
-        url = await payments.start_topup(db, shop, body.amount_toman * 10, gateway)
+        url = await payments.start_topup(db, shop, body.amount_cents, gateway)
     except PaymentError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from None
     return TopupOut(payment_url=url)
@@ -157,16 +138,16 @@ def _after_topup(payment: Payment) -> None:
     logger.info("payment %s credited to shop %s", payment.id, payment.shop_id)
 
 
-@router.post("/aban/webhook", include_in_schema=False)
-async def aban_webhook(
+@router.post("/stripe/webhook", include_in_schema=False)
+async def stripe_webhook(
     request: Request,
     db: DbSession,
-    gateway: AbanGateway = Depends(get_aban),
+    gateway: Stripe = Depends(get_gateway),
 ) -> Response:
-    """Aban Gateway reports invoice changes here, signed with our webhook secret."""
+    """Stripe reports Checkout Session changes here, signed with our webhook secret."""
     raw = await request.body()
-    if not gateway.signature_ok(raw, request.headers.get("x-signature", "")):
-        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+    if not gateway.signature_ok(raw, request.headers.get("stripe-signature", "")):
+        return Response(status_code=status.HTTP_400_BAD_REQUEST)
     try:
         event = json.loads(raw)
     except ValueError:
@@ -174,60 +155,41 @@ async def aban_webhook(
     if not isinstance(event, dict):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
     try:
-        credited = await payments.aban_webhook(db, event, gateway)
+        credited = await payments.stripe_webhook(db, event, gateway)
     except PaymentError:
-        # Aban retries; verifying can succeed then.
+        # Stripe retries; reading the session can succeed then.
         return Response(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
     if credited is not None:
         _after_topup(credited)
     return Response(status_code=status.HTTP_200_OK)
 
 
-@router.get("/aban/return/{payment_id}", include_in_schema=False)
-async def aban_return(
+@router.get("/stripe/return/{payment_id}", include_in_schema=False)
+async def stripe_return(
     payment_id: uuid.UUID,
     db: DbSession,
-    gateway: AbanGateway = Depends(get_aban),
+    gateway: Stripe = Depends(get_gateway),
+    cancelled: bool = False,
 ) -> RedirectResponse:
-    """The owner's browser comes back here from Aban's payment page."""
+    """The owner's browser comes back here from Stripe's checkout page."""
     panel = f"{get_settings().frontend_url.rstrip('/')}/billing"
     payment = await db.get(Payment, payment_id)
-    if payment is None or payment.gateway != "aban":
+    if payment is None or payment.gateway != gateway.name:
         return RedirectResponse(f"{panel}?payment=failed")
     if payment.status == PaymentStatus.PENDING:
-        try:
-            if await payments.settle_aban(db, payment, gateway):
-                _after_topup(payment)
-        except PaymentError:
-            pass
+        if cancelled:
+            payment.status = PaymentStatus.FAILED
+            payment.error = "Cancelled on the checkout page."
+            await db.commit()
+        else:
+            try:
+                if await payments.settle(db, payment, gateway):
+                    _after_topup(payment)
+            except PaymentError:
+                pass
     if payment.status == PaymentStatus.PAID:
         return RedirectResponse(f"{panel}?payment=success")
     if payment.status == PaymentStatus.PENDING:
-        # Card-to-card: the bank SMS may arrive a little later; the webhook will credit it.
+        # Some payment methods confirm a little later; the webhook will credit it.
         return RedirectResponse(f"{panel}?payment=pending")
-    return RedirectResponse(f"{panel}?payment=failed")
-
-
-@router.get("/zarinpal/callback", include_in_schema=False)
-async def zarinpal_callback(
-    db: DbSession,
-    gateway: Zarinpal = Depends(get_zarinpal),
-    authority: str = Query(alias="Authority", default=""),
-    payment_status: str = Query(alias="Status", default=""),
-) -> RedirectResponse:
-    """Zarinpal sends the owner's browser here after paying; we verify and go to the panel."""
-    panel = f"{get_settings().frontend_url.rstrip('/')}/billing"
-    was_pending = authority != "" and (
-        await db.scalar(select(Payment.status).where(Payment.authority == authority))
-        == PaymentStatus.PENDING
-    )
-    payment = (
-        await payments.complete_topup(db, authority, payment_status == "OK", gateway)
-        if authority
-        else None
-    )
-    if payment is not None and payment.status.value == "paid":
-        if was_pending:
-            _after_topup(payment)
-        return RedirectResponse(f"{panel}?payment=success&ref={payment.ref_id or ''}")
     return RedirectResponse(f"{panel}?payment=failed")

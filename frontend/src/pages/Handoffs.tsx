@@ -101,7 +101,7 @@ function HandoffCard({ item, now, index, onAddFaq }: { item: HandoffItem; now: n
   const toast = useToast();
   const qc = useQueryClient();
   const name = useCustomerName()(item.customer_username, item.customer_igsid, item.customer_name);
-  const channelLabel = useChannelLabel()(item.channel, item.telegram_business);
+  const channelLabel = useChannelLabel()(item.channel);
   const h = item.handoff;
   const open = h.status === "open";
   const late = open && now - new Date(h.handed_off_at).getTime() > HOUR;

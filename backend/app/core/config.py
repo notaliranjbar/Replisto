@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     queue_backend: Literal["arq", "inline"] = "arq"
 
     # Wait this long after a customer's message before replying, so bursts of short
-    # messages ("salam" / "in mantoo" / "size 44 dari?") get one combined answer.
+    # messages ("hi" / "this dress" / "do you have size M?") get one combined answer.
     reply_debounce_seconds: float = 5.0
 
     # JWT signing key and Fernet key for encrypting third-party tokens at rest.
@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     # Log outgoing DMs instead of sending them (local testing with the webhook simulator).
     instagram_dry_run: bool = False
 
-    # Any OpenAI-compatible provider (direct or an Iranian gateway).
+    # Any OpenAI-compatible provider (OpenAI directly, or a gateway such as OpenRouter).
     llm_base_url: str = "https://api.openai.com/v1"
     llm_api_key: str = ""
     llm_model: str = ""
@@ -76,33 +76,27 @@ class Settings(BaseSettings):
     # A safety net against one chatty customer (or a spammer) draining a shop's wallet.
     max_bot_replies_per_customer_hour: int = 30
 
-    # Billing: shops top up a wallet and every AI answer is paid from it. Amounts in rial.
+    # Billing: shops top up a wallet and every AI answer is paid from it. Amounts in US cents.
     billing_enabled: bool = True
-    # The sign-up gift (500,000 rial = 50,000 toman). Given once per person, after the owner
-    # verifies their mobile number.
-    signup_credit_rial: int = 500_000
-    usage_rial_per_1k_prompt_tokens: int = 300
-    usage_rial_per_1k_completion_tokens: int = 1_200
-    usage_min_rial_per_reply: int = 500
+    # The sign-up gift ($5). Given once per person, after the owner verifies their mobile
+    # number.
+    signup_credit_cents: int = 500
+    # Usage prices may be fractions of a cent; an answer's total is rounded up to a cent.
+    usage_cents_per_1k_prompt_tokens: float = 0.05
+    usage_cents_per_1k_completion_tokens: float = 0.2
+    usage_min_cents_per_reply: int = 1
     # The owner is told once the balance drops below this.
-    low_balance_rial: int = 100_000
-    topup_min_rial: int = 500_000
-    topup_max_rial: int = 500_000_000
+    low_balance_cents: int = 200
+    topup_min_cents: int = 500
+    topup_max_cents: int = 100_000
 
-    # Wallet top-ups: "aban" (Aban Gateway, card-to-card confirmed automatically from the bank
-    # SMS; no e-Namad needed) or "zarinpal".
-    payment_gateway: str = "aban"
-    # Aban Gateway: API token (ag_live_… or ag_test_… for testing without money) and the
-    # webhook secret, both from its panel (Settings → API tokens / Webhook).
-    aban_api_token: str = ""
-    aban_webhook_secret: str = ""
-    aban_api_base: str = "https://api.abangateway.ir"
-    # How long an Aban invoice stays payable.
-    aban_invoice_minutes: int = 30
-
-    # Zarinpal payment gateway (alternative).
-    zarinpal_merchant_id: str = ""
-    zarinpal_sandbox: bool = False
+    # Wallet top-ups through Stripe Checkout. The secret key (sk_live_… or sk_test_…) and the
+    # webhook signing secret (whsec_…) come from the Stripe dashboard (Developers → API keys
+    # / Webhooks). The webhook endpoint is PUBLIC_BASE_URL/api/v1/billing/stripe/webhook,
+    # listening to the checkout.session.* events.
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_api_base: str = "https://api.stripe.com"
 
     # Outgoing email (password reset). Without SMTP_HOST the link is only logged.
     smtp_host: str = ""
@@ -117,13 +111,13 @@ class Settings(BaseSettings):
     # the link and deleting the account work before that).
     require_verified_email: bool = True
 
-    # SMS for verifying mobile numbers: "kavenegar" or "smsir" (both send a code with a
-    # template approved in their panel). Empty: codes are only logged (development).
-    sms_provider: str = ""
-    sms_api_key: str = ""
-    # Kavenegar: the template name; SMS.ir: the template id. The template has one
-    # parameter, the code (Kavenegar: %token, SMS.ir: CODE).
-    sms_template: str = ""
+    # SMS for verifying mobile numbers, through Twilio. Without an account SID the codes are
+    # only logged (development). TWILIO_FROM is a Twilio phone number (+1...) or a Messaging
+    # Service SID (MG...).
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_from: str = ""
+    twilio_api_base: str = "https://api.twilio.com"
     phone_code_minutes: int = 10
 
     # Wrong passwords: after this many failures for one email (or 4x for one IP) within the

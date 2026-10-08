@@ -1,7 +1,7 @@
 """Teaching Replisto: turn whatever the owner sends into product and knowledge changes.
 
 Owners describe their shop in every possible way: they type a price list or a change ("the
-black linen manteau is now 1.3 million, two left in size 44"), paste a Google Doc link with no
+black linen dress is now $45, two left in size M"), paste a Google Doc link with no
 particular structure, upload a PDF, or connect a sheet. All of it goes
 through one path:
 
@@ -28,7 +28,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.text import normalize, parse_int
+from app.core.text import normalize, parse_decimal, parse_int
 from app.core.timeutil import utcnow
 from app.models import (
     KnowledgeEntry,
@@ -66,7 +66,7 @@ _TEACHABLE_SECTIONS = [
 
 
 class TeachError(Exception):
-    """User-facing (Persian) reason the input could not be read or understood."""
+    """User-facing reason the input could not be read or understood."""
 
 
 @dataclass
@@ -88,7 +88,8 @@ _TOOL = {
             "properties": {
                 "summary": {
                     "type": "string",
-                    "description": "One or two short Persian sentences to the owner: what you "
+                    "description": "One or two short sentences to the owner, in the language "
+                    "they wrote in: what you "
                     "understood and will change. If there is nothing to learn, say so.",
                 },
                 "products": {
@@ -111,7 +112,7 @@ _TOOL = {
                             "category": {"type": "string"},
                             "color": {"type": "string"},
                             "size": {"type": "string"},
-                            "price_toman": {"type": "integer"},
+                            "price": {"type": "number"},
                             "stock": {"type": "integer"},
                             "description": {"type": "string"},
                         },
@@ -135,7 +136,7 @@ _TOOL = {
                 "questions": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Persian questions to the owner, only when something "
+                    "description": "Questions to the owner, in their language, only when something "
                     "essential is unclear (e.g. which product they mean).",
                 },
             },
@@ -156,8 +157,8 @@ def _system_prompt(shop: Shop, source: str, products_block: str, sections_block:
 
 PRODUCTS
 - One entry per sellable variant. If colours or sizes have their own stock or price, make one entry per colour/size. If several sizes or colours are listed without separate stock, still make one entry per size/colour (stock unknown).
-- price_toman is an integer in toman. "۱٫۲ میلیون" = 1200000. Iranian shops often write prices in thousand toman ("۸۹۰ تومن" or "۸۹۰ت" for clothing usually means 890000); use the context. Prices in ریال are divided by 10.
-- stock: a count; 0 for sold out ("تموم شد", "ناموجود"); leave it out when unknown ("موجود است" without a number: leave it out).
+- price is a number in the shop's currency ({shop.currency}), without the currency sign: "$49.90" = 49.9, "1.2k" = 1200. If the input gives prices in another currency, keep the number and mention it in the summary.
+- stock: a count; 0 for sold out ("sold out", "نفدت الكمية"); leave it out when unknown ("in stock" without a number: leave it out).
 - To change an existing product, give its ref and ONLY the fields that change. For "I sold two" compute the new stock from the current one. If the change applies to several rows (all sizes of a product), give one entry per row.
 - Never invent prices, stock, sizes or colours. Leave out what the input doesn't say.
 - Rows marked [sheet] come from a live Google Sheet: don't change them; mention in the summary that the owner should edit the sheet.
@@ -166,9 +167,9 @@ SHOP INFORMATION
 - Policies and facts go to knowledge: about (who the shop is), shipping, payment (and how to order), returns, contact (links, phone, address, hours), faq (title = the question, content = the answer), free_text (anything else, e.g. discount codes).
 - about/shipping/payment/returns/contact hold ONE text each: give the complete new text, merging the current text below with what's new.
 
-Write product names, descriptions and knowledge in Persian, as the owner would.
+Write product names, descriptions and knowledge in the language the owner uses, as they would.
 
-EXISTING PRODUCTS (ref | name | colour | size | price toman | stock)
+EXISTING PRODUCTS (ref | name | colour | size | price | stock)
 {products_block or "(none yet)"}
 
 CURRENT SHOP INFORMATION
@@ -180,17 +181,19 @@ async def extract(
 ) -> Extraction:
     """Ask the AI what to learn from `text`. Raises TeachError / LLMError.
 
-    `context` is earlier input from the owner, so a follow-up like "make its price 2.5
-    million" is understood.
+    `context` is earlier input from the owner, so a follow-up like "make its price 25"
+    is understood.
     """
     text = text.strip()
     if not text:
-        raise TeachError("متنی برای خواندن پیدا نشد.")
+        raise TeachError("There was no text to read.")
     limit = get_settings().teach_max_chars
     if len(text) > limit:
-        raise TeachError(f"متن طولانی‌تر از حد مجاز است ({limit:,} کاراکتر). آن را چند بخش کنید.")
+        raise TeachError(
+            f"The text is over the limit of {limit:,} characters. Split it into parts."
+        )
     if not llm.configured:
-        raise TeachError("هوش مصنوعی روی سرور فعال نیست.")
+        raise TeachError("The AI isn't set up on the server.")
 
     refs, products_block = await _products_context(db, shop, f"{context}\n{text}")
     sections_block = await _sections_context(db, shop)
@@ -292,7 +295,7 @@ async def _products_context(
     for index, product in enumerate(items, start=1):
         ref = f"#{index}"
         refs[ref] = product
-        price = f"{int(product.price):,}" if product.price is not None else "-"
+        price = _fmt_number(product.price) if product.price is not None else "-"
         stock = str(product.stock) if product.stock is not None else "-"
         locked = " [sheet]" if product.origin == ProductOrigin.SHEET else ""
         lines.append(
@@ -339,8 +342,9 @@ def _clean(raw: dict[str, Any], refs: dict[str, Product]) -> dict[str, Any]:
                 value = _text(item[key], limits.get(key, 5000))
                 if value is not None:
                     fields[key] = value
-        if "price_toman" in item and _int(item["price_toman"]) is not None:
-            fields["price"] = _int(item["price_toman"])
+        price = parse_decimal(item.get("price"))
+        if price is not None and price >= 0:
+            fields["price"] = products.price_number(price.quantize(Decimal("0.01")))
         if "stock" in item and _int(item["stock"]) is not None:
             fields["stock"] = _int(item["stock"])
 
@@ -413,7 +417,7 @@ def _snapshot(product: Product) -> dict[str, Any]:
         "category": product.category,
         "color": product.color,
         "size": product.size,
-        "price": int(product.price) if product.price is not None else None,
+        "price": products.price_number(product.price) if product.price is not None else None,
         "stock": product.stock,
         "description": product.description,
     }
@@ -435,7 +439,7 @@ async def propose(
 ) -> TeachProposal:
     """Extract and store a proposal; the AI usage is paid from the wallet."""
     if not billing.can_spend(shop):
-        raise TeachError("موجودی کیف پول تمام شده است. برای استفاده، کیف پول را شارژ کنید.")
+        raise TeachError("Your wallet is empty. Top it up to keep using this.")
     result = await extract(db, llm, shop, text, source, context)
     proposal = TeachProposal(
         shop_id=shop.id,
@@ -453,7 +457,7 @@ async def propose(
         shop,
         prompt_tokens=result.usage.prompt_tokens,
         completion_tokens=result.usage.completion_tokens,
-        description="یادگیری اطلاعات فروشگاه",
+        description="Learning shop information",
         details={"proposal_id": str(proposal.id), "source": source},
     )
     return proposal
@@ -473,9 +477,9 @@ async def apply(
     skip_products: set[int] | None = None,
     skip_knowledge: set[int] | None = None,
 ) -> str:
-    """Apply a pending proposal. Returns a Persian description of what changed."""
+    """Apply a pending proposal. Returns a description of what changed."""
     if proposal.status != ProposalStatus.PENDING:
-        raise TeachError("این پیشنهاد قبلا ثبت یا رد شده است.")
+        raise TeachError("This proposal was already applied or discarded.")
     settings = get_settings()
     skip_products = skip_products or set()
     skip_knowledge = skip_knowledge or set()
@@ -496,7 +500,7 @@ async def apply(
             continue
         fields = dict(change.get("fields") or {})
         if "price" in fields and fields["price"] is not None:
-            fields["price"] = Decimal(fields["price"])
+            fields["price"] = Decimal(str(fields["price"]))
         if change["action"] == "create":
             if total >= settings.product_row_limit:
                 counts["skipped"] += 1
@@ -598,7 +602,7 @@ async def undo(db: AsyncSession, shop: Shop, proposal: TeachProposal) -> int:
         delete(Product).where(Product.shop_id == shop.id, Product.id.in_(ids))
     )
     proposal.status = ProposalStatus.DISCARDED
-    proposal.result = (proposal.result or "") + "\nبرگردانده شد."
+    proposal.result = (proposal.result or "") + "\nUndone."
     await db.commit()
     return int(result.rowcount or 0)
 
@@ -606,22 +610,39 @@ async def undo(db: AsyncSession, shop: Shop, proposal: TeachProposal) -> int:
 def describe_result(counts: dict[str, int]) -> str:
     parts = []
     if counts["created"]:
-        parts.append(f"{counts['created']} محصول اضافه شد")
+        parts.append(_count(counts["created"], "product added", "products added"))
     if counts["updated"]:
-        parts.append(f"{counts['updated']} محصول به‌روز شد")
+        parts.append(_count(counts["updated"], "product updated", "products updated"))
     if counts["deleted"]:
-        parts.append(f"{counts['deleted']} محصول حذف شد")
+        parts.append(_count(counts["deleted"], "product removed", "products removed"))
     if counts["knowledge"]:
-        parts.append(f"{counts['knowledge']} مورد به اطلاعات فروشگاه اضافه شد")
+        parts.append(
+            _count(
+                counts["knowledge"],
+                "shop information entry saved",
+                "shop information entries saved",
+            )
+        )
     if counts["locked"]:
-        parts.append(f"{counts['locked']} مورد مربوط به گوگل شیت بود و باید در خود شیت تغییر کند")
+        parts.append(
+            f"{counts['locked']} from your Google Sheet (change those in the sheet itself)"
+        )
     if counts["skipped"]:
-        parts.append(f"{counts['skipped']} مورد به خاطر سقف مجاز یا حذف قبلی ثبت نشد")
-    return "، ".join(parts) + "." if parts else "تغییری ثبت نشد."
+        parts.append(f"{counts['skipped']} skipped (over the limit or already removed)")
+    return "; ".join(parts) + "." if parts else "Nothing was changed."
+
+
+def _count(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
+
+
+def _fmt_number(value: Any) -> str:
+    number = Decimal(str(value))
+    return f"{int(number):,}" if number == number.to_integral_value() else f"{number:,.2f}"
 
 
 def _fmt_price(value: Any) -> str:
-    return f"{int(value):,} تومان".replace(",", "٬") if value is not None else "بدون قیمت"
+    return _fmt_number(value) if value is not None else "no price"
 
 
 def _product_line(fields: dict[str, Any]) -> str:
@@ -631,60 +652,60 @@ def _product_line(fields: dict[str, Any]) -> str:
     if "price" in fields:
         parts.append(_fmt_price(fields["price"]))
     if "stock" in fields:
-        parts.append(f"موجودی {fields['stock']}")
-    return "، ".join(p for p in parts if p)
+        parts.append(f"stock {fields['stock']}")
+    return ", ".join(p for p in parts if p)
 
 
 def describe(proposal: TeachProposal, max_lines: int = 30) -> str:
-    """The proposal as a short Persian message (the panel's preview)."""
+    """The proposal as a short message (the panel's preview)."""
     changes = proposal.changes or {}
     lines: list[str] = []
     if proposal.summary:
         lines.append(proposal.summary)
     product_lines: list[str] = []
     for change in changes.get("products") or []:
-        lock = " 🔒 (در گوگل شیت تغییر دهید)" if change.get("locked") else ""
+        lock = " 🔒 (change it in the Google Sheet)" if change.get("locked") else ""
         if change["action"] == "create":
             product_lines.append(f"➕ {_product_line(change['fields'])}")
         elif change["action"] == "delete":
-            product_lines.append(f"🗑 حذف: {_product_line(change['before'] or {})}{lock}")
+            product_lines.append(f"🗑 Remove: {_product_line(change['before'] or {})}{lock}")
         else:
             before = change.get("before") or {}
             diffs = []
             for key, value in change["fields"].items():
                 label = {
-                    "price": "قیمت",
-                    "stock": "موجودی",
-                    "name": "نام",
-                    "color": "رنگ",
-                    "size": "سایز",
-                    "description": "توضیحات",
-                    "category": "دسته",
-                    "sku": "کد",
+                    "price": "Price",
+                    "stock": "Stock",
+                    "name": "Name",
+                    "color": "Colour",
+                    "size": "Size",
+                    "description": "Description",
+                    "category": "Category",
+                    "sku": "SKU",
                 }.get(key, key)
                 old = before.get(key)
                 if key == "price":
-                    diffs.append(f"{label}: {_fmt_price(old)} ← {_fmt_price(value)}")
+                    diffs.append(f"{label}: {_fmt_price(old)} → {_fmt_price(value)}")
                 elif key == "description":
                     diffs.append(label)
                 else:
-                    diffs.append(f"{label}: {old if old is not None else '-'} ← {value}")
+                    diffs.append(f"{label}: {old if old is not None else '-'} → {value}")
             name = " ".join(
                 v for v in (before.get("name"), before.get("color"), before.get("size")) if v
             )
-            product_lines.append(f"✏️ {name}: {'، '.join(diffs)}{lock}")
+            product_lines.append(f"✏️ {name}: {', '.join(diffs)}{lock}")
     if product_lines:
         lines.append("")
         lines.extend(product_lines[:max_lines])
         if len(product_lines) > max_lines:
-            lines.append(f"… و {len(product_lines) - max_lines} مورد دیگر")
+            lines.append(f"… and {len(product_lines) - max_lines} more")
     labels = {s.key.value: s.label for s in knowledge.SECTIONS}
     knowledge_lines = []
     for change in changes.get("knowledge") or []:
         label = labels.get(change["section"], change["section"])
-        title = f" «{change['title']}»" if change.get("title") else ""
-        verb = "به‌روز" if change.get("mode") == "replace" else "اضافه"
-        knowledge_lines.append(f"📝 {label}{title}: {verb} می‌شود")
+        title = f" “{change['title']}”" if change.get("title") else ""
+        verb = "updated" if change.get("mode") == "replace" else "added"
+        knowledge_lines.append(f"📝 {label}{title}: {verb}")
     if knowledge_lines:
         lines.append("")
         lines.extend(knowledge_lines)
@@ -692,14 +713,14 @@ def describe(proposal: TeachProposal, max_lines: int = 30) -> str:
     if sheet:
         lines.append("")
         lines.append(
-            f"🔄 اتصال زنده‌ی گوگل شیت ({sheet.get('rows', 0)} ردیف)؛ "
-            "هر چند دقیقه دوباره خوانده می‌شود."
+            f"🔄 Live Google Sheet connection ({sheet.get('rows', 0)} rows); "
+            "it's re-read every few minutes."
         )
     if changes.get("questions"):
         lines.append("")
         lines.extend(f"❓ {q}" for q in changes["questions"])
     if is_empty(proposal) and not changes.get("questions"):
-        lines.append("چیز تازه‌ای برای یاد گرفتن پیدا نکردم.")
+        lines.append("I didn't find anything new to learn.")
     return "\n".join(lines).strip()
 
 
@@ -725,44 +746,44 @@ async def text_from_url(http: httpx.AsyncClient, llm: LLMClient, url: str) -> tu
     parsed = urlparse(url.strip())
     if parsed.scheme not in ("http", "https") or parsed.hostname not in _GOOGLE_HOSTS:
         raise TeachError(
-            "فعلا فقط لینک گوگل داک، گوگل شیت یا فایل گوگل درایو پشتیبانی می‌شود. "
-            "متن را مستقیم هم می‌توانید بفرستید."
+            "Only Google Docs, Google Sheets and Google Drive file links are supported for "
+            "now. You can also send the text directly."
         )
     doc = _DOC_PATH.search(parsed.path)
     if doc:
         export = f"https://docs.google.com/document/d/{doc.group(1)}/export?format=txt"
         data = await _download(http, export)
-        return knowledge._decode(data), "گوگل داک"
+        return knowledge._decode(data), "Google Doc"
     if _SHEET_PATH.search(parsed.path):
         try:
             table = await products.fetch_table(http, url)
         except products.ProductSourceError as exc:
             raise TeachError(str(exc)) from None
-        return table_to_text(table), "گوگل شیت"
+        return table_to_text(table), "Google Sheet"
     drive = _DRIVE_FILE.search(parsed.path)
     if drive:
         data = await _download(
             http, f"https://drive.google.com/uc?export=download&id={drive.group(1)}"
         )
-        return await text_from_file(_guess_name(data), data, llm), "فایل گوگل درایو"
-    raise TeachError("این لینک گوگل قابل خواندن نیست.")
+        return await text_from_file(_guess_name(data), data, llm), "Google Drive file"
+    raise TeachError("This Google link can't be read.")
 
 
 async def _download(http: httpx.AsyncClient, url: str) -> bytes:
     try:
         resp = await http.get(url, follow_redirects=True, timeout=30)
     except httpx.HTTPError as exc:
-        raise TeachError("دسترسی به گوگل ممکن نشد. کمی بعد دوباره تلاش کنید.") from exc
+        raise TeachError("Couldn't reach Google. Please try again in a moment.") from exc
     content_type = resp.headers.get("content-type", "")
     if resp.status_code in (401, 403, 404) or "text/html" in content_type:
         raise TeachError(
-            "فایل در دسترس نیست. در گوگل از Share گزینه‌ی «Anyone with the link» "
-            "با دسترسی Viewer را انتخاب کنید."
+            "The file isn't accessible. In Google, open Share and set "
+            "“Anyone with the link” as Viewer."
         )
     if resp.is_error:
-        raise TeachError("گوگل خطا برگرداند. کمی بعد دوباره تلاش کنید.")
+        raise TeachError("Google returned an error. Please try again in a moment.")
     if len(resp.content) > get_settings().upload_max_bytes:
-        raise TeachError("فایل بیش از حد بزرگ است.")
+        raise TeachError("The file is too large.")
     return resp.content
 
 
@@ -806,12 +827,12 @@ async def sheet_proposal(
     mapping = products.suggest_mapping(table.headers)
     if "name" not in mapping or not ({"price", "stock"} & mapping.keys()):
         return None
-    labels = "، ".join(f"{products.FIELD_LABELS[f]} ← «{h}»" for f, h in mapping.items())
+    labels = ", ".join(f"{products.FIELD_LABELS[f]} ← “{h}”" for f, h in mapping.items())
     proposal = TeachProposal(
         shop_id=shop.id,
         source="url",
         source_label=url[:500],
-        summary=f"این گوگل شیت لیست محصولات است. ستون‌ها را این‌طور شناختم: {labels}",
+        summary=f"This Google Sheet is a product list. I matched the columns like this: {labels}",
         changes={
             "products": [],
             "knowledge": [],
@@ -828,7 +849,7 @@ async def _connect_sheet(
     db: AsyncSession, shop: Shop, sheet: dict[str, Any], http: httpx.AsyncClient | None
 ) -> str:
     if http is None:
-        return "\nاتصال گوگل شیت انجام نشد."
+        return "\nThe Google Sheet wasn't connected."
     source = await db.scalar(select(ProductSource).where(ProductSource.shop_id == shop.id))
     if source is None:
         source = ProductSource(shop_id=shop.id, kind=ProductSourceKind.GOOGLE_SHEET)
@@ -840,8 +861,8 @@ async def _connect_sheet(
     try:
         count = await products.sync_source(db, source, http)
     except products.ProductSourceError as exc:
-        return f"\nخواندن گوگل شیت ناموفق بود: {exc}"
-    return f"\nگوگل شیت وصل شد و {count} ردیف محصول خوانده شد."
+        return f"\nReading the Google Sheet failed: {exc}"
+    return f"\nThe Google Sheet is connected and {count} product rows were read."
 
 
 async def propose_from_url(

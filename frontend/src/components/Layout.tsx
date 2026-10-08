@@ -12,9 +12,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  MessageCircle,
   Package,
-  Send,
   Settings,
   UserRound,
   Wallet,
@@ -41,7 +39,7 @@ export default function Layout() {
   const { data: me } = useMe();
   const { data: dash } = useDashboard();
   const gift = dash?.wallet.gift;
-  const giftWaiting = !!dash?.wallet.enabled && !!gift && !gift.granted && gift.amount_toman > 0;
+  const giftWaiting = !!dash?.wallet.enabled && !!gift && !gift.granted && gift.amount_cents > 0;
   const [drawer, setDrawer] = useState(false);
   const location = useLocation();
 
@@ -50,7 +48,7 @@ export default function Layout() {
   // Close the mobile drawer on navigation
   useEffect(() => setDrawer(false), [location.pathname]);
 
-  // "(2) پنل مزون مهسا" in the browser tab
+  // "(2) Layla Boutique panel" in the browser tab
   useEffect(() => {
     const base = me ? t.panelTitle(me.shop.name) : t.appName;
     const n = dash?.open_handoffs ?? 0;
@@ -78,8 +76,6 @@ export default function Layout() {
     {
       label: t.panel.nav.groupSetup,
       items: [
-        { to: "/telegram", label: t.launch.nav.telegram, icon: <Send />, tag: dash && !dash.setup.telegram_available ? t.launch.nav.soon : undefined },
-        { to: "/bale", label: t.launch.nav.bale, icon: <MessageCircle />, tag: dash && !dash.setup.bale_available ? t.launch.nav.soon : undefined },
         { to: "/settings", label: t.nav.settings, icon: <Settings /> },
         { to: "/billing", label: t.launch.nav.billing, icon: <Wallet /> },
         { to: "/instagram", label: t.nav.instagram, icon: <Camera />, tag: dash && !dash.setup.instagram_available ? t.launch.nav.soon : undefined },
@@ -105,7 +101,7 @@ export default function Layout() {
               className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-ink-900 ring-1 ring-brand-100 transition-colors hover:bg-brand-100"
             >
               <Gift className="size-5 shrink-0 text-brand-600" aria-hidden />
-              <span className="min-w-0 flex-1">{t.launch.gift.banner(f.num(gift.amount_toman))}</span>
+              <span className="min-w-0 flex-1">{t.launch.gift.banner(f.usd(gift.amount_cents))}</span>
               <span className="font-bold text-brand-700">{t.launch.gift.bannerAction}</span>
             </Link>
           )}
@@ -117,7 +113,7 @@ export default function Layout() {
             >
               <Wallet className="size-5 shrink-0 text-amber-500" aria-hidden />
               <span className="min-w-0 flex-1">
-                {dash.wallet.balance_toman <= 0 ? t.launch.emptyBalance : t.launch.lowBalance(f.num(dash.wallet.balance_toman))}
+                {dash.wallet.balance_cents <= 0 ? t.launch.emptyBalance : t.launch.lowBalance(f.usd(dash.wallet.balance_cents))}
               </span>
               <span className="font-bold">{t.launch.topUpNow}</span>
             </Link>

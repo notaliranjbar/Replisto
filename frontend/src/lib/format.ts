@@ -36,7 +36,29 @@ export function makeFormat(lang: Lang, t: Dict) {
     ["minute", 60],
   ];
 
+  const moneyFormats = new Map<string, Intl.NumberFormat>();
+  const moneyFormat = (currency: string) => {
+    let fmt = moneyFormats.get(currency);
+    if (!fmt) {
+      try {
+        fmt = new Intl.NumberFormat(locale, { style: "currency", currency });
+      } catch {
+        // not an ISO currency code: fall back to dollars
+        fmt = new Intl.NumberFormat(locale, { style: "currency", currency: "USD" });
+      }
+      moneyFormats.set(currency, fmt);
+    }
+    return fmt;
+  };
+
   return {
+    /** Wallet amounts (US cents) → "$12.50" */
+    usd: (cents: number) => moneyFormat("USD").format(cents / 100),
+    /** A product price in the shop's currency → "$49.90", "AED 49.90" */
+    money: (amount: number | string, currency: string) => {
+      const v = typeof amount === "string" ? Number(amount) : amount;
+      return Number.isFinite(v) ? moneyFormat(currency).format(v) : String(amount);
+    },
     /** 1250000 → "1,250,000" */
     num: (n: number | string | null | undefined) => {
       if (n === null || n === undefined || n === "") return "";
