@@ -91,7 +91,7 @@ const landing: Dict["landing"] = {
       { q: "How much is this one?", time: "01:12" },
       { q: "Do you have it in size 46?", time: "01:40" },
       { q: "How many days to Tripoli?", time: "02:05" },
-      { q: "Can I pay by card transfer?", time: "02:31" },
+      { q: "Can I pay cash on delivery?", time: "02:31" },
       { q: "Can I exchange it if it doesn't fit?", time: "03:18" },
     ],
     points: [

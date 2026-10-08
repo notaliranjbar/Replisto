@@ -5,7 +5,8 @@ from typing import Literal
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_INSECURE_SECRET = "change-me"
+# Development only: production refuses to start with it (see _check_production_secrets).
+_INSECURE_SECRET = "change-me-development-only-not-a-secret"
 
 
 class Settings(BaseSettings):

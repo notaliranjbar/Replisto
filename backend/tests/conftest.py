@@ -63,7 +63,7 @@ class FakeMeta:
     """Stands in for Meta's servers behind a real InstagramClient (via httpx.MockTransport)."""
 
     ig_user_id: str = "17841400000000001"
-    username: str = "mahsa.boutique"
+    username: str = "layla.boutique"
     sent: list[dict[str, Any]] = field(default_factory=list)
     subscribed: bool = False
     # When set, the send endpoint answers with this (status, body) instead of succeeding.
@@ -319,7 +319,7 @@ async def client(
 async def auth_headers(client: AsyncClient) -> dict[str, str]:
     resp = await client.post(
         "/api/v1/auth/register",
-        json={"email": "owner@shop.com", "password": "strongpass1", "shop_name": "Mahsa Shop"},
+        json={"email": "owner@shop.com", "password": "strongpass1", "shop_name": "Layla Shop"},
     )
     return {"Authorization": f"Bearer {resp.json()['access_token']}"}
 

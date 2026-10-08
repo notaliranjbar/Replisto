@@ -57,7 +57,7 @@ async def shop(client: AsyncClient, auth_headers: dict, sessions: async_sessionm
             InstagramAccount(
                 shop_id=shop.id,
                 ig_user_id=ACCOUNT,
-                username="mahsa",
+                username="layla",
                 access_token_encrypted=encrypt_secret("t"),
             )
         )

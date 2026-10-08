@@ -57,7 +57,7 @@ async def test_connect_flow(
 
     status = (await client.get("/api/v1/instagram", headers=auth_headers)).json()
     assert status["connected"] and status["active"]
-    assert status["username"] == "mahsa.boutique"
+    assert status["username"] == "layla.boutique"
     assert status["ig_user_id"] == fake_meta.ig_user_id
 
     account = await db.scalar(select(InstagramAccount))

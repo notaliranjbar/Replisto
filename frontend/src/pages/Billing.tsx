@@ -244,11 +244,14 @@ function HistoryCard() {
       ) : (
         <ul className="divide-y divide-slate-100">
           {items.map((e) => (
-            <li key={e.id} className="flex flex-wrap items-center gap-3 px-5 py-3 sm:px-6">
+            <li key={e.id} className="flex items-center gap-3 px-5 py-3 sm:px-6">
               <Badge tone={e.amount_cents >= 0 ? "green" : "neutral"}>{B.kinds[e.kind] ?? e.kind}</Badge>
-              <span className="min-w-0 flex-1 truncate text-sm text-ink-900">{e.description}</span>
-              <span className="text-xs text-slate-400">{f.smart(e.created_at)}</span>
-              <span className={cx("num w-28 text-end text-sm font-bold", e.amount_cents >= 0 ? "text-emerald-700" : "text-ink-900")}>
+              {/* description above the time on phones, side by side on wider screens */}
+              <span className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center sm:gap-3">
+                <span className="min-w-0 truncate text-sm text-ink-900 sm:flex-1">{e.description}</span>
+                <span className="text-xs text-slate-400">{f.smart(e.created_at)}</span>
+              </span>
+              <span className={cx("num shrink-0 text-end text-sm font-bold sm:w-28", e.amount_cents >= 0 ? "text-emerald-700" : "text-ink-900")}>
                 {e.amount_cents >= 0 ? "+" : "−"}
                 {f.usd(Math.abs(e.amount_cents))}
               </span>

@@ -30,7 +30,7 @@ async def shop(db: AsyncSession) -> Shop:
         InstagramAccount(
             shop_id=user.shop.id,
             ig_user_id=ACCOUNT,
-            username="mahsa.boutique",
+            username="layla.boutique",
             access_token_encrypted=encrypt_secret("page-token"),
         )
     )

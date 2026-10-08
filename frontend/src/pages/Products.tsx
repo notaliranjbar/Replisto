@@ -298,8 +298,8 @@ function Catalogue({ onEdit }: { onEdit: (p: Product) => void }) {
         <div className={cx("transition-opacity", isFetching && "opacity-60")}>
           <ul className="divide-y divide-slate-100">
             {data.items.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5 transition-colors hover:bg-brand-50/30 sm:px-6">
-                <button type="button" onClick={() => onEdit(p)} className="min-w-48 flex-1 text-start">
+              <li key={p.id} className="flex flex-wrap items-center gap-x-1 gap-y-2 px-5 py-3.5 transition-colors hover:bg-brand-50/30 sm:gap-x-4 sm:px-6">
+                <button type="button" onClick={() => onEdit(p)} className="min-w-48 flex-1 basis-full text-start sm:basis-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold text-ink-950" dir="auto">
                       {p.name}
@@ -317,8 +317,9 @@ function Catalogue({ onEdit }: { onEdit: (p: Product) => void }) {
                     ))}
                   </div>
                 </button>
-                <div className="num w-32 text-end text-sm font-bold text-ink-950">{p.price != null ? f.money(p.price, currency) : "—"}</div>
-                <div className="flex w-36 items-center justify-end gap-1">
+                {/* phones: price, stock and actions share one row under the name */}
+                <div className="num me-auto text-sm font-bold text-ink-950 sm:me-0 sm:w-32 sm:text-end">{p.price != null ? f.money(p.price, currency) : "—"}</div>
+                <div className="flex items-center justify-end gap-1 sm:w-36">
                   {p.editable && (
                     <Button
                       size="sm"

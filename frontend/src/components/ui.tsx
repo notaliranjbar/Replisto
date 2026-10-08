@@ -296,7 +296,8 @@ export function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cx(
-        "inline-flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors duration-200",
+        // a 44px-tall touch area around the 24px track
+        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors duration-200 after:absolute after:-inset-x-1 after:-inset-y-2.5 after:content-['']",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:opacity-50",
         checked ? "bg-emerald-500" : "bg-slate-300 hover:bg-slate-400/80",
       )}

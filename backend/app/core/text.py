@@ -3,13 +3,10 @@
 import re
 from decimal import Decimal, InvalidOperation
 
-# Arabic-Indic and Eastern Arabic-Indic digits.
-_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
-# Letter variants people type interchangeably: alef forms, taa marbuta, alef maqsura, and the
-# yaa and kaf variants some keyboards produce.
-_LETTERS = str.maketrans(
-    {"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ة": "ه", "ى": "ي", "ی": "ي", "ک": "ك", "ۀ": "ه"}
-)
+# Arabic-Indic digits.
+_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+# Letter variants people type interchangeably: alef forms, taa marbuta and alef maqsura.
+_LETTERS = str.maketrans({"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ة": "ه", "ى": "ي"})
 # Arabic diacritics, tatweel, and invisible joiners.
 _STRIP = re.compile("[ً-ٰٟـ‌‍‎‏]")
 _SPACES = re.compile(r"\s+")

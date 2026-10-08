@@ -45,7 +45,7 @@ def _post(shop_id, media_id: str, code: str, caption: str, days_ago: int) -> Ins
 
 def test_post_key_ignores_url_noise() -> None:
     assert post_key("https://www.instagram.com/p/AbC_1-2/?igsh=xyz") == "p/AbC_1-2"
-    assert post_key("instagram.com/mahsa.shop/reel/Zz9/") == "reel/Zz9"
+    assert post_key("instagram.com/layla.shop/reel/Zz9/") == "reel/Zz9"
     assert post_key("https://example.com/p/AbC") is None
 
 

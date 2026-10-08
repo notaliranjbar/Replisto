@@ -418,3 +418,15 @@ body {
     stroke-dashoffset: 0;
   }
 }
+
+/*
+ * Phones: iOS Safari zooms the page into any form field whose text is under 16px, so fields
+ * get 16px there. Unlayered, so it wins over the text-sm utilities.
+ */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
