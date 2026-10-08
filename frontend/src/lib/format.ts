@@ -1,26 +1,28 @@
-import type { Dict } from "../i18n/fa";
+import type { Dict } from "../i18n/ar";
+import type { Lang } from "../i18n";
 
-// Dates from the API are UTC ISO strings; shown in the browser's timezone, Jalali for Persian.
+// Dates from the API are UTC ISO strings; shown in the browser's timezone. Arabic keeps Latin digits.
 
 export type Format = ReturnType<typeof makeFormat>;
 
-export function makeFormat(lang: "fa" | "en", t: Dict) {
-  const locale = lang === "fa" ? "fa-IR" : "en-US";
+export function makeFormat(lang: Lang, t: Dict) {
+  const locale = lang === "ar" ? "ar-u-nu-latn" : "en-US";
+  const dateLocale = lang === "ar" ? "ar-u-nu-latn" : "en-GB";
   const num = new Intl.NumberFormat(locale);
-  const dateTime = new Intl.DateTimeFormat(lang === "fa" ? "fa-IR-u-ca-persian" : "en-GB", {
+  const dateTime = new Intl.DateTimeFormat(dateLocale, {
     year: "numeric",
     month: "long",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
-  const date = new Intl.DateTimeFormat(lang === "fa" ? "fa-IR-u-ca-persian" : "en-GB", {
+  const date = new Intl.DateTimeFormat(dateLocale, {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
   const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" });
-  const shortDay = new Intl.DateTimeFormat(lang === "fa" ? "fa-IR-u-ca-persian" : "en-GB", {
+  const shortDay = new Intl.DateTimeFormat(dateLocale, {
     month: "short",
     day: "numeric",
   });
@@ -35,7 +37,7 @@ export function makeFormat(lang: "fa" | "en", t: Dict) {
   ];
 
   return {
-    /** 1250000 → "۱٬۲۵۰٬۰۰۰" */
+    /** 1250000 → "1,250,000" */
     num: (n: number | string | null | undefined) => {
       if (n === null || n === undefined || n === "") return "";
       const v = typeof n === "string" ? Number(n) : n;
@@ -48,10 +50,10 @@ export function makeFormat(lang: "fa" | "en", t: Dict) {
       const d = new Date(iso);
       const now = new Date();
       if (d.toDateString() === now.toDateString()) return time.format(d);
-      return `${shortDay.format(d)}${lang === "fa" ? "،" : ","} ${time.format(d)}`;
+      return `${shortDay.format(d)}${lang === "ar" ? "،" : ","} ${time.format(d)}`;
     },
     time: (iso: string) => time.format(new Date(iso)),
-    /** "۳ دقیقه پیش" */
+    /** "3 minutes ago" */
     ago: (iso: string, now = Date.now()) => {
       const secs = (new Date(iso).getTime() - now) / 1000;
       for (const [unit, size] of units) {
@@ -59,7 +61,7 @@ export function makeFormat(lang: "fa" | "en", t: Dict) {
       }
       return t.time.justNow;
     },
-    /** Elapsed time without "ago": "۱۴ دقیقه" / "۲ ساعت" */
+    /** Elapsed time without "ago": "14 minutes" / "2 hours" */
     duration: (iso: string, now = Date.now()) => {
       const mins = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60000));
       const fmt = (value: number, unit: "minute" | "hour" | "day") =>

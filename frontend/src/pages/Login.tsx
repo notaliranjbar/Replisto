@@ -8,7 +8,7 @@ import { useI18n } from "../i18n";
 import { errorMessage, fieldError } from "../lib/errors";
 
 export default function Login() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const { login, expired } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -34,8 +34,8 @@ export default function Login() {
   const hasFieldErrors = error instanceof ApiError && Object.keys(error.fields).length > 0;
   let message: string | null = null;
   if (error != null && !hasFieldErrors) {
-    // the server's text is Persian; in English mode show our own for the common case
-    message = error instanceof ApiError && error.status === 401 && lang === "en" ? t.auth.wrongCredentials : errorMessage(error, t);
+    // the server's text is Persian; show our own for the common case
+    message = error instanceof ApiError && error.status === 401 ? t.auth.wrongCredentials : errorMessage(error, t);
   }
 
   return (

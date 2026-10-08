@@ -1,4 +1,4 @@
-"""Teaching Javab in free form: text, documents and links become proposals the owner confirms."""
+"""Teaching Replisto in free form: text, documents and links become proposals the owner confirms."""
 
 import pytest
 from httpx import AsyncClient

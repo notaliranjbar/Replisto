@@ -8,7 +8,7 @@ import type { Billing as BillingData, Plan, WalletEntryPage } from "../api/types
 import { useToast } from "../components/toast";
 import { Alert, Badge, Button, Card, CardHeader, ConfirmDialog, EmptyState, Field, Input, PageHeader, PageLoading, cx } from "../components/ui";
 import { useI18n } from "../i18n";
-import { errorMessage } from "../lib/errors";
+import { errorMessage, isPersian } from "../lib/errors";
 
 export default function Billing() {
   const { t } = useI18n();
@@ -160,14 +160,19 @@ function Plans({ b }: { b: BillingData }) {
     onError: (err) => toast.error(errorMessage(err, t)),
   });
 
-  const upgrading = target ? b.plans.findIndex((p) => p.key === target.key) > current : false;
-  const nextLabel = b.plans.find((p) => p.key === b.plan_next)?.label;
+  // plan names and features come from the API in Persian; show our own copy for known plans
+  const plans = b.plans.map((p): Plan => {
+    const copy = B.plans[p.key];
+    return copy ? { ...p, label: copy.label, features: [...copy.features] } : p;
+  });
+  const upgrading = target ? plans.findIndex((p) => p.key === target.key) > current : false;
+  const nextLabel = plans.find((p) => p.key === b.plan_next)?.label;
 
   return (
     <Card>
       <CardHeader icon={<Layers />} title={B.plansTitle} />
       <div className="grid grid-cols-1 gap-4 p-5 sm:px-6 md:grid-cols-3">
-        {b.plans.map((p) => {
+        {plans.map((p) => {
           const active = p.key === b.plan;
           return (
             <div key={p.key} className={cx("flex flex-col rounded-2xl p-5 ring-1", active ? "bg-brand-50/70 ring-brand-300" : "ring-line")}>
@@ -268,7 +273,7 @@ function HistoryCard() {
           {items.map((e) => (
             <li key={e.id} className="flex flex-wrap items-center gap-3 px-5 py-3 sm:px-6">
               <Badge tone={e.amount_toman >= 0 ? "green" : "neutral"}>{B.kinds[e.kind] ?? e.kind}</Badge>
-              <span className="min-w-0 flex-1 truncate text-sm text-ink-900">{e.description}</span>
+              <span className="min-w-0 flex-1 truncate text-sm text-ink-900">{isPersian(e.description) ? "" : e.description}</span>
               <span className="text-xs text-slate-400">{f.smart(e.created_at)}</span>
               <span className={cx("num w-28 text-end text-sm font-bold", e.amount_toman >= 0 ? "text-emerald-700" : "text-ink-900")}>
                 {e.amount_toman >= 0 ? "+" : "−"}

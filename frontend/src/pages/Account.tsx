@@ -73,7 +73,7 @@ export default function Account() {
               value={lang}
               onChange={setLang}
               items={[
-                { value: "fa", label: <span lang="fa">فارسی</span> },
+                { value: "ar", label: <span lang="ar">العربية</span> },
                 { value: "en", label: <span lang="en">English</span> },
               ]}
             />

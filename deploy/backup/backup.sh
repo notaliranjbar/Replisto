@@ -20,12 +20,12 @@ MAX_UPLOAD_BYTES=49000000
 
 backup_once() {
   stamp="$(date -u +%Y%m%d-%H%M)"
-  file="/backups/javab-${stamp}.dump"
+  file="/backups/replisto-${stamp}.dump"
   echo "[backup] dumping to ${file}"
   PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump -h db -U "${POSTGRES_USER:-app}" \
     -d "${POSTGRES_DB:-app}" -Fc -f "${file}.tmp"
   mv "${file}.tmp" "${file}"
-  find /backups -name 'javab-*.dump*' -mtime "+${KEEP_DAYS}" -delete
+  find /backups -name 'replisto-*.dump*' -mtime "+${KEEP_DAYS}" -delete
 
   if [ -n "${BACKUP_PASSPHRASE:-}" ] && [ -n "${TELEGRAM_BOT_TOKEN:-}" ] \
      && [ -n "${OPS_TELEGRAM_CHAT_ID:-}" ]; then
@@ -35,7 +35,7 @@ backup_once() {
     if [ "${size}" -lt "${MAX_UPLOAD_BYTES}" ]; then
       curl -sf -o /dev/null \
         -F "chat_id=${OPS_TELEGRAM_CHAT_ID}" \
-        -F "caption=Javab backup ${stamp} (encrypted)" \
+        -F "caption=Replisto backup ${stamp} (encrypted)" \
         -F "document=@${file}.enc" \
         "${TELEGRAM_API_BASE:-https://api.telegram.org}/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
         && echo "[backup] off-site copy sent" \

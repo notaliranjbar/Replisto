@@ -335,120 +335,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/telegram": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Status */
-        get: operations["get_status_api_v1_telegram_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update */
-        patch: operations["update_api_v1_telegram_patch"];
-        trace?: never;
-    };
-    "/api/v1/telegram/link": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create Link
-         * @description A one-time link that connects the owner's Telegram account to this shop.
-         */
-        post: operations["create_link_api_v1_telegram_link_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/telegram/admins/{admin_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Remove Admin */
-        delete: operations["remove_admin_api_v1_telegram_admins__admin_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/telegram/custom-bot": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Set Custom Bot
-         * @description Connect the shop's own Telegram bot by the token @BotFather gave (pro and business).
-         */
-        put: operations["set_custom_bot_api_v1_telegram_custom_bot_put"];
-        post?: never;
-        /** Remove Custom Bot */
-        delete: operations["remove_custom_bot_api_v1_telegram_custom_bot_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/telegram/business": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Disable Business
-         * @description Stop answering in the owner's account. (To remove it fully, the owner also removes the
-         *     bot in Telegram > Settings > Telegram Business > Chatbots.)
-         */
-        delete: operations["disable_business_api_v1_telegram_business_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/telegram/channels/{channel_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Remove Channel */
-        delete: operations["remove_channel_api_v1_telegram_channels__channel_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/knowledge/sections": {
         parameters: {
             query?: never;
@@ -708,7 +594,7 @@ export interface paths {
         };
         /**
          * List Products
-         * @description The shop's catalogue: everything Javab knows, however it was taught. Searchable.
+         * @description The shop's catalogue: everything Replisto knows, however it was taught. Searchable.
          */
         get: operations["list_products_api_v1_products_get"];
         put?: never;
@@ -1162,27 +1048,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/billing/plan": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Change Plan
-         * @description Upgrade (starts now, the month's fee is paid from the wallet) or downgrade (applies
-         *     when the paid month ends).
-         */
-        post: operations["change_plan_api_v1_billing_plan_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/billing/topup": {
         parameters: {
             query?: never;
@@ -1200,82 +1065,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/bale": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Bale */
-        get: operations["get_bale_api_v1_bale_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update Bale */
-        patch: operations["update_bale_api_v1_bale_patch"];
-        trace?: never;
-    };
-    "/api/v1/bale/link": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create Bale Link
-         * @description A one-time link that connects the owner's Bale account to this shop.
-         */
-        post: operations["create_bale_link_api_v1_bale_link_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/bale/admins/{admin_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Remove Bale Admin */
-        delete: operations["remove_bale_admin_api_v1_bale_admins__admin_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/bale/custom-bot": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Set Bale Custom Bot
-         * @description Connect the shop's own Bale bot by the token Bale's @botfather gave (pro and business).
-         */
-        put: operations["set_bale_custom_bot_api_v1_bale_custom_bot_put"];
-        post?: never;
-        /** Remove Bale Custom Bot */
-        delete: operations["remove_bale_custom_bot_api_v1_bale_custom_bot_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1284,22 +1073,6 @@ export interface components {
         AccountDelete: {
             /** Password */
             password: string;
-        };
-        /** AdminOut */
-        AdminOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Telegram User Id */
-            telegram_user_id: number;
-            /** Username */
-            username: string | null;
-            /** First Name */
-            first_name: string;
-            /** Notify */
-            notify: boolean;
         };
         /** ApplyIn */
         ApplyIn: {
@@ -1314,25 +1087,6 @@ export interface components {
              */
             skip_knowledge: number[];
         };
-        /** BaleStatus */
-        BaleStatus: {
-            /** Available */
-            available: boolean;
-            /** Enabled */
-            enabled: boolean;
-            /** Shared Bot Username */
-            shared_bot_username: string | null;
-            /** Shop Link */
-            shop_link: string | null;
-            /** Shop Code */
-            shop_code: string;
-            /** Admins */
-            admins: components["schemas"]["AdminOut"][];
-            custom_bot: components["schemas"]["CustomBotOut"] | null;
-            /** Custom Bot Allowed */
-            custom_bot_allowed: boolean;
-            plan: components["schemas"]["Plan"];
-        };
         /** BillingOut */
         BillingOut: {
             /** Enabled */
@@ -1341,12 +1095,6 @@ export interface components {
             balance_toman: number;
             /** Low Balance */
             low_balance: boolean;
-            plan: components["schemas"]["Plan"];
-            /** Plan Renews At */
-            plan_renews_at: string | null;
-            plan_next: components["schemas"]["Plan"] | null;
-            /** Plans */
-            plans: components["schemas"]["PlanOut"][];
             pricing: components["schemas"]["PricingOut"];
             /** Topup Available */
             topup_available: boolean;
@@ -1382,37 +1130,12 @@ export interface components {
             /** File */
             file: string;
         };
-        /** BusinessOut */
-        BusinessOut: {
-            /** Connected */
-            connected: boolean;
-            /** Enabled */
-            enabled: boolean;
-            /** Can Reply */
-            can_reply: boolean;
-            /** Telegram User Id */
-            telegram_user_id: number | null;
-        };
         /**
          * Channel
          * @description Where a conversation happens. The bot itself is the same on every channel.
          * @enum {string}
          */
-        Channel: "instagram" | "telegram" | "bale";
-        /** ChannelOut */
-        ChannelOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Title */
-            title: string;
-            /** Username */
-            username: string | null;
-            /** Active */
-            active: boolean;
-        };
+        Channel: "instagram";
         /** ConnectUrlOut */
         ConnectUrlOut: {
             /** Url */
@@ -1426,11 +1149,6 @@ export interface components {
              */
             id: string;
             channel: components["schemas"]["Channel"];
-            /**
-             * Telegram Business
-             * @default false
-             */
-            telegram_business: boolean;
             /** Customer Id */
             customer_id: string;
             /** Customer Igsid */
@@ -1464,11 +1182,6 @@ export interface components {
              */
             id: string;
             channel: components["schemas"]["Channel"];
-            /**
-             * Telegram Business
-             * @default false
-             */
-            telegram_business: boolean;
             /** Customer Id */
             customer_id: string;
             /** Customer Igsid */
@@ -1498,22 +1211,6 @@ export interface components {
             items: components["schemas"]["ConversationOut"][];
             /** Total */
             total: number;
-        };
-        /** CustomBotIn */
-        CustomBotIn: {
-            /** Token */
-            token: string;
-        };
-        /** CustomBotOut */
-        CustomBotOut: {
-            /** Username */
-            username: string;
-            /** Active */
-            active: boolean;
-            /** Last Error */
-            last_error: string | null;
-            /** Link */
-            link: string;
         };
         /** DashboardOut */
         DashboardOut: {
@@ -1594,17 +1291,13 @@ export interface components {
         };
         /**
          * GiftStatus
-         * @description The sign-up gift: given once the owner links Telegram/Bale (+ verifies their phone).
+         * @description The sign-up gift: given once the owner verifies their mobile number.
          */
         GiftStatus: {
             /** Amount Toman */
             amount_toman: number;
             /** Granted */
             granted: boolean;
-            /** Messenger Linked */
-            messenger_linked: boolean;
-            /** Phone Required */
-            phone_required: boolean;
             /** Phone Verified */
             phone_verified: boolean;
         };
@@ -1621,11 +1314,6 @@ export interface components {
              */
             conversation_id: string;
             channel: components["schemas"]["Channel"];
-            /**
-             * Telegram Business
-             * @default false
-             */
-            telegram_business: boolean;
             /** Customer Igsid */
             customer_igsid: string;
             /** Customer Username */
@@ -1710,16 +1398,6 @@ export interface components {
          * @enum {string}
          */
         KnowledgeSection: "about" | "shipping" | "payment" | "returns" | "contact" | "faq" | "free_text" | "file";
-        /** LinkOut */
-        LinkOut: {
-            /** Url */
-            url: string;
-            /**
-             * Expires At
-             * Format: date-time
-             */
-            expires_at: string;
-        };
         /** LoginRequest */
         LoginRequest: {
             /**
@@ -1753,11 +1431,6 @@ export interface components {
          * @enum {string}
          */
         MessageSender: "customer" | "bot" | "owner";
-        /** MessengerUpdate */
-        MessengerUpdate: {
-            /** Enabled */
-            enabled: boolean;
-        };
         /** PasswordChange */
         PasswordChange: {
             /** Current Password */
@@ -1793,26 +1466,6 @@ export interface components {
             phone: string;
             /** Gift Toman */
             gift_toman: number;
-        };
-        /**
-         * Plan
-         * @description What a shop pays for on top of usage. Usage (AI answers) costs the same on every plan.
-         * @enum {string}
-         */
-        Plan: "basic" | "pro" | "business";
-        /** PlanChange */
-        PlanChange: {
-            plan: components["schemas"]["Plan"];
-        };
-        /** PlanOut */
-        PlanOut: {
-            key: components["schemas"]["Plan"];
-            /** Label */
-            label: string;
-            /** Monthly Fee Toman */
-            monthly_fee_toman: number;
-            /** Features */
-            features: string[];
         };
         /** PlaygroundIn */
         PlaygroundIn: {
@@ -1941,10 +1594,10 @@ export interface components {
         };
         /**
          * ProductOrigin
-         * @description How Javab learned about a product. Every product lives in Javab's own catalogue.
+         * @description How Replisto learned about a product. Every product lives in Replisto's own catalogue.
          * @enum {string}
          */
-        ProductOrigin: "manual" | "sheet" | "file" | "teach" | "telegram_post";
+        ProductOrigin: "manual" | "sheet" | "file" | "teach";
         /** ProductOut */
         ProductOut: {
             /**
@@ -1982,8 +1635,6 @@ export interface components {
             image_url: string | null;
             /** Post Url */
             post_url: string | null;
-            /** Telegram Post Url */
-            telegram_post_url?: string | null;
             /**
              * Bot View
              * @default {}
@@ -2164,22 +1815,6 @@ export interface components {
             instagram_active: boolean;
             /** Instagram Username */
             instagram_username: string | null;
-            /** Telegram Available */
-            telegram_available: boolean;
-            /** Telegram Owner Linked */
-            telegram_owner_linked: boolean;
-            /** Bale Available */
-            bale_available: boolean;
-            /** Bale Owner Linked */
-            bale_owner_linked: boolean;
-            /** Bale Custom Bot */
-            bale_custom_bot: boolean;
-            /** Telegram Custom Bot */
-            telegram_custom_bot: boolean;
-            /** Telegram Business */
-            telegram_business: boolean;
-            /** Telegram Channels */
-            telegram_channels: number;
             /** Knowledge Entries */
             knowledge_entries: number;
             /** Products Connected */
@@ -2216,8 +1851,6 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /** Slug */
-            slug: string;
             /** Bot Enabled */
             bot_enabled: boolean;
             /** Tone */
@@ -2288,32 +1921,6 @@ export interface components {
             bot_replies: number;
             /** Open Unanswered */
             open_unanswered: number;
-        };
-        /** TelegramStatus */
-        TelegramStatus: {
-            /** Available */
-            available: boolean;
-            /** Enabled */
-            enabled: boolean;
-            /** Shared Bot Username */
-            shared_bot_username: string | null;
-            /** Shop Link */
-            shop_link: string | null;
-            /** Shop Code */
-            shop_code: string;
-            /** Admins */
-            admins: components["schemas"]["AdminOut"][];
-            custom_bot: components["schemas"]["CustomBotOut"] | null;
-            /** Custom Bot Allowed */
-            custom_bot_allowed: boolean;
-            plan: components["schemas"]["Plan"];
-            business: components["schemas"]["BusinessOut"];
-            /** Business Allowed */
-            business_allowed: boolean;
-            /** Business Bot Username */
-            business_bot_username: string | null;
-            /** Channels */
-            channels: components["schemas"]["ChannelOut"][];
         };
         /** TextIn */
         TextIn: {
@@ -2410,7 +2017,7 @@ export interface components {
          * WalletEntryKind
          * @enum {string}
          */
-        WalletEntryKind: "topup" | "usage" | "plan_fee" | "bonus" | "adjustment";
+        WalletEntryKind: "topup" | "usage" | "bonus" | "adjustment";
         /** WalletEntryOut */
         WalletEntryOut: {
             /**
@@ -2450,8 +2057,6 @@ export interface components {
             balance_toman: number;
             /** Low Balance */
             low_balance: boolean;
-            /** Plan */
-            plan: string;
             gift: components["schemas"]["GiftStatus"];
         };
     };
@@ -3016,206 +2621,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PostsOut"];
-                };
-            };
-        };
-    };
-    get_status_api_v1_telegram_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TelegramStatus"];
-                };
-            };
-        };
-    };
-    update_api_v1_telegram_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MessengerUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TelegramStatus"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_link_api_v1_telegram_link_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LinkOut"];
-                };
-            };
-        };
-    };
-    remove_admin_api_v1_telegram_admins__admin_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                admin_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    set_custom_bot_api_v1_telegram_custom_bot_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CustomBotIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TelegramStatus"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_custom_bot_api_v1_telegram_custom_bot_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    disable_business_api_v1_telegram_business_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    remove_channel_api_v1_telegram_channels__channel_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                channel_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4493,39 +3898,6 @@ export interface operations {
             };
         };
     };
-    change_plan_api_v1_billing_plan_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PlanChange"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BillingOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     topup_api_v1_billing_topup_post: {
         parameters: {
             query?: never;
@@ -4556,159 +3928,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
-            };
-        };
-    };
-    get_bale_api_v1_bale_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BaleStatus"];
-                };
-            };
-        };
-    };
-    update_bale_api_v1_bale_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MessengerUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BaleStatus"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_bale_link_api_v1_bale_link_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LinkOut"];
-                };
-            };
-        };
-    };
-    remove_bale_admin_api_v1_bale_admins__admin_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                admin_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    set_bale_custom_bot_api_v1_bale_custom_bot_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CustomBotIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BaleStatus"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_bale_custom_bot_api_v1_bale_custom_bot_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };

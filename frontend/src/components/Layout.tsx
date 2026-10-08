@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { useDashboard, useMe } from "../api/queries";
 import { useAuth } from "../auth/AuthContext";
-import { useI18n } from "../i18n";
+import { otherLang, useI18n } from "../i18n";
 import { useHandoffWatcher } from "../lib/notifications";
 import { Logo, LogoMark } from "./Logo";
 import ThemeToggle from "./ThemeToggle";
@@ -212,7 +212,7 @@ function Sidebar({ groups, onClose }: { groups: Group[]; onClose?: () => void })
           className="flex h-10 w-full items-center gap-3 rounded-xl px-3 font-medium text-slate-600 transition-colors hover:bg-fill hover:text-ink-950"
         >
           <Languages className="size-[18px]" aria-hidden />
-          <span lang={lang === "fa" ? "en" : "fa"}>{t.otherLang}</span>
+          <span lang={otherLang(lang)}>{t.otherLang}</span>
         </button>
         <button
           type="button"

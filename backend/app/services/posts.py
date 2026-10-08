@@ -3,8 +3,7 @@
 The bot shares a post when it recommends a product ("here's the post"), so the customer sees
 the photos right in the chat. On Instagram a product's post is the one the owner put in the
 product sheet (post_url column), otherwise the newest post whose caption names the product or
-its code. On Telegram it is the channel post the product came from, else its Instagram link
-or photo.
+its code.
 """
 
 import logging
@@ -19,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import decrypt_secret
 from app.core.text import normalize
 from app.core.timeutil import utcnow
-from app.models import Channel, InstagramAccount, InstagramPost, Product, TelegramPost
+from app.models import Channel, InstagramAccount, InstagramPost, Product
 from app.services.instagram import InstagramClient
 
 logger = logging.getLogger(__name__)
@@ -29,7 +28,6 @@ POST_MARKER = "[پست]"
 MAX_POSTS_PER_REPLY = 3
 
 _PERMALINK = re.compile(r"instagram\.com/(?:[\w.]+/)?(p|reel|tv)/([\w-]+)", re.IGNORECASE)
-_TELEGRAM_LINK = re.compile(r"(?:t\.me/([\w]+)/(\d+))|(?:tg:(-?\d+)/(\d+))")
 _IMAGE_LINK = re.compile(r"img:(\S+)")
 
 
@@ -39,17 +37,11 @@ class PostLink:
 
     # Instagram: None when the owner linked a post we haven't read; sent as a plain link.
     media_id: str | None
-    # How the post is recorded in the conversation: the Instagram/t.me link, "tg:<chat>/<id>"
-    # for a private channel post, or "img:<url>" for a product photo.
+    # How the post is recorded in the conversation: the Instagram link, or "img:<url>" for a
+    # product photo.
     permalink: str
     caption: str = ""
     preview_url: str | None = None
-    # Telegram channel post: re-sent with copyMessage by the bot that saw it.
-    tg_chat_id: int | None = None
-    tg_message_id: int | None = None
-    tg_bot_id: uuid.UUID | None = None
-    # A photo (Telegram file id or public URL) sent when copying the post isn't possible.
-    photo: str | None = None
 
 
 def post_key(url: str) -> str | None:
@@ -57,10 +49,6 @@ def post_key(url: str) -> str | None:
     match = _PERMALINK.search(url or "")
     if match:
         return f"{match.group(1).lower()}/{match.group(2)}"
-    match = _TELEGRAM_LINK.search(url or "")
-    if match:
-        chat = match.group(1) or match.group(3)
-        return f"tg/{chat.lower()}/{match.group(2) or match.group(4)}"
     match = _IMAGE_LINK.search(url or "")
     return f"img/{match.group(1)}" if match else None
 
@@ -135,50 +123,12 @@ def _link(post: InstagramPost) -> PostLink:
     return PostLink(post.ig_media_id, post.permalink, post.caption, post.preview_url)
 
 
-def telegram_link(post: TelegramPost) -> PostLink:
-    return PostLink(
-        media_id=None,
-        permalink=post.public_url or f"tg:{post.chat_id}/{post.message_id}",
-        caption=post.text,
-        tg_chat_id=post.chat_id,
-        tg_message_id=post.message_id,
-        tg_bot_id=post.bot_id,
-        photo=post.photo_file_id,
-    )
-
-
 async def shareable_posts(
     db: AsyncSession, shop_id: uuid.UUID, channel: Channel, products: list[Product]
 ) -> dict[str, PostLink]:
     """Map each product name to what the bot can show of it on this channel."""
-    instagram = link_products(products, await load_posts(db, shop_id))
-    if channel == Channel.INSTAGRAM:
-        return instagram  # only the account's own posts render as cards in Instagram DMs
-
-    post_ids = {p.telegram_post_id for p in products if p.telegram_post_id}
-    telegram_posts = (
-        {
-            p.id: p
-            for p in await db.scalars(select(TelegramPost).where(TelegramPost.id.in_(post_ids)))
-        }
-        if post_ids
-        else {}
-    )
-    links: dict[str, PostLink] = {}
-    for product in products:
-        name = product.name.strip()
-        if name in links:
-            continue
-        post = telegram_posts.get(product.telegram_post_id) if product.telegram_post_id else None
-        if post is not None:
-            links[name] = telegram_link(post)
-        elif name in instagram:
-            links[name] = instagram[name]  # sent as a link; Telegram shows its preview
-        elif product.image_url:
-            links[name] = PostLink(
-                None, f"img:{product.image_url}", product.name, photo=product.image_url
-            )
-    return links
+    # Only the account's own posts render as cards in Instagram DMs.
+    return link_products(products, await load_posts(db, shop_id))
 
 
 def _parse_time(value: object) -> datetime | None:

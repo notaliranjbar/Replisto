@@ -19,22 +19,11 @@ from app.core.database import SessionLocal
 from app.core.monitoring import setup_monitoring
 from app.core.queue import ArqQueue
 from app.core.timeutil import utcnow
-from app.models import InstagramAccount, ProposalStatus, TeachProposal, TelegramBot
-from app.services import (
-    billing,
-    instagram_accounts,
-    messaging,
-    ops,
-    payments,
-    posts,
-    products,
-    telegram_bot,
-)
+from app.models import InstagramAccount, ProposalStatus, TeachProposal
+from app.services import instagram_accounts, messaging, payments, posts, products
 from app.services.instagram import InstagramClient, InstagramError
-from app.services.llm import LLMClient, LLMError
-from app.services.notify import TelegramNotifier
+from app.services.llm import LLMError
 from app.services.responder import get_responder
-from app.services.telegram import TelegramClient, TelegramError
 from app.services.webhook import MessagingEvent
 
 logger = logging.getLogger(__name__)
@@ -54,34 +43,8 @@ async def process_event(ctx: dict[str, Any], event: MessagingEvent) -> None:
         )
 
 
-async def process_telegram_update(ctx: dict[str, Any], bot_id: str, update: dict[str, Any]) -> None:
-    async with SessionLocal() as db:
-        bot = await db.get(TelegramBot, uuid.UUID(bot_id))
-        if bot is None:
-            return
-        client = TelegramClient(ctx["http"])
-        try:
-            await telegram_bot.process_update(
-                db,
-                bot,
-                update,
-                telegram_bot.BotContext(
-                    client=client,
-                    llm=LLMClient(ctx["http"]),
-                    http=ctx["http"],
-                    queue=ctx["queue"],
-                    notifier=TelegramNotifier(db, client),
-                    debounce_seconds=get_settings().reply_debounce_seconds,
-                ),
-            )
-        except (LLMError, TelegramError) as exc:
-            logger.warning("telegram update failed (try %s), retrying: %s", ctx.get("job_try"), exc)
-            raise Retry(defer=ctx.get("job_try", 1) * 10) from exc
-
-
 async def reply_conversation(ctx: dict[str, Any], conversation_id: str, trigger_at: str) -> None:
     async with SessionLocal() as db:
-        telegram = TelegramClient(ctx["http"])
         try:
             await messaging.reply_to_conversation(
                 db,
@@ -89,10 +52,8 @@ async def reply_conversation(ctx: dict[str, Any], conversation_id: str, trigger_
                 datetime.fromisoformat(trigger_at),
                 InstagramClient(ctx["http"]),
                 get_responder(db, ctx["http"]),
-                telegram=telegram,
-                notifier=TelegramNotifier(db, telegram),
             )
-        except (InstagramError, TelegramError, LLMError) as exc:
+        except (InstagramError, LLMError) as exc:
             # Only retryable errors propagate out of reply_to_conversation.
             logger.warning("reply failed (try %s), retrying: %s", ctx.get("job_try"), exc)
             raise Retry(defer=ctx.get("job_try", 1) * 10) from exc
@@ -126,24 +87,12 @@ async def refresh_instagram_tokens(ctx: dict[str, Any]) -> None:
     logger.info("refreshed %d instagram tokens", count)
 
 
-async def renew_plans(ctx: dict[str, Any]) -> None:
-    """Charge the next month of pro/business plans, or move shops back to basic."""
-    async with SessionLocal() as db:
-        notifier = TelegramNotifier(db, TelegramClient(ctx["http"]))
-        for shop, message in await billing.renew_plans(db):
-            try:
-                await notifier.message(shop, message)
-            except Exception:
-                logger.exception("could not tell shop %s about its plan", shop.id)
-
-
 async def reconcile_payments(ctx: dict[str, Any]) -> None:
     """Credit Aban top-ups whose webhook never arrived (a safety net, not the main path)."""
     async with SessionLocal() as db:
         gateway = payments.AbanGateway(ctx["http"])
         for payment in await payments.reconcile_aban(db, gateway):
             logger.warning("payment %s credited by the periodic check", payment.id)
-            await ops.topup_paid(db, ctx["http"], payment)
 
 
 async def drop_stale_proposals(ctx: dict[str, Any]) -> None:
@@ -170,18 +119,16 @@ async def shutdown(ctx: dict[str, Any]) -> None:
 # Used by InlineQueue for local development without Redis.
 FUNCTIONS = {
     "process_event": process_event,
-    "process_telegram_update": process_telegram_update,
     "reply_conversation": reply_conversation,
 }
 
 
 class WorkerSettings:
-    functions = [process_event, process_telegram_update, reply_conversation]
+    functions = [process_event, reply_conversation]
     cron_jobs = [
         cron(refresh_instagram_tokens, hour={3}, minute={0}),
         cron(sync_instagram_posts, hour={4}, minute={30}),
         cron(sync_product_sheets, minute=set(range(0, 60, 5))),
-        cron(renew_plans, minute={15}),
         cron(reconcile_payments, minute=set(range(3, 60, 10))),
         cron(drop_stale_proposals, hour={2}, minute={45}),
     ]

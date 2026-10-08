@@ -1,10 +1,8 @@
 """Verifying the owner's mobile number.
 
-Two ways, both ending in `user.phone` + `user.phone_verified_at`:
-- an SMS code from the panel (Kavenegar or SMS.ir, with a code template approved in their
-  panel; without a provider the code is only logged, for development);
-- sharing the contact of their own Telegram/Bale account with our bot (free, no SMS): the
-  messenger itself vouches that the number belongs to that account.
+An SMS code from the panel (Kavenegar or SMS.ir, with a code template approved in their
+panel; without a provider the code is only logged, for development) ends in `user.phone` +
+`user.phone_verified_at`.
 
 A number can be verified on one account only (it also limits the sign-up gift, see gifts.py).
 """
@@ -48,18 +46,6 @@ def normalize_iran_mobile(raw: str) -> str:
     return "+98" + digits
 
 
-def normalize_contact_phone(raw: str) -> str:
-    """A number Telegram/Bale gives in a shared contact ('989123456789' or '+98...')."""
-    digits = re.sub(r"\D", "", raw.translate(_PERSIAN_DIGITS))
-    try:
-        return normalize_iran_mobile(digits)
-    except PhoneError:
-        pass
-    if not 8 <= len(digits) <= 15:
-        raise PhoneError("این شماره قابل تأیید نیست.")
-    return "+" + digits
-
-
 def local_format(phone: str) -> str:
     """'+989123456789' -> '09123456789' (how Iranians read it)."""
     return "0" + phone[3:] if phone.startswith("+98") else phone
@@ -73,7 +59,7 @@ async def set_verified(db: AsyncSession, user: User, phone: str) -> None:
     """Record a verified number; raises PhoneError if another account already has it."""
     other = await owner_of(db, phone)
     if other is not None and other.id != user.id:
-        raise PhoneError("این شماره قبلا برای حساب دیگری در «جواب» تأیید شده است.")
+        raise PhoneError("این شماره قبلا برای حساب دیگری در Replisto تأیید شده است.")
     user.phone = phone
     user.phone_verified_at = utcnow()
     user.phone_pending = None
@@ -88,7 +74,7 @@ async def start(db: AsyncSession, http: httpx.AsyncClient, user: User, raw: str)
     phone = normalize_iran_mobile(raw)
     other = await owner_of(db, phone)
     if other is not None and other.id != user.id:
-        raise PhoneError("این شماره قبلا برای حساب دیگری در «جواب» تأیید شده است.")
+        raise PhoneError("این شماره قبلا برای حساب دیگری در Replisto تأیید شده است.")
     code = f"{secrets.randbelow(1_000_000):06d}"
     await send_code(http, phone, code)
     settings = get_settings()

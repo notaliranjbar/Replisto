@@ -2,7 +2,7 @@
 @import "@fontsource-variable/vazirmatn";
 
 /*
- * Javab design tokens.
+ * Replisto design tokens.
  *
  * brand   violet from the logo tile; 600 is the exact logo colour and the primary
  *         (white text on it: 6.7:1). Lighter steps are tints for surfaces, darker for hover/text.
@@ -281,7 +281,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Mixed Persian/English content (usernames, URLs) */
+/* Mixed Arabic/English content (usernames, URLs) */
 .ltr {
   direction: ltr;
   unicode-bidi: isolate;
@@ -293,7 +293,7 @@ body {
 
 @layer components {
   /*
-   * Marketing type scale. Persian script needs taller lines than Latin and must never get
+   * Marketing type scale. Arabic script needs taller lines than Latin and must never get
    * negative letter-spacing (it breaks letter joining), so tracking is tightened for English only.
    */
   .t-display {

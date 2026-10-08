@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { Languages } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
-import { useI18n } from "../../i18n";
+import { otherLang, useI18n } from "../../i18n";
 import { Logo } from "../Logo";
 import { SECTIONS } from "./SiteHeader";
 
@@ -12,7 +12,7 @@ export default function SiteFooter({ onLanding = false }: { onLanding?: boolean 
   const { t, lang, toggleLang } = useI18n();
   const { loggedIn } = useAuth();
   const L = t.landing;
-  const year = new Intl.DateTimeFormat(lang === "fa" ? "fa-IR-u-ca-persian" : "en-US", { year: "numeric" }).format(new Date());
+  const year = new Intl.DateTimeFormat(lang === "ar" ? "ar" : "en-US", { year: "numeric" }).format(new Date());
   const sectionLabels = { roles: L.nav.roles, channels: L.nav.channels, how: L.nav.how, faq: L.nav.faq };
 
   return (
@@ -27,7 +27,7 @@ export default function SiteFooter({ onLanding = false }: { onLanding?: boolean 
             className="mt-5 inline-flex h-10 items-center gap-2 rounded-lg border border-white/15 px-3.5 text-sm font-medium text-white/85 transition-colors hover:border-white/35 hover:text-white"
           >
             <Languages className="size-4" aria-hidden />
-            <span lang={lang === "fa" ? "en" : "fa"}>{t.otherLang}</span>
+            <span lang={otherLang(lang)}>{t.otherLang}</span>
           </button>
         </div>
 

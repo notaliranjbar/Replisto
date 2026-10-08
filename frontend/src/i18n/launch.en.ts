@@ -1,4 +1,4 @@
-import type { Dict } from "./fa";
+import type { Dict } from "./ar";
 
 const launch: Dict["launch"] = {
   nav: {
@@ -29,7 +29,7 @@ const launch: Dict["launch"] = {
 
   instagramSoon: {
     title: "Instagram is coming soon",
-    body: "Connecting Instagram opens once Meta approves the app. Until then Javab answers your customers on Telegram.",
+    body: "Connecting Instagram opens once Meta approves the app. Until then Replisto answers your customers on Telegram.",
     action: "Set up Telegram",
   },
 
@@ -50,7 +50,7 @@ const launch: Dict["launch"] = {
 
   telegram: {
     title: "Telegram",
-    subtitle: "Javab answers your customers on Telegram: through your shop link, your own bot, or your personal account. Separate from Bale.",
+    subtitle: "Replisto answers your customers on Telegram: through your shop link, your own bot, or your personal account. Separate from Bale.",
     shopCode: "Shop code",
     shopCodeHint: "If the link doesn't open right for a customer, they can send this code to the bot.",
     notReady: "The Telegram bot isn't set up on the server yet (TELEGRAM_BOT_TOKEN). This page works once it is.",
@@ -77,15 +77,15 @@ const launch: Dict["launch"] = {
     channelActive: "Active",
     channelInactive: "Inactive",
     customTitle: "Your shop's own Telegram bot",
-    customHint: "Customers on Telegram talk to a bot with your shop's name and picture instead of the Javab bot.",
+    customHint: "Customers on Telegram talk to a bot with your shop's name and picture instead of the Replisto bot.",
     customSteps: ["Message @BotFather in Telegram and send /newbot.", "Pick the bot's name and username (the username must end in bot).", "Copy the token BotFather gives you and paste it here."],
     tokenLabel: "Bot token",
     connect: "Connect",
     disconnect: "Disconnect",
     customConnected: (bot) => `@${bot} is connected`,
-    customDisconnectConfirm: "Your own bot will stop answering customers. The shop link keeps working on the Javab bot.",
+    customDisconnectConfirm: "Your own bot will stop answering customers. The shop link keeps working on the Replisto bot.",
     businessTitle: "Answer from your personal account (Telegram Business)",
-    businessHint: "If customers message you directly, Javab can answer them from your own account. Whenever you reply in a conversation yourself, the bot steps back there.",
+    businessHint: "If customers message you directly, Replisto can answer them from your own account. Whenever you reply in a conversation yourself, the bot steps back there.",
     businessSteps: [
       "First link the account under “Link your own Telegram”.",
       "Update Telegram to the latest version. In Telegram's settings open Telegram Business → Chatbots (newer versions may call it Chat Automation).",
@@ -103,7 +103,7 @@ const launch: Dict["launch"] = {
 
   bale: {
     title: "Bale",
-    subtitle: "Javab answers your customers on the Bale messenger, no VPN needed. It's separate from Telegram: keep on whichever you want.",
+    subtitle: "Replisto answers your customers on the Bale messenger, no VPN needed. It's separate from Telegram: keep on whichever you want.",
     notReady: "The Bale bot isn't set up on the server yet (BALE_BOT_TOKEN). This page works once it is.",
     enabled: "Answering on Bale",
     enabledHint: "Turn off to stop the bot on Bale; Telegram isn't affected.",
@@ -113,7 +113,7 @@ const launch: Dict["launch"] = {
     linkHint: "Once your Bale account is linked, we tell you right there when a customer is waiting for you, and you reply from there. You also teach the bot products by text, files or photos.",
     linkButton: "Create Bale link",
     customTitle: "Your shop's own Bale bot",
-    customHint: "Customers on Bale talk to a bot with your shop's name and picture instead of the Javab bot.",
+    customHint: "Customers on Bale talk to a bot with your shop's name and picture instead of the Replisto bot.",
     customSteps: ["Message @botfather in the Bale app and send /newbot.", "Pick the bot's name and username (the username must end in bot).", "Copy the token botfather gives you and paste it here."],
     notAvailable: "Channel posts and answering from your personal account are Telegram-only; Bale doesn't offer them to bots.",
   },
@@ -152,16 +152,21 @@ const launch: Dict["launch"] = {
     pricingTitle: "Usage pricing",
     pricingAnswer: "Each bot answer: by how much text the AI reads and writes",
     pricingMin: (amount) => `Minimum per answer: ${amount} toman`,
-    nonRefundable: "Wallet credit is non-refundable and can only be used for Javab in this account.",
+    nonRefundable: "Wallet credit is non-refundable and can only be used for Replisto in this account.",
     termsLink: "Terms of Service",
     historyTitle: "History",
     historyEmpty: "No transactions yet.",
+    plans: {
+      basic: { label: "Basic", features: ["The shared Replisto bot on Telegram with your shop's own link", "Instagram (once enabled)", "Pay only for what you use"] },
+      pro: { label: "Pro", features: ["Everything in Basic", "Your own Telegram bot with your shop's name and photo"] },
+      business: { label: "Business", features: ["Everything in Pro", "Replisto answers from your personal Telegram account (Telegram Business)"] },
+    },
     kinds: { topup: "Top-up", usage: "Usage", plan_fee: "Plan fee", bonus: "Gift", adjustment: "Adjustment" },
   },
 
   catalogue: {
     title: "Products",
-    subtitle: "Everything Javab knows about your products, however you taught it.",
+    subtitle: "Everything Replisto knows about your products, however you taught it.",
     summary: (total, inStock, out) => `${total} products · ${inStock} in stock · ${out} sold out`,
     add: "Add product",
     connectSheet: "Google Sheet / Excel",
@@ -194,7 +199,7 @@ const launch: Dict["launch"] = {
     saved: "Product saved",
     deleted: "Product deleted",
     deleteConfirm: (name) => `Delete “${name}”? The bot will no longer know it.`,
-    botKnows: "What Javab knows about this product",
+    botKnows: "What Replisto knows about this product",
     botFields: {
       name: "Name",
       sku: "Code",
@@ -215,7 +220,7 @@ const launch: Dict["launch"] = {
   },
 
   teach: {
-    title: "Teach Javab",
+    title: "Teach Replisto",
     subtitle: "Describe your products and shop any way you like; before saving, you see what it understood.",
     tabText: "Text",
     tabLink: "Google link",
@@ -267,7 +272,7 @@ const launch: Dict["launch"] = {
   },
 
   signupTerms: {
-    before: "By creating an account you accept Javab's ",
+    before: "By creating an account you accept Replisto's ",
     terms: "Terms of Service",
     and: " and ",
     privacy: "Privacy Policy",
@@ -289,13 +294,20 @@ const launch: Dict["launch"] = {
     confirm: "Verify",
     changeNumber: "Change number",
     phoneDone: (phone) => `${phone} is verified`,
-    viaBot: "Quicker, no SMS: in the Javab bot on Telegram or Bale, tap “📱 تأیید شماره موبایل”.",
+    viaBot: "Quicker, no SMS: in the Replisto bot on Telegram or Bale, tap the 📱 phone verification button.",
     giftReceived: (amount) => `🎁 ${amount} toman of gift credit was added to your wallet!`,
     pageTitle: "Verify email",
     checking: "Verifying…",
     done: "Your email is verified. Thanks!",
     toPanel: "Go to the panel",
     noToken: "The link is incomplete. Ask for a new one in the panel (Account).",
+    gateTitle: "Verify your email",
+    gateSubtitle: "One step left to create your account",
+    gateBody: (email: string) => `We sent a verification link to ${email}. Click it to activate your account; this page opens by itself.`,
+    gateSpam: "No email? Check your spam folder, or send it again.",
+    gateWaiting: "Waiting for verification…",
+    wrongEmail: "Typed the wrong email?",
+    signUpAgain: "Log out and sign up again",
   },
 
   gift: {

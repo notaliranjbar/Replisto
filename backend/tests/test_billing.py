@@ -1,4 +1,4 @@
-"""The wallet: pay-as-you-go answers, an empty wallet, plans, and top-ups (Aban, Zarinpal)."""
+"""The wallet: pay-as-you-go answers, an empty wallet, and top-ups (Aban, Zarinpal)."""
 
 import hashlib
 import hmac
@@ -21,7 +21,6 @@ from app.models import (
     MessageSender,
     Payment,
     PaymentStatus,
-    Plan,
     Shop,
     User,
     WalletEntry,
@@ -185,7 +184,7 @@ async def test_billing_off_charges_nothing(
 
 
 async def test_signing_up_alone_earns_no_gift(client: AsyncClient, billing_on: None) -> None:
-    """The gift waits for a linked Telegram/Bale account (test_verification.py)."""
+    """The gift waits for a verified phone number (test_verification.py)."""
     resp = await client.post(
         "/api/v1/auth/register",
         json={"email": "new@shop.ir", "password": "strongpass1", "shop_name": "S"},
@@ -199,59 +198,8 @@ async def test_signing_up_alone_earns_no_gift(client: AsyncClient, billing_on: N
     assert gift == {
         "amount_toman": get_settings().signup_credit_rial // 10,
         "granted": False,
-        "messenger_linked": False,
-        "phone_required": True,
         "phone_verified": False,
     }
-
-
-async def test_plans(
-    client: AsyncClient, auth_headers: dict, db: AsyncSession, billing_on: None
-) -> None:
-    fee = get_settings().plan_pro_monthly_rial
-    resp = await client.post("/api/v1/billing/plan", json={"plan": "pro"}, headers=auth_headers)
-    assert resp.status_code == 402  # the auth fixture's shop has no credit
-
-    shop = await db.scalar(select(Shop))
-    assert shop is not None
-    shop.balance_rial = fee + 50_000
-    await db.commit()
-    body = (
-        await client.post("/api/v1/billing/plan", json={"plan": "pro"}, headers=auth_headers)
-    ).json()
-    assert body["plan"] == "pro" and body["balance_toman"] == 5_000
-    assert body["plan_renews_at"] is not None
-
-    # A downgrade waits for the paid month to end.
-    body = (
-        await client.post("/api/v1/billing/plan", json={"plan": "basic"}, headers=auth_headers)
-    ).json()
-    assert body["plan"] == "pro" and body["plan_next"] == "basic"
-
-
-async def test_renewal_without_credit_falls_back_to_basic(
-    db: AsyncSession, shop: Shop, billing_on: None
-) -> None:
-    shop.plan = Plan.BUSINESS
-    shop.plan_renews_at = utcnow() - timedelta(minutes=1)
-    shop.balance_rial = 1000
-    await db.commit()
-    changes = await billing.renew_plans(db)
-    assert [s.id for s, _ in changes] == [shop.id]
-    await db.refresh(shop)
-    assert shop.plan == Plan.BASIC and shop.plan_renews_at is None
-
-
-async def test_renewal_with_credit(db: AsyncSession, shop: Shop, billing_on: None) -> None:
-    shop.plan = Plan.PRO
-    due = utcnow() - timedelta(minutes=1)
-    shop.plan_renews_at = due
-    shop.balance_rial = get_settings().plan_pro_monthly_rial
-    await db.commit()
-    assert await billing.renew_plans(db) == []
-    await db.refresh(shop)
-    assert shop.plan == Plan.PRO and shop.balance_rial == 0
-    assert as_utc(shop.plan_renews_at) > utcnow() + timedelta(days=29)
 
 
 async def test_zarinpal_topup(

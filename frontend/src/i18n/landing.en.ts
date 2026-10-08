@@ -1,9 +1,9 @@
-import type { Dict } from "./fa";
+import type { Dict } from "./ar";
 
 const landing: Dict["landing"] = {
   meta: {
-    title: "Javab — AI agent for your business",
-    description: "Javab is an AI agent for your business: it talks to your customers using your own info and products, helps with sales and support, and works on your messaging channels.",
+    title: "Replisto — AI agent for your business",
+    description: "Replisto is an AI agent for your business: it talks to your customers using your own info and products, helps with sales and support, and works on your messaging channels.",
   },
 
   nav: {
@@ -17,7 +17,7 @@ const landing: Dict["landing"] = {
     menu: "Open menu",
     closeMenu: "Close menu",
     main: "Main navigation",
-    home: "Javab home",
+    home: "Replisto home",
     skip: "Skip to main content",
   },
 
@@ -26,10 +26,10 @@ const landing: Dict["landing"] = {
     titleBefore: "An AI ",
     titleMark: "teammate",
     titleAfter: " for your business",
-    lead: "Javab talks to your customers using your own info and products: it answers questions, guides purchases and keeps requests on track. When it should, it hands the conversation to you.",
+    lead: "Replisto talks to your customers using your own info and products: it answers questions, guides purchases and keeps requests on track. When it should, it hands the conversation to you.",
     primary: "Create account",
     secondary: "See what it does",
-    rolesLabel: "Javab's roles",
+    rolesLabel: "Replisto's roles",
     roles: ["Sales", "Support", "Advisor", "Assistant", "Follow-up"],
     channelsLabel: "On your channels",
   },
@@ -39,9 +39,9 @@ const landing: Dict["landing"] = {
     example: "Example",
     shop: "Customer conversation",
     customer: "neda_k",
-    botOn: "Javab is on",
-    auto: "Auto-reply by Javab",
-    typing: "Javab is typing",
+    botOn: "Replisto is on",
+    auto: "Auto-reply by Replisto",
+    typing: "Replisto is typing",
     m1: "Hi, do you have the black linen coat in size 44?",
     m2: "Hi! Yes, it's in stock. There are 2 left in black, size 44, and it's 1,250,000 toman.",
     lookup: "Stock checked in your product list",
@@ -60,7 +60,7 @@ const landing: Dict["landing"] = {
   roles: {
     eyebrow: "Capabilities",
     title: "One teammate, several roles",
-    lead: "Javab works the way your business needs it to — from sales and support to guidance and follow-up.",
+    lead: "Replisto works the way your business needs it to — from sales and support to guidance and follow-up.",
     items: [
       { title: "Sales", body: "Answers buyers' questions about products, prices and stock, and stays with them until they decide." },
       { title: "Support", body: "Handles customers' everyday questions and requests around the clock, using your own information." },
@@ -73,7 +73,7 @@ const landing: Dict["landing"] = {
   channels: {
     eyebrow: "Channels",
     title: "Works where your customers already are",
-    lead: "Connect your business's messaging channels; Javab works across all of them with the same knowledge and the same voice.",
+    lead: "Connect your business's messaging channels; Replisto works across all of them with the same knowledge and the same voice.",
     names: { instagram: "Instagram", whatsapp: "WhatsApp", telegram: "Telegram", bale: "Bale" },
     connect: (name) => `Connect ${name}`,
     live: "Live",
@@ -81,7 +81,7 @@ const landing: Dict["landing"] = {
   },
 
   problem: {
-    eyebrow: "Why Javab",
+    eyebrow: "Why Replisto",
     title: "Most customer messages are the same few questions",
     lead: "Price, size, stock, shipping cost, payment. Customers want the answer now, even at 2 a.m. — and a message left unanswered is usually a sale that doesn't happen.",
     inboxTitle: "Last night's messages",
@@ -96,7 +96,7 @@ const landing: Dict["landing"] = {
     ],
     points: [
       { title: "Replies in seconds, around the clock", body: "Every customer message is answered right away — at night, on holidays, or in the middle of a rush." },
-      { title: "Only from your own information", body: "Javab doesn't make things up. Answers come from your business info and your product list." },
+      { title: "Only from your own information", body: "Replisto doesn't make things up. Answers come from your business info and your product list." },
       { title: "When it doesn't know, it doesn't guess", body: "A question your info doesn't cover is handed to you instead of getting a wrong answer." },
     ],
   },
@@ -104,10 +104,10 @@ const landing: Dict["landing"] = {
   features: {
     eyebrow: "How it works",
     title: "A teammate that knows your business",
-    lead: "Javab works from your own information, products and rules — like a well-trained colleague.",
+    lead: "Replisto works from your own information, products and rules — like a well-trained colleague.",
     knowledge: {
       title: "Works from your business info",
-      body: "Write down shipping, payment, returns and FAQs once, or upload a PDF, Word file or photo of them. Javab answers only from this information.",
+      body: "Write down shipping, payment, returns and FAQs once, or upload a PDF, Word file or photo of them. Replisto answers only from this information.",
       bullets: [
         "Text in files and photos is extracted automatically, and you can edit it",
         "Questions your info didn't cover are collected so you can add the answer in one click",
@@ -115,7 +115,7 @@ const landing: Dict["landing"] = {
     },
     products: {
       title: "Prices and stock, always current",
-      body: "Connect your product list from Google Sheets or an Excel file. Before every answer, Javab checks price and stock in that list.",
+      body: "Connect your product list from Google Sheets or an Excel file. Before every answer, Replisto checks price and stock in that list.",
       bullets: [
         "Google Sheets syncs automatically every 5 minutes",
         "If a colour or size is sold out, it suggests the variants still in stock",
@@ -129,13 +129,13 @@ const landing: Dict["landing"] = {
         "You hear about it right away in your own Telegram or Bale, and reply from there",
         "Browser notification and a count in the tab title",
         "Replying to the customer yourself closes the handoff automatically",
-        "While you're in the conversation, Javab stays quiet for that customer",
+        "While you're in the conversation, Replisto stays quiet for that customer",
       ],
     },
     control: {
       title: "Your tone, your rules",
-      body: "Friendly or formal, with or without emoji. Write rules Javab must never break, and pause it for any single customer whenever you like.",
-      bullets: ["Before you start, ask questions as a customer on the test page", "Turn Javab on or off for everyone with one switch"],
+      body: "Friendly or formal, with or without emoji. Write rules Replisto must never break, and pause it for any single customer whenever you like.",
+      bullets: ["Before you start, ask questions as a customer on the test page", "Turn Replisto on or off for everyone with one switch"],
     },
   },
 
@@ -202,15 +202,15 @@ const landing: Dict["landing"] = {
     steps: [
       { title: "Connect a channel", body: "Your shop's own link on Telegram and Bale is ready; put it in your bio and channel. No passwords needed. Instagram is coming soon." },
       { title: "Info and products", body: "Enter shipping, payment, returns and FAQs, and connect your product list." },
-      { title: "Test Javab", body: "Ask questions as a customer on the test page and see the replies. Nothing is sent to anyone." },
-      { title: "Go live", body: "Flip one switch. From then on, Javab talks to your customers and you only see what's handed to you." },
+      { title: "Test Replisto", body: "Ask questions as a customer on the test page and see the replies. Nothing is sent to anyone." },
+      { title: "Go live", body: "Flip one switch. From then on, Replisto talks to your customers and you only see what's handed to you." },
     ],
   },
 
   trust: {
     eyebrow: "Security & control",
     title: "Your accounts, your rules, your data",
-    lead: "Javab is built so the business owner always stays in control.",
+    lead: "Replisto is built so the business owner always stays in control.",
     items: [
       { title: "Official channel connections", body: "Each channel connects through that platform's official flow. We never ask for your account passwords." },
       { title: "Encrypted access", body: "Channel access tokens are stored encrypted, and your password only as a hash." },
@@ -225,7 +225,7 @@ const landing: Dict["landing"] = {
     title: "Before you start, you might ask",
     items: [
       {
-        q: "Which channels does Javab work on?",
+        q: "Which channels does Replisto work on?",
         a: "Today, Telegram and Bale. Every shop gets its own link that takes customers straight to that shop's assistant; you can also have your own bot with your shop's name, or let it answer from your personal Telegram account. Instagram is coming soon.",
       },
       {
@@ -233,12 +233,12 @@ const landing: Dict["landing"] = {
         a: "No. Telegram and Bale connect with a one-time link from the panel, and we never ask for any password. You can disconnect any time from the panel.",
       },
       {
-        q: "What happens when Javab doesn't know an answer?",
+        q: "What happens when Replisto doesn't know an answer?",
         a: "It doesn't guess. It tells the customer their question is being followed up, hands the conversation to you, and lets you know in the panel and with a browser notification.",
       },
       {
         q: "Can I still talk to customers myself?",
-        a: "Yes. Whenever you reply yourself, Javab stays quiet for that customer for a while — you choose how long. You can also pause it completely for any customer.",
+        a: "Yes. Whenever you reply yourself, Replisto stays quiet for that customer for a while — you choose how long. You can also pause it completely for any customer.",
       },
       {
         q: "How do I add my products?",
@@ -246,13 +246,13 @@ const landing: Dict["landing"] = {
       },
       {
         q: "Does it reply to comments too?",
-        a: "Not yet. Javab works on customers' private messages.",
+        a: "Not yet. Replisto works on customers' private messages.",
       },
     ],
   },
 
   cta: {
-    title: "Add Javab to your team",
+    title: "Add Replisto to your team",
     lead: "Create an account, add your business info, and try it yourself before you go live.",
     primary: "Create account",
     secondary: "Log in to the panel",
@@ -264,7 +264,7 @@ const landing: Dict["landing"] = {
     account: "Account",
     legal: "Legal",
     support: "Support",
-    rights: (year) => `© ${year} Javab`,
+    rights: (year) => `© ${year} Replisto`,
   },
 };
 

@@ -122,7 +122,6 @@ async def main() -> None:
         )
         user.shop = Shop(
             name="مزون مهسا",
-            slug="demo-mahsa",
             bot_enabled=True,
             balance_rial=DEMO_CREDIT_RIAL,
             signup_gift_at=now,

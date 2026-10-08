@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -15,12 +15,19 @@
           document.documentElement.style.colorScheme = "dark";
         }
       } catch (e) {}
+      try {
+        var l = new URLSearchParams(location.search).get("lang") || localStorage.getItem("dm.lang");
+        if (l === "ar") {
+          document.documentElement.lang = "ar";
+          document.documentElement.dir = "rtl";
+        }
+      } catch (e) {}
     </script>
-    <meta name="description" content="«جواب» ایجنت هوش مصنوعی کسب‌وکار شماست: با اطلاعات و محصولات خودتان با مشتری‌ها گفتگو می‌کند، در فروش و پشتیبانی کمک می‌کند و روی کانال‌های ارتباطی شما کار می‌کند." />
-    <meta property="og:title" content="جواب — ایجنت هوش مصنوعی برای کسب‌وکار" />
-    <meta property="og:description" content="همکار هوشمند کسب‌وکار شما: فروش، پشتیبانی، مشاوره و پیگیری مشتری." />
-    <meta property="og:image" content="/brand/javab-logo-512.png" />
-    <title>جواب — ایجنت هوش مصنوعی برای کسب‌وکار</title>
+    <meta name="description" content="Replisto is an AI agent for your business: it talks to your customers using your own info and products, helps with sales and support, and works on your messaging channels." />
+    <meta property="og:title" content="Replisto — AI agent for your business" />
+    <meta property="og:description" content="Your business's smart teammate: sales, support, advice and customer follow-up." />
+    <meta property="og:image" content="/brand/replisto-logo-512.png" />
+    <title>Replisto — AI agent for your business</title>
   </head>
   <body>
     <div id="root"></div>

@@ -93,7 +93,7 @@ export default function Knowledge() {
 }
 
 function Usage({ used, limit }: { used: number; limit: number }) {
-  const { t, f, lang } = useI18n();
+  const { t, f } = useI18n();
   const full = used >= limit;
   const pct = Math.min(100, Math.round((used / Math.max(limit, 1)) * 100));
   return (
@@ -101,7 +101,7 @@ function Usage({ used, limit }: { used: number; limit: number }) {
       <div className="text-sm font-semibold text-slate-500">{t.knowledge.usage}</div>
       <div className="num mb-3 mt-1 text-2xl font-extrabold text-ink-950">
         {f.num(pct)}
-        {lang === "fa" ? "٪" : "%"}
+        %
       </div>
       <ProgressBar value={used} max={limit} />
       <div className="num mt-2 text-xs text-slate-500">

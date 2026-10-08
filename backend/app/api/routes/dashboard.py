@@ -20,10 +20,6 @@ from app.models import (
     ProductSource,
     ProposalStatus,
     TeachProposal,
-    TelegramAdmin,
-    TelegramBot,
-    TelegramBusinessConnection,
-    TelegramChannel,
 )
 from app.services import gifts
 from app.services.llm import LLMError
@@ -39,17 +35,6 @@ class SetupStatus(BaseModel):
     # False when Meta revoked access; the owner must reconnect.
     instagram_active: bool
     instagram_username: str | None
-    # Telegram: the shared bot is running, the owner linked their account, and how many
-    # ways customers reach the shop there (start link is always one; + own bot, business).
-    telegram_available: bool
-    telegram_owner_linked: bool
-    # Bale (بله) is a separate channel with the same kind of setup.
-    bale_available: bool
-    bale_owner_linked: bool
-    bale_custom_bot: bool
-    telegram_custom_bot: bool
-    telegram_business: bool
-    telegram_channels: int
     knowledge_entries: int
     products_connected: bool
     product_count: int
@@ -67,12 +52,10 @@ class Stats(BaseModel):
 
 
 class GiftStatus(BaseModel):
-    """The sign-up gift: given once the owner links Telegram/Bale (+ verifies their phone)."""
+    """The sign-up gift: given once the owner verifies their mobile number."""
 
     amount_toman: int  # 0: no gift on this server
     granted: bool
-    messenger_linked: bool
-    phone_required: bool
     phone_verified: bool
 
 
@@ -80,14 +63,13 @@ class WalletStatus(BaseModel):
     enabled: bool
     balance_toman: int
     low_balance: bool
-    plan: str
     gift: GiftStatus
 
 
 class DashboardOut(BaseModel):
     setup: SetupStatus
     wallet: WalletStatus
-    # Things the owner taught (in Telegram or here) that wait for their OK.
+    # Things the owner taught that wait for their OK.
     pending_proposals: int
     # DMs waiting for the owner right now (the bot didn't know the answer).
     open_handoffs: int
@@ -177,15 +159,6 @@ async def dashboard(shop: CurrentShop, db: DbSession) -> DashboardOut:
             or 0
         )
 
-    shared_platforms = set(
-        (
-            await db.scalars(
-                select(TelegramBot.platform).where(
-                    TelegramBot.shop_id.is_(None), TelegramBot.is_active.is_(True)
-                )
-            )
-        ).all()
-    )
     settings = get_settings()
     return DashboardOut(
         open_handoffs=open_handoffs or 0,
@@ -193,7 +166,6 @@ async def dashboard(shop: CurrentShop, db: DbSession) -> DashboardOut:
             enabled=settings.billing_enabled,
             balance_toman=shop.balance_rial // 10,
             low_balance=settings.billing_enabled and shop.balance_rial < settings.low_balance_rial,
-            plan=shop.plan.value,
             gift=GiftStatus(**await gifts.status(db, shop)),
         ),
         pending_proposals=await exists(
@@ -201,24 +173,6 @@ async def dashboard(shop: CurrentShop, db: DbSession) -> DashboardOut:
         ),
         setup=SetupStatus(
             instagram_available=settings.instagram_enabled,
-            telegram_available="telegram" in shared_platforms,
-            bale_available="bale" in shared_platforms,
-            telegram_owner_linked=await exists(TelegramAdmin, TelegramAdmin.platform == "telegram")
-            > 0,
-            telegram_custom_bot=await exists(
-                TelegramBot, TelegramBot.is_active.is_(True), TelegramBot.platform == "telegram"
-            )
-            > 0,
-            bale_owner_linked=await exists(TelegramAdmin, TelegramAdmin.platform == "bale") > 0,
-            bale_custom_bot=await exists(
-                TelegramBot, TelegramBot.is_active.is_(True), TelegramBot.platform == "bale"
-            )
-            > 0,
-            telegram_business=await exists(
-                TelegramBusinessConnection, TelegramBusinessConnection.is_enabled.is_(True)
-            )
-            > 0,
-            telegram_channels=await exists(TelegramChannel, TelegramChannel.is_active.is_(True)),
             instagram_connected=account is not None,
             instagram_active=bool(account and account.is_active),
             instagram_username=account.username if account else None,

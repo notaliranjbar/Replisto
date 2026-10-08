@@ -1,9 +1,11 @@
 import type { Section } from "../api/types";
 import type { Lang } from ".";
 
-// Section labels come from the API in Persian (docs/FRONTEND.md §4.3). For the English
-// panel (Meta's reviewers) we swap in translations; unknown keys fall back to the API text.
-const en: Record<string, Pick<Section, "label" | "hint" | "placeholder">> = {
+// Section labels come from the API in Persian (docs/FRONTEND.md §4.3); the panel swaps in its
+// own translations. Unknown keys fall back to the API text.
+type Copy = Record<string, Pick<Section, "label" | "hint" | "placeholder">>;
+
+const en: Copy = {
   about: {
     label: "About the shop",
     hint: "What does your shop sell, and what should customers know about it?",
@@ -46,7 +48,52 @@ const en: Record<string, Pick<Section, "label" | "hint" | "placeholder">> = {
   },
 };
 
+const ar: Copy = {
+  about: {
+    label: "عن المتجر",
+    hint: "ماذا يبيع متجرك، وما الذي يجب أن يعرفه العملاء عنه؟",
+    placeholder: "مثلًا: بوتيك نورة، نصمم العبايات والبلوزات النسائية منذ 2019. كل القطع تُخاط لدينا.",
+  },
+  shipping: {
+    label: "الشحن",
+    hint: "طرق الشحن والتكلفة ومدة التوصيل والمدن الأخرى والخارج",
+    placeholder: "مثلًا: بريد سريع، من 3 إلى 5 أيام عمل، 85,000 تومان. مجاني للطلبات فوق مليونين.",
+  },
+  payment: {
+    label: "الدفع",
+    hint: "طرق الدفع وكيفية تقديم الطلب",
+    placeholder: "مثلًا: تحويل بنكي أو الدفع عبر الموقع. الدفع عند الاستلام داخل المدينة فقط.",
+  },
+  returns: {
+    label: "الإرجاع والاستبدال",
+    hint: "شروط الإرجاع أو الاستبدال ومدته",
+    placeholder: "مثلًا: استبدال المقاس خلال 7 أيام من الاستلام إذا لم يُلبس وكانت البطاقة سليمة.",
+  },
+  contact: {
+    label: "التواصل وساعات العمل",
+    hint: "الموقع والهاتف والعنوان وساعات الدعم",
+    placeholder: "مثلًا: noura.shop، الدعم من 10 صباحًا حتى 8 مساءً، مغلق يوم الجمعة.",
+  },
+  faq: {
+    label: "الأسئلة الشائعة",
+    hint: "أسئلة يطرحها العملاء كثيرًا، مع إجاباتها",
+    placeholder: "السؤال: ما نوع القماش؟ / الإجابة: كتان تركي فاخر",
+  },
+  free_text: {
+    label: "معلومات أخرى",
+    hint: "أي شيء آخر يجب أن يعرفه البوت",
+    placeholder: "مثلًا: خصم 15% على طلبك الأول بالرمز FIRST15",
+  },
+  file: {
+    label: "الملفات المرفوعة",
+    hint: "النص المستخرج من ملفاتك. يمكنك تعديله.",
+    placeholder: "",
+  },
+};
+
+const copies: Record<Lang, Copy> = { en, ar };
+
 export function localizeSection(section: Section, lang: Lang): Section {
-  const tr = lang === "en" ? en[section.key] : undefined;
+  const tr = copies[lang][section.key];
   return tr ? { ...section, ...tr } : section;
 }

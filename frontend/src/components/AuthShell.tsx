@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { Languages } from "lucide-react";
-import { useI18n } from "../i18n";
+import { otherLang, useI18n } from "../i18n";
 import { Logo, LogoMark } from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
@@ -22,7 +22,7 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
               className="inline-flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-ink-950"
             >
               <Languages className="size-4" aria-hidden />
-              <span lang={lang === "fa" ? "en" : "fa"}>{t.otherLang}</span>
+              <span lang={otherLang(lang)}>{t.otherLang}</span>
             </button>
           </div>
         </header>

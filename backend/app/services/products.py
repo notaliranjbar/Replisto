@@ -1,9 +1,8 @@
 """Product catalogue: import from Google Sheets / Excel / CSV, column mapping, and search.
 
-Every product lives in Javab's own catalogue (`products`), whatever way the owner taught it:
+Every product lives in Replisto's own catalogue (`products`), whatever way the owner taught it:
 typed in the panel, a live Google Sheet (re-synced every few minutes), an Excel/CSV upload,
-something the AI understood from text/a document (services/teach.py), or a post in the
-shop's Telegram channel. The bot looks products up through a tool call, so prices and stock
+or something the AI understood from text/a document (services/teach.py). The bot looks products up through a tool call, so prices and stock
 always come from the owner's data instead of the model's imagination.
 
 A sheet or file import only replaces the rows that came from that same source; products added

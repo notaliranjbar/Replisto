@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { ArrowRight, Languages, Menu, X } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
-import { useI18n } from "../../i18n";
+import { otherLang, useI18n } from "../../i18n";
 import { Logo } from "../Logo";
 import ThemeToggle from "../ThemeToggle";
 import { buttonClass, cx } from "../ui";
@@ -39,7 +39,7 @@ export default function SiteHeader({ overHero = false }: { overHero?: boolean })
   const labels: Record<(typeof SECTIONS)[number], string> = { roles: L.roles, channels: L.channels, how: L.how, faq: L.faq };
   // the landing sections only exist for visitors; for a logged-in user "/" is the dashboard
   const sections = loggedIn ? [] : SECTIONS;
-  const otherLang = lang === "fa" ? "en" : "fa";
+  const switchTo = otherLang(lang);
 
   return (
     <header
@@ -89,7 +89,7 @@ export default function SiteHeader({ overHero = false }: { overHero?: boolean })
             )}
           >
             <Languages className="size-4" aria-hidden />
-            <span lang={otherLang}>{t.otherLang}</span>
+            <span lang={switchTo}>{t.otherLang}</span>
           </button>
           {loggedIn ? (
             <Link to="/" className={buttonClass(light ? "inverse" : "primary", "md", "max-sm:hidden")}>
@@ -251,7 +251,7 @@ function MobileMenu({
                 className="flex h-11 items-center gap-2 rounded-lg px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
               >
                 <Languages className="size-4" aria-hidden />
-                <span lang={lang === "fa" ? "en" : "fa"}>{t.otherLang}</span>
+                <span lang={otherLang(lang)}>{t.otherLang}</span>
               </button>
               <ThemeToggle label className="h-11 rounded-lg px-4 text-sm font-medium text-slate-600 hover:bg-slate-100" />
             </div>

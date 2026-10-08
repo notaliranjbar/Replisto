@@ -1,6 +1,6 @@
 import { cx } from "../ui";
 
-// Messaging channels Javab works on. Marks are single-colour (currentColor) so all four sit in
+// Messaging channels Replisto works on. Marks are single-colour (currentColor) so all four sit in
 // the same style: Instagram, WhatsApp and Telegram from Simple Icons (CC0), Bale from bale.ai.
 // Telegram and Bale are live; Instagram waits for Meta's approval. Flip `live` as it ships.
 

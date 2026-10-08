@@ -1,4 +1,4 @@
-import type { Dict } from "./fa";
+import type { Dict } from "./ar";
 
 const panel: Dict["panel"] = {
   nav: {
@@ -47,7 +47,7 @@ const panel: Dict["panel"] = {
 
   settings: {
     sections: {
-      status: { title: "Status", desc: "Turn Javab on or off for all conversations." },
+      status: { title: "Status", desc: "Turn Replisto on or off for all conversations." },
       identity: { title: "Introduction", desc: "The name the bot introduces itself with." },
       tone: { title: "Tone", desc: "How the bot talks to customers. See a sample of each." },
       fallback: { title: "When it doesn't know", desc: "The message sent while the conversation is handed to you." },

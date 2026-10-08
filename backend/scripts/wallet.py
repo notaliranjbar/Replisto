@@ -32,7 +32,7 @@ async def main(argv: list[str]) -> None:
             note = argv[3] if len(argv) > 3 else "تنظیم دستی"
             amount = toman * 10 if action == "credit" else -toman * 10
             await billing.apply(db, shop, amount, WalletEntryKind.ADJUSTMENT, note)
-        print(f"{shop.name}: {billing.toman(shop.balance_rial)} (plan {shop.plan.value})")
+        print(f"{shop.name}: {billing.toman(shop.balance_rial)}")
         entries = await db.scalars(
             select(WalletEntry)
             .where(WalletEntry.shop_id == shop.id)

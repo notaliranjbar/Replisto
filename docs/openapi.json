@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Javab",
+    "title": "Replisto",
     "version": "0.2.0"
   },
   "paths": {
@@ -705,269 +705,6 @@
         ]
       }
     },
-    "/api/v1/telegram": {
-      "get": {
-        "tags": [
-          "telegram"
-        ],
-        "summary": "Get Status",
-        "operationId": "get_status_api_v1_telegram_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TelegramStatus"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      },
-      "patch": {
-        "tags": [
-          "telegram"
-        ],
-        "summary": "Update",
-        "operationId": "update_api_v1_telegram_patch",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MessengerUpdate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TelegramStatus"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/telegram/link": {
-      "post": {
-        "tags": [
-          "telegram"
-        ],
-        "summary": "Create Link",
-        "description": "A one-time link that connects the owner's Telegram account to this shop.",
-        "operationId": "create_link_api_v1_telegram_link_post",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/telegram/admins/{admin_id}": {
-      "delete": {
-        "tags": [
-          "telegram"
-        ],
-        "summary": "Remove Admin",
-        "operationId": "remove_admin_api_v1_telegram_admins__admin_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "admin_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Admin Id"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/telegram/custom-bot": {
-      "put": {
-        "tags": [
-          "telegram"
-        ],
-        "summary": "Set Custom Bot",
-        "description": "Connect the shop's own Telegram bot by the token @BotFather gave (pro and business).",
-        "operationId": "set_custom_bot_api_v1_telegram_custom_bot_put",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CustomBotIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TelegramStatus"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "telegram"
-        ],
-        "summary": "Remove Custom Bot",
-        "operationId": "remove_custom_bot_api_v1_telegram_custom_bot_delete",
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/telegram/business": {
-      "delete": {
-        "tags": [
-          "telegram"
-        ],
-        "summary": "Disable Business",
-        "description": "Stop answering in the owner's account. (To remove it fully, the owner also removes the\nbot in Telegram > Settings > Telegram Business > Chatbots.)",
-        "operationId": "disable_business_api_v1_telegram_business_delete",
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/telegram/channels/{channel_id}": {
-      "delete": {
-        "tags": [
-          "telegram"
-        ],
-        "summary": "Remove Channel",
-        "operationId": "remove_channel_api_v1_telegram_channels__channel_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "channel_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Channel Id"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/knowledge/sections": {
       "get": {
         "tags": [
@@ -1572,7 +1309,7 @@
           "products"
         ],
         "summary": "List Products",
-        "description": "The shop's catalogue: everything Javab knows, however it was taught. Searchable.",
+        "description": "The shop's catalogue: everything Replisto knows, however it was taught. Searchable.",
         "operationId": "list_products_api_v1_products_get",
         "security": [
           {
@@ -3042,53 +2779,6 @@
         }
       }
     },
-    "/api/v1/billing/plan": {
-      "post": {
-        "tags": [
-          "billing"
-        ],
-        "summary": "Change Plan",
-        "description": "Upgrade (starts now, the month's fee is paid from the wallet) or downgrade (applies\nwhen the paid month ends).",
-        "operationId": "change_plan_api_v1_billing_plan_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlanChange"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BillingOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
     "/api/v1/billing/topup": {
       "post": {
         "tags": [
@@ -3134,208 +2824,6 @@
           }
         ]
       }
-    },
-    "/api/v1/bale": {
-      "get": {
-        "tags": [
-          "bale"
-        ],
-        "summary": "Get Bale",
-        "operationId": "get_bale_api_v1_bale_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaleStatus"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      },
-      "patch": {
-        "tags": [
-          "bale"
-        ],
-        "summary": "Update Bale",
-        "operationId": "update_bale_api_v1_bale_patch",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MessengerUpdate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaleStatus"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/bale/link": {
-      "post": {
-        "tags": [
-          "bale"
-        ],
-        "summary": "Create Bale Link",
-        "description": "A one-time link that connects the owner's Bale account to this shop.",
-        "operationId": "create_bale_link_api_v1_bale_link_post",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/bale/admins/{admin_id}": {
-      "delete": {
-        "tags": [
-          "bale"
-        ],
-        "summary": "Remove Bale Admin",
-        "operationId": "remove_bale_admin_api_v1_bale_admins__admin_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "admin_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Admin Id"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/bale/custom-bot": {
-      "put": {
-        "tags": [
-          "bale"
-        ],
-        "summary": "Set Bale Custom Bot",
-        "description": "Connect the shop's own Bale bot by the token Bale's @botfather gave (pro and business).",
-        "operationId": "set_bale_custom_bot_api_v1_bale_custom_bot_put",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CustomBotIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaleStatus"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "bale"
-        ],
-        "summary": "Remove Bale Custom Bot",
-        "operationId": "remove_bale_custom_bot_api_v1_bale_custom_bot_delete",
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
     }
   },
   "components": {
@@ -3352,47 +2840,6 @@
           "password"
         ],
         "title": "AccountDelete"
-      },
-      "AdminOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "telegram_user_id": {
-            "type": "integer",
-            "title": "Telegram User Id"
-          },
-          "username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Username"
-          },
-          "first_name": {
-            "type": "string",
-            "title": "First Name"
-          },
-          "notify": {
-            "type": "boolean",
-            "title": "Notify"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "telegram_user_id",
-          "username",
-          "first_name",
-          "notify"
-        ],
-        "title": "AdminOut"
       },
       "ApplyIn": {
         "properties": {
@@ -3416,81 +2863,6 @@
         "type": "object",
         "title": "ApplyIn"
       },
-      "BaleStatus": {
-        "properties": {
-          "available": {
-            "type": "boolean",
-            "title": "Available"
-          },
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled"
-          },
-          "shared_bot_username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Shared Bot Username"
-          },
-          "shop_link": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Shop Link"
-          },
-          "shop_code": {
-            "type": "string",
-            "title": "Shop Code"
-          },
-          "admins": {
-            "items": {
-              "$ref": "#/components/schemas/AdminOut"
-            },
-            "type": "array",
-            "title": "Admins"
-          },
-          "custom_bot": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CustomBotOut"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "custom_bot_allowed": {
-            "type": "boolean",
-            "title": "Custom Bot Allowed"
-          },
-          "plan": {
-            "$ref": "#/components/schemas/Plan"
-          }
-        },
-        "type": "object",
-        "required": [
-          "available",
-          "enabled",
-          "shared_bot_username",
-          "shop_link",
-          "shop_code",
-          "admins",
-          "custom_bot",
-          "custom_bot_allowed",
-          "plan"
-        ],
-        "title": "BaleStatus"
-      },
       "BillingOut": {
         "properties": {
           "enabled": {
@@ -3504,38 +2876,6 @@
           "low_balance": {
             "type": "boolean",
             "title": "Low Balance"
-          },
-          "plan": {
-            "$ref": "#/components/schemas/Plan"
-          },
-          "plan_renews_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Plan Renews At"
-          },
-          "plan_next": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Plan"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "plans": {
-            "items": {
-              "$ref": "#/components/schemas/PlanOut"
-            },
-            "type": "array",
-            "title": "Plans"
           },
           "pricing": {
             "$ref": "#/components/schemas/PricingOut"
@@ -3562,10 +2902,6 @@
           "enabled",
           "balance_toman",
           "low_balance",
-          "plan",
-          "plan_renews_at",
-          "plan_next",
-          "plans",
           "pricing",
           "topup_available",
           "gateway",
@@ -3636,86 +2972,13 @@
         ],
         "title": "Body_upload_file_api_v1_knowledge_upload_post"
       },
-      "BusinessOut": {
-        "properties": {
-          "connected": {
-            "type": "boolean",
-            "title": "Connected"
-          },
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled"
-          },
-          "can_reply": {
-            "type": "boolean",
-            "title": "Can Reply"
-          },
-          "telegram_user_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Telegram User Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "connected",
-          "enabled",
-          "can_reply",
-          "telegram_user_id"
-        ],
-        "title": "BusinessOut"
-      },
       "Channel": {
         "type": "string",
         "enum": [
-          "instagram",
-          "telegram",
-          "bale"
+          "instagram"
         ],
         "title": "Channel",
         "description": "Where a conversation happens. The bot itself is the same on every channel."
-      },
-      "ChannelOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Username"
-          },
-          "active": {
-            "type": "boolean",
-            "title": "Active"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "title",
-          "username",
-          "active"
-        ],
-        "title": "ChannelOut"
       },
       "ConnectUrlOut": {
         "properties": {
@@ -3739,11 +3002,6 @@
           },
           "channel": {
             "$ref": "#/components/schemas/Channel"
-          },
-          "telegram_business": {
-            "type": "boolean",
-            "title": "Telegram Business",
-            "default": false
           },
           "customer_id": {
             "type": "string",
@@ -3886,11 +3144,6 @@
           },
           "channel": {
             "$ref": "#/components/schemas/Channel"
-          },
-          "telegram_business": {
-            "type": "boolean",
-            "title": "Telegram Business",
-            "default": false
           },
           "customer_id": {
             "type": "string",
@@ -4036,57 +3289,6 @@
           "total"
         ],
         "title": "ConversationPage"
-      },
-      "CustomBotIn": {
-        "properties": {
-          "token": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 10,
-            "pattern": "^\\d+:[\\w-]+$",
-            "title": "Token"
-          }
-        },
-        "type": "object",
-        "required": [
-          "token"
-        ],
-        "title": "CustomBotIn"
-      },
-      "CustomBotOut": {
-        "properties": {
-          "username": {
-            "type": "string",
-            "title": "Username"
-          },
-          "active": {
-            "type": "boolean",
-            "title": "Active"
-          },
-          "last_error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Error"
-          },
-          "link": {
-            "type": "string",
-            "title": "Link"
-          }
-        },
-        "type": "object",
-        "required": [
-          "username",
-          "active",
-          "last_error",
-          "link"
-        ],
-        "title": "CustomBotOut"
       },
       "DashboardOut": {
         "properties": {
@@ -4291,14 +3493,6 @@
             "type": "boolean",
             "title": "Granted"
           },
-          "messenger_linked": {
-            "type": "boolean",
-            "title": "Messenger Linked"
-          },
-          "phone_required": {
-            "type": "boolean",
-            "title": "Phone Required"
-          },
           "phone_verified": {
             "type": "boolean",
             "title": "Phone Verified"
@@ -4308,12 +3502,10 @@
         "required": [
           "amount_toman",
           "granted",
-          "messenger_linked",
-          "phone_required",
           "phone_verified"
         ],
         "title": "GiftStatus",
-        "description": "The sign-up gift: given once the owner links Telegram/Bale (+ verifies their phone)."
+        "description": "The sign-up gift: given once the owner verifies their mobile number."
       },
       "HTTPValidationError": {
         "properties": {
@@ -4337,11 +3529,6 @@
           },
           "channel": {
             "$ref": "#/components/schemas/Channel"
-          },
-          "telegram_business": {
-            "type": "boolean",
-            "title": "Telegram Business",
-            "default": false
           },
           "customer_igsid": {
             "type": "string",
@@ -4612,25 +3799,6 @@
         ],
         "title": "KnowledgeSection"
       },
-      "LinkOut": {
-        "properties": {
-          "url": {
-            "type": "string",
-            "title": "Url"
-          },
-          "expires_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Expires At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "url",
-          "expires_at"
-        ],
-        "title": "LinkOut"
-      },
       "LoginRequest": {
         "properties": {
           "email": {
@@ -4692,19 +3860,6 @@
           "owner"
         ],
         "title": "MessageSender"
-      },
-      "MessengerUpdate": {
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled"
-          }
-        },
-        "type": "object",
-        "required": [
-          "enabled"
-        ],
-        "title": "MessengerUpdate"
       },
       "PasswordChange": {
         "properties": {
@@ -4810,58 +3965,6 @@
           "gift_toman"
         ],
         "title": "PhoneVerifiedOut"
-      },
-      "Plan": {
-        "type": "string",
-        "enum": [
-          "basic",
-          "pro",
-          "business"
-        ],
-        "title": "Plan",
-        "description": "What a shop pays for on top of usage. Usage (AI answers) costs the same on every plan."
-      },
-      "PlanChange": {
-        "properties": {
-          "plan": {
-            "$ref": "#/components/schemas/Plan"
-          }
-        },
-        "type": "object",
-        "required": [
-          "plan"
-        ],
-        "title": "PlanChange"
-      },
-      "PlanOut": {
-        "properties": {
-          "key": {
-            "$ref": "#/components/schemas/Plan"
-          },
-          "label": {
-            "type": "string",
-            "title": "Label"
-          },
-          "monthly_fee_toman": {
-            "type": "integer",
-            "title": "Monthly Fee Toman"
-          },
-          "features": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Features"
-          }
-        },
-        "type": "object",
-        "required": [
-          "key",
-          "label",
-          "monthly_fee_toman",
-          "features"
-        ],
-        "title": "PlanOut"
       },
       "PlaygroundIn": {
         "properties": {
@@ -5286,11 +4389,10 @@
           "manual",
           "sheet",
           "file",
-          "teach",
-          "telegram_post"
+          "teach"
         ],
         "title": "ProductOrigin",
-        "description": "How Javab learned about a product. Every product lives in Javab's own catalogue."
+        "description": "How Replisto learned about a product. Every product lives in Replisto's own catalogue."
       },
       "ProductOut": {
         "properties": {
@@ -5415,17 +4517,6 @@
               }
             ],
             "title": "Post Url"
-          },
-          "telegram_post_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Telegram Post Url"
           },
           "bot_view": {
             "additionalProperties": true,
@@ -5937,38 +5028,6 @@
             ],
             "title": "Instagram Username"
           },
-          "telegram_available": {
-            "type": "boolean",
-            "title": "Telegram Available"
-          },
-          "telegram_owner_linked": {
-            "type": "boolean",
-            "title": "Telegram Owner Linked"
-          },
-          "bale_available": {
-            "type": "boolean",
-            "title": "Bale Available"
-          },
-          "bale_owner_linked": {
-            "type": "boolean",
-            "title": "Bale Owner Linked"
-          },
-          "bale_custom_bot": {
-            "type": "boolean",
-            "title": "Bale Custom Bot"
-          },
-          "telegram_custom_bot": {
-            "type": "boolean",
-            "title": "Telegram Custom Bot"
-          },
-          "telegram_business": {
-            "type": "boolean",
-            "title": "Telegram Business"
-          },
-          "telegram_channels": {
-            "type": "integer",
-            "title": "Telegram Channels"
-          },
           "knowledge_entries": {
             "type": "integer",
             "title": "Knowledge Entries"
@@ -6007,14 +5066,6 @@
           "instagram_connected",
           "instagram_active",
           "instagram_username",
-          "telegram_available",
-          "telegram_owner_linked",
-          "bale_available",
-          "bale_owner_linked",
-          "bale_custom_bot",
-          "telegram_custom_bot",
-          "telegram_business",
-          "telegram_channels",
           "knowledge_entries",
           "products_connected",
           "product_count",
@@ -6073,10 +5124,6 @@
             "type": "string",
             "title": "Name"
           },
-          "slug": {
-            "type": "string",
-            "title": "Slug"
-          },
           "bot_enabled": {
             "type": "boolean",
             "title": "Bot Enabled"
@@ -6106,7 +5153,6 @@
         "required": [
           "id",
           "name",
-          "slug",
           "bot_enabled",
           "tone",
           "use_emoji",
@@ -6326,110 +5372,6 @@
           "open_unanswered"
         ],
         "title": "Stats"
-      },
-      "TelegramStatus": {
-        "properties": {
-          "available": {
-            "type": "boolean",
-            "title": "Available"
-          },
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled"
-          },
-          "shared_bot_username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Shared Bot Username"
-          },
-          "shop_link": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Shop Link"
-          },
-          "shop_code": {
-            "type": "string",
-            "title": "Shop Code"
-          },
-          "admins": {
-            "items": {
-              "$ref": "#/components/schemas/AdminOut"
-            },
-            "type": "array",
-            "title": "Admins"
-          },
-          "custom_bot": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CustomBotOut"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "custom_bot_allowed": {
-            "type": "boolean",
-            "title": "Custom Bot Allowed"
-          },
-          "plan": {
-            "$ref": "#/components/schemas/Plan"
-          },
-          "business": {
-            "$ref": "#/components/schemas/BusinessOut"
-          },
-          "business_allowed": {
-            "type": "boolean",
-            "title": "Business Allowed"
-          },
-          "business_bot_username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Business Bot Username"
-          },
-          "channels": {
-            "items": {
-              "$ref": "#/components/schemas/ChannelOut"
-            },
-            "type": "array",
-            "title": "Channels"
-          }
-        },
-        "type": "object",
-        "required": [
-          "available",
-          "enabled",
-          "shared_bot_username",
-          "shop_link",
-          "shop_code",
-          "admins",
-          "custom_bot",
-          "custom_bot_allowed",
-          "plan",
-          "business",
-          "business_allowed",
-          "business_bot_username",
-          "channels"
-        ],
-        "title": "TelegramStatus"
       },
       "TextIn": {
         "properties": {
@@ -6681,7 +5623,6 @@
         "enum": [
           "topup",
           "usage",
-          "plan_fee",
           "bonus",
           "adjustment"
         ],
@@ -6767,10 +5708,6 @@
             "type": "boolean",
             "title": "Low Balance"
           },
-          "plan": {
-            "type": "string",
-            "title": "Plan"
-          },
           "gift": {
             "$ref": "#/components/schemas/GiftStatus"
           }
@@ -6780,7 +5717,6 @@
           "enabled",
           "balance_toman",
           "low_balance",
-          "plan",
           "gift"
         ],
         "title": "WalletStatus"

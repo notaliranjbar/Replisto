@@ -2,7 +2,7 @@
 
     channel webhook ──► record_customer_message ──(enqueue, delayed)──► reply_to_conversation
                                                                               │
-                                    ChannelSender (Instagram / Telegram) ◄────┘
+                                         ChannelSender (Instagram) ◄────┘
 
 Decisions that are easy to get wrong live here:
 - Channels retry webhooks, so everything is idempotent on the message's external id.
@@ -11,7 +11,7 @@ Decisions that are easy to get wrong live here:
 - When the owner answers by hand the bot steps back for `shop.handoff_pause_minutes`. On
   Instagram our own sends come back as echoes and must not be mistaken for the owner.
 - When the bot can't answer, the conversation is handed off: the customer gets a message
-  once, the question waits in the owner's panel, and the owner is alerted in Telegram.
+  once, the question waits in the owner's panel, and the owner is alerted there.
 - Every AI answer is paid from the shop's wallet, once, after it is delivered. With an empty
   wallet the bot doesn't call the AI: the customer gets the fallback message and the
   conversation goes to the owner.
@@ -43,15 +43,15 @@ from app.services import billing
 from app.services.channels import ChannelSender, Gateways, SendError, sender_for, split_text
 from app.services.instagram import InstagramClient, InstagramError
 from app.services.llm import LLMError
-from app.services.notify import CHANNEL_LABELS, Notifier, NullNotifier
+from app.services.notify import Notifier, NullNotifier
 from app.services.posts import POST_MARKER, PostLink, post_key
 from app.services.responder import ChatTurn, Responder
-from app.services.telegram import TelegramClient
 from app.services.webhook import MessagingEvent
 
 logger = logging.getLogger(__name__)
 
 HISTORY_LIMIT = 20
+CHANNEL_NAMES = {Channel.INSTAGRAM: "Instagram"}
 EMPTY_WALLET_REASON = "موجودی کیف پول جواب تمام شده است"
 
 
@@ -195,12 +195,11 @@ async def reply_to_conversation(
     instagram: InstagramClient | None,
     responder: Responder,
     *,
-    telegram: TelegramClient | None = None,
     notifier: Notifier | None = None,
 ) -> None:
     """Answer the conversation, unless something newer or someone else already took over.
 
-    Raises the channel's error (InstagramError, TelegramError) or LLMError when the failure
+    Raises the channel's error (InstagramError) or LLMError when the failure
     is retryable, so the worker can retry the job.
     """
     notifier = notifier or NullNotifier()
@@ -214,9 +213,7 @@ async def reply_to_conversation(
     shop = await db.get(Shop, conversation.shop_id)
     if shop is None or not shop.bot_enabled:
         return
-    sender = await sender_for(
-        db, shop, conversation, Gateways(instagram=instagram, telegram=telegram)
-    )
+    sender = await sender_for(db, shop, conversation, Gateways(instagram=instagram))
     if sender is None:
         return
     now = utcnow()
@@ -345,13 +342,12 @@ async def _charge(
     tokens: tuple[int | None, int | None],
     notifier: Notifier,
 ) -> None:
-    label = CHANNEL_LABELS.get(conversation.channel, conversation.channel.value)
     running_low = await billing.charge_usage(
         db,
         shop,
         prompt_tokens=tokens[0],
         completion_tokens=tokens[1],
-        description=f"پاسخ به مشتری در {label}",
+        description=f"Customer reply on {CHANNEL_NAMES.get(conversation.channel, 'Instagram')}",
         details={"conversation_id": str(conversation.id)},
     )
     if running_low:
@@ -405,7 +401,7 @@ async def _open_handoff(
 
 
 async def _safe_notify(call) -> None:  # type: ignore[no-untyped-def]
-    """Alerts are best effort: a Telegram hiccup must never fail or retry a customer reply."""
+    """Alerts are best effort: a failed alert must never fail or retry a customer reply."""
     try:
         await call
     except Exception:
@@ -517,3 +513,36 @@ async def _commit_ignoring_duplicate(db: AsyncSession) -> bool:
         await db.rollback()
         return False
     return True
+
+
+# ---------------------------------------------------------------------------- owner replies
+
+
+async def send_owner_reply(
+    db: AsyncSession,
+    shop: Shop,
+    conversation: Conversation,
+    text: str,
+    instagram: InstagramClient | None,
+) -> str | None:
+    """Send the owner's own answer (typed in the panel) on the conversation's channel.
+
+    Returns a user-facing error, or None on success.
+    """
+    sender = await sender_for(db, shop, conversation, Gateways(instagram=instagram))
+    if sender is None:
+        return "This channel isn't connected right now; answer the customer in the app itself."
+    last = conversation.last_customer_message_at
+    if sender.reply_window and last and utcnow() - as_utc(last) > sender.reply_window:
+        return (
+            "More than 24 hours have passed since the customer's message; "
+            "the channel no longer allows a reply."
+        )
+    external_id = None
+    for chunk in split_text(text, sender.max_text_length):
+        try:
+            external_id = await sender.send_text(chunk)
+        except SendError:
+            return "Sending the message failed; try again in a moment."
+    await record_owner_message(db, shop, conversation, text=text, external_id=external_id)
+    return None

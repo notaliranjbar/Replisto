@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.api.deps import CurrentShop, CurrentUser, DbSession, HttpClient
+from app.api.deps import CurrentShop, CurrentUser, DbSession, HttpClient, SignedInUser
 from app.core.config import get_settings
 from app.core.security import hash_password, verify_password
 from app.core.throttle import Throttle, minutes_text
@@ -48,7 +48,7 @@ class PhoneVerifiedOut(BaseModel):
 
 
 @router.get("/me", response_model=UserOut)
-async def me(user: CurrentUser) -> User:
+async def me(user: SignedInUser) -> User:
     return user
 
 
@@ -61,7 +61,7 @@ async def change_password(body: PasswordChange, user: CurrentUser, db: DbSession
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_account(body: AccountDelete, user: CurrentUser, db: DbSession) -> None:
+async def delete_account(body: AccountDelete, user: SignedInUser, db: DbSession) -> None:
     """Permanently delete the account and everything stored for it (Meta requires this)."""
     if not verify_password(body.password, user.password_hash):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "رمز عبور اشتباه است")

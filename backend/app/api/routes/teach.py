@@ -1,8 +1,4 @@
-"""Teach Javab from the panel: any text, a link or a file becomes a proposal to confirm.
-
-The same proposals are made by the Telegram bot (photos, files, forwarded posts), so
-the panel can also list and confirm those.
-"""
+"""Teach Replisto from the panel: any text, a link or a file becomes a proposal to confirm."""
 
 import uuid
 from datetime import datetime
@@ -24,13 +20,13 @@ router = APIRouter(prefix="/teach", tags=["teach"])
 
 class ProposalOut(BaseModel):
     id: uuid.UUID
-    # text | url | file | photo | telegram_post
+    # text | url | file
     source: str
     source_label: str
     status: ProposalStatus
     # What the AI understood, in Persian, for the owner.
     summary: str
-    # The whole proposal as one readable Persian message (same as the bot shows).
+    # The whole proposal as one readable Persian message.
     preview: str
     # products: [{action: create|update|delete, product_id, before, fields, locked}]
     #   fields use the product field names (price in toman); locked rows come from a live

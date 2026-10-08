@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import time
 
@@ -7,7 +6,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app.api.deps import CurrentUser, DbSession, HttpClient
+from app.api.deps import DbSession, SignedInUser
 from app.core.config import get_settings
 from app.core.security import (
     TokenError,
@@ -26,7 +25,6 @@ from app.core.throttle import Throttle, minutes_text
 from app.core.timeutil import utcnow
 from app.models import Shop, User
 from app.schemas.auth import LoginRequest, RefreshRequest, RegisterRequest, TokenPair
-from app.services import ops
 from app.services.email import send_email
 
 logger = logging.getLogger(__name__)
@@ -89,7 +87,7 @@ def _tokens_for(user: User) -> TokenPair:
 
 
 @router.post("/register", response_model=TokenPair, status_code=status.HTTP_201_CREATED)
-async def register(body: RegisterRequest, db: DbSession, http: HttpClient) -> TokenPair:
+async def register(body: RegisterRequest, db: DbSession) -> TokenPair:
     email_taken = HTTPException(status.HTTP_409_CONFLICT, "این ایمیل قبلا ثبت شده است")
     if await db.scalar(select(User.id).where(User.email == body.email)):
         raise email_taken
@@ -106,12 +104,9 @@ async def register(body: RegisterRequest, db: DbSession, http: HttpClient) -> To
     except IntegrityError:  # concurrent registration with the same email
         await db.rollback()
         raise email_taken from None
-    # No credit yet: the sign-up gift comes after linking Telegram/Bale (services/gifts.py).
+    # No credit yet: the sign-up gift comes after verifying a phone number (services/gifts.py).
     await _send_verification(user)
-    try:
-        await asyncio.wait_for(ops.new_signup(db, http, user, user.shop), timeout=5)
-    except Exception:
-        logger.warning("could not announce the sign-up of %s", user.id)
+    logger.info("new sign-up: shop %s", user.shop.id)
     return _tokens_for(user)
 
 
@@ -161,7 +156,7 @@ async def forgot_password(body: ForgotPasswordRequest, db: DbSession) -> ForgotP
     """Email a password reset link. Same answer whether or not the email is registered,
     so the endpoint doesn't reveal who has an account."""
     answer = ForgotPasswordOut(
-        message="اگر این ایمیل در «جواب» ثبت شده باشد، لینک تغییر رمز برایش فرستاده شد."
+        message="اگر این ایمیل در Replisto ثبت شده باشد، لینک تغییر رمز برایش فرستاده شد."
     )
     now = time.monotonic()
     if now - _last_reset_request.get(body.email, -_RESET_INTERVAL_SECONDS) < (
@@ -179,11 +174,11 @@ async def forgot_password(body: ForgotPasswordRequest, db: DbSession) -> ForgotP
     try:
         await send_email(
             user.email,
-            "تغییر رمز عبور «جواب»",
+            "تغییر رمز عبور Replisto",
             "سلام،\n\nبرای انتخاب رمز عبور تازه روی این لینک بزنید:\n"
             f"{link}\n\n"
             f"این لینک {settings.password_reset_minutes} دقیقه و فقط یک بار کار می‌کند. "
-            "اگر شما درخواست نداده‌اید، این ایمیل را نادیده بگیرید.\n\n«جواب»",
+            "اگر شما درخواست نداده‌اید، این ایمیل را نادیده بگیرید.\n\nReplisto",
         )
     except Exception:
         logger.exception("could not send password reset email")
@@ -216,11 +211,11 @@ async def _send_verification(user: User) -> None:
     try:
         await send_email(
             user.email,
-            "تأیید ایمیل «جواب»",
-            "سلام،\n\nبه «جواب» خوش آمدید! برای تأیید ایمیلتان روی این لینک بزنید:\n"
+            "تأیید ایمیل Replisto",
+            "سلام،\n\nبه Replisto خوش آمدید! برای تأیید ایمیلتان روی این لینک بزنید:\n"
             f"{link}\n\n"
-            f"این لینک {settings.email_verify_days} روز کار می‌کند. اگر شما در «جواب» "
-            "ثبت‌نام نکرده‌اید، این ایمیل را نادیده بگیرید.\n\n«جواب»",
+            f"این لینک {settings.email_verify_days} روز کار می‌کند. اگر شما در Replisto "
+            "ثبت‌نام نکرده‌اید، این ایمیل را نادیده بگیرید.\n\nReplisto",
         )
     except Exception:
         logger.exception("could not send the verification email")
@@ -246,7 +241,7 @@ async def verify_email(body: VerifyEmailRequest, db: DbSession) -> None:
 
 
 @router.post("/email/resend", status_code=status.HTTP_202_ACCEPTED)
-async def resend_verification(user: CurrentUser) -> ForgotPasswordOut:
+async def resend_verification(user: SignedInUser) -> ForgotPasswordOut:
     if user.email_verified_at is not None:
         return ForgotPasswordOut(message="ایمیل شما قبلا تأیید شده است.")
     key = str(user.id)

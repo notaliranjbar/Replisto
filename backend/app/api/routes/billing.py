@@ -1,6 +1,5 @@
-"""The shop's wallet (pay as you go), plans, and top-ups through the payment gateway."""
+"""The shop's wallet (pay as you go) and top-ups through the payment gateway."""
 
-import asyncio
 import json
 import logging
 import uuid
@@ -14,20 +13,13 @@ from sqlalchemy import func, select
 
 from app.api.deps import CurrentShop, DbSession, HttpClient
 from app.core.config import get_settings
-from app.models import Payment, PaymentStatus, Plan, WalletEntry, WalletEntryKind
-from app.services import billing, ops, payments
+from app.models import Payment, PaymentStatus, WalletEntry, WalletEntryKind
+from app.services import billing, payments
 from app.services.payments import AbanGateway, PaymentError, Zarinpal
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/billing", tags=["billing"])
-
-
-class PlanOut(BaseModel):
-    key: Plan
-    label: str
-    monthly_fee_toman: int
-    features: list[str]
 
 
 class PricingOut(BaseModel):
@@ -45,11 +37,6 @@ class BillingOut(BaseModel):
     enabled: bool
     balance_toman: int
     low_balance: bool
-    plan: Plan
-    plan_renews_at: datetime | None
-    # A downgrade the owner asked for, applied at plan_renews_at.
-    plan_next: Plan | None
-    plans: list[PlanOut]
     pricing: PricingOut
     # Whether online top-up (payment gateway) is available.
     topup_available: bool
@@ -74,10 +61,6 @@ class WalletEntryOut(BaseModel):
 class WalletEntryPage(BaseModel):
     items: list[WalletEntryOut]
     total: int
-
-
-class PlanChange(BaseModel):
-    plan: Plan
 
 
 class TopupIn(BaseModel):
@@ -110,18 +93,6 @@ async def get_billing(shop: CurrentShop, http: HttpClient) -> BillingOut:
         enabled=billing.enabled(),
         balance_toman=shop.balance_rial // 10,
         low_balance=billing.enabled() and shop.balance_rial < settings.low_balance_rial,
-        plan=shop.plan,
-        plan_renews_at=shop.plan_renews_at,
-        plan_next=shop.plan_next,
-        plans=[
-            PlanOut(
-                key=info.key,
-                label=info.label,
-                monthly_fee_toman=billing.plan_fee(info.key) // 10,
-                features=info.features,
-            )
-            for info in billing.PLANS.values()
-        ],
         pricing=PricingOut(
             per_1k_prompt_tokens_toman=settings.usage_rial_per_1k_prompt_tokens / 10,
             per_1k_completion_tokens_toman=settings.usage_rial_per_1k_completion_tokens / 10,
@@ -168,20 +139,6 @@ async def list_entries(
     )
 
 
-@router.post("/plan", response_model=BillingOut)
-async def change_plan(
-    body: PlanChange, shop: CurrentShop, db: DbSession, http: HttpClient
-) -> BillingOut:
-    """Upgrade (starts now, the month's fee is paid from the wallet) or downgrade (applies
-    when the paid month ends)."""
-    try:
-        await billing.change_plan(db, shop, body.plan)
-    except billing.BillingError as exc:
-        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, str(exc)) from None
-    await db.refresh(shop)
-    return await get_billing(shop, http)
-
-
 @router.post("/topup", response_model=TopupOut)
 async def topup(
     body: TopupIn,
@@ -196,19 +153,14 @@ async def topup(
     return TopupOut(payment_url=url)
 
 
-async def _after_topup(db: DbSession, http: HttpClient, payment: Payment) -> None:
-    """Tell the owner and the team, without holding the gateway's request for long."""
-    try:
-        await asyncio.wait_for(ops.topup_paid(db, http, payment), timeout=10)
-    except Exception:
-        logger.exception("could not announce payment %s", payment.id)
+def _after_topup(payment: Payment) -> None:
+    logger.info("payment %s credited to shop %s", payment.id, payment.shop_id)
 
 
 @router.post("/aban/webhook", include_in_schema=False)
 async def aban_webhook(
     request: Request,
     db: DbSession,
-    http: HttpClient,
     gateway: AbanGateway = Depends(get_aban),
 ) -> Response:
     """Aban Gateway reports invoice changes here, signed with our webhook secret."""
@@ -227,7 +179,7 @@ async def aban_webhook(
         # Aban retries; verifying can succeed then.
         return Response(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
     if credited is not None:
-        await _after_topup(db, http, credited)
+        _after_topup(credited)
     return Response(status_code=status.HTTP_200_OK)
 
 
@@ -235,7 +187,6 @@ async def aban_webhook(
 async def aban_return(
     payment_id: uuid.UUID,
     db: DbSession,
-    http: HttpClient,
     gateway: AbanGateway = Depends(get_aban),
 ) -> RedirectResponse:
     """The owner's browser comes back here from Aban's payment page."""
@@ -246,7 +197,7 @@ async def aban_return(
     if payment.status == PaymentStatus.PENDING:
         try:
             if await payments.settle_aban(db, payment, gateway):
-                await _after_topup(db, http, payment)
+                _after_topup(payment)
         except PaymentError:
             pass
     if payment.status == PaymentStatus.PAID:
@@ -260,7 +211,6 @@ async def aban_return(
 @router.get("/zarinpal/callback", include_in_schema=False)
 async def zarinpal_callback(
     db: DbSession,
-    http: HttpClient,
     gateway: Zarinpal = Depends(get_zarinpal),
     authority: str = Query(alias="Authority", default=""),
     payment_status: str = Query(alias="Status", default=""),
@@ -278,6 +228,6 @@ async def zarinpal_callback(
     )
     if payment is not None and payment.status.value == "paid":
         if was_pending:
-            await _after_topup(db, http, payment)
+            _after_topup(payment)
         return RedirectResponse(f"{panel}?payment=success&ref={payment.ref_id or ''}")
     return RedirectResponse(f"{panel}?payment=failed")

@@ -1,14 +1,16 @@
 // Email and phone verification, and the sign-up gift card that asks for them.
 import { useState, type FormEvent } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Gift, Mail, ShieldCheck, Smartphone } from "lucide-react";
 import { api } from "../api/client";
 import { keys } from "../api/queries";
 import type { Dashboard, User } from "../api/types";
+import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n";
 import { errorMessage } from "../lib/errors";
+import AuthShell from "./AuthShell";
 import { useToast } from "./toast";
-import { Alert, Badge, Button, Card, CardHeader, Field, IconChip, Input, LinkButton, cx } from "./ui";
+import { Alert, Badge, Button, Card, CardHeader, Field, IconChip, Input, LinkButton, Spinner, cx } from "./ui";
 
 type PhoneStart = { phone: string; minutes: number };
 type PhoneVerified = { phone: string; gift_toman: number };
@@ -26,6 +28,48 @@ export function useResendEmail() {
     onSuccess: (r) => toast.success(r.message),
     onError: (err) => toast.error(errorMessage(err, t)),
   });
+}
+
+/** Shown instead of the panel until the email is verified; opens by itself once the link is clicked (here or on another device). */
+export function CheckYourEmail({ me }: { me: User }) {
+  const { t } = useI18n();
+  const V = t.launch.verify;
+  const { logout } = useAuth();
+  const resend = useResendEmail();
+  useQuery({ queryKey: keys.me, queryFn: () => api<User>("/me"), refetchInterval: 4000 });
+  return (
+    <AuthShell
+      title={V.gateTitle}
+      subtitle={V.gateSubtitle}
+      footer={
+        <>
+          {V.wrongEmail}{" "}
+          <button type="button" onClick={logout} className="font-medium text-brand-700 hover:underline">
+            {V.signUpAgain}
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div className="flex items-start gap-4">
+          <IconChip>
+            <Mail />
+          </IconChip>
+          <p className="text-sm leading-7 text-ink-800">{V.gateBody(me.email)}</p>
+        </div>
+        <p className="text-sm leading-6 text-slate-500">{V.gateSpam}</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="secondary" loading={resend.isPending} onClick={() => resend.mutate()}>
+            {V.resend}
+          </Button>
+          <span className="flex items-center gap-2 text-sm text-slate-500">
+            <Spinner className="size-4" />
+            {V.gateWaiting}
+          </span>
+        </div>
+      </div>
+    </AuthShell>
+  );
 }
 
 export function EmailNotVerified({ me }: { me: User }) {

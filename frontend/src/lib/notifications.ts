@@ -50,7 +50,7 @@ export function useHandoffWatcher(dashboard: Dashboard | undefined) {
         const n = new Notification(t.handoffs.notificationTitle(name), {
           body: newest.handoff.question.replace(/\s+/g, " ").slice(0, 140),
           tag: `handoff-${newest.conversation_id}`,
-          icon: "/brand/javab-logo-192.png",
+          icon: "/brand/replisto-logo-192.png",
         });
         n.onclick = () => {
           window.focus();

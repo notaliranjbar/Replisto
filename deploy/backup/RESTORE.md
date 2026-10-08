@@ -1,13 +1,13 @@
 # Restoring a backup
 
 Backups are in `./backups` on the server (next to `docker-compose.yml`), named
-`javab-YYYYMMDD-HHMM.dump`. If the server itself is lost, take the newest encrypted copy
+`replisto-YYYYMMDD-HHMM.dump`. If the server itself is lost, take the newest encrypted copy
 (`.dump.enc`) from the operations Telegram chat.
 
 ## 1. Decrypt (only for a copy from Telegram)
 
 ```bash
-openssl enc -d -aes-256-cbc -pbkdf2 -in javab-20261002-1200.dump.enc -out javab-20261002-1200.dump
+openssl enc -d -aes-256-cbc -pbkdf2 -in replisto-20261002-1200.dump.enc -out replisto-20261002-1200.dump
 ```
 
 It asks for `BACKUP_PASSPHRASE`. Keep that passphrase somewhere safe outside the server
@@ -19,7 +19,7 @@ Stop the services that write to the database, restore, then start everything aga
 
 ```bash
 docker compose stop api worker
-docker compose cp javab-20261002-1200.dump db:/tmp/restore.dump
+docker compose cp replisto-20261002-1200.dump db:/tmp/restore.dump
 docker compose exec db pg_restore -U app -d app --clean --if-exists /tmp/restore.dump
 docker compose up -d
 ```

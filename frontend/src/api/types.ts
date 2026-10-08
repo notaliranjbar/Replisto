@@ -34,7 +34,7 @@ export type Posts = S["PostsOut"];
 
 export type ConversationFilter = "all" | "needs_owner" | "unanswered" | "paused";
 
-// Telegram, wallet, catalogue and "teach Javab" (docs/FRONTEND.md §11)
+// Telegram, wallet, catalogue and "teach Replisto" (docs/FRONTEND.md §11)
 export type Channel = Conversation["channel"];
 export type ProductOrigin = Product["origin"];
 export type ProductIn = S["ProductIn"];

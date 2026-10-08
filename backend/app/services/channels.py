@@ -4,13 +4,12 @@ The bot (responder, products, handoffs, billing) doesn't know about channels. A 
 records its channel and endpoint (`Conversation.channel` / `channel_ref`); `sender_for` turns
 that into a `ChannelSender` that can send text and product posts there.
 
-    Instagram account ─┐                     ┌─► InstagramSender (Graph API)
-    shared/custom bot ─┼─► Conversation ─────┼─► TelegramSender (Telegram or Bale Bot API)
-    Telegram Business ─┘                     └─► TelegramSender (business_connection_id)
+    Instagram account ──► Conversation ──► InstagramSender (Graph API)
+
+A new channel adds its own sender here and a branch in `sender_for`.
 """
 
 import logging
-import uuid
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Protocol
@@ -20,30 +19,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.security import decrypt_secret
-from app.models import (
-    Channel,
-    Conversation,
-    InstagramAccount,
-    Plan,
-    Shop,
-    TelegramBot,
-    TelegramBusinessConnection,
-)
+from app.models import Channel, Conversation, InstagramAccount, Shop
 from app.services import instagram as ig
-from app.services import telegram as tg
 from app.services.instagram import InstagramClient, InstagramError
 from app.services.posts import PostLink
-from app.services.telegram import TelegramClient, TelegramError
 
 logger = logging.getLogger(__name__)
 
-# Instagram (and Telegram Business) only allow replies within 24h of the customer's last
-# message. Keep a margin so a slow job doesn't hit the boundary.
+# Instagram only allows replies within 24h of the customer's last message. Keep a margin so a
+# slow job doesn't hit the boundary.
 _REPLY_WINDOW = timedelta(hours=24) - timedelta(minutes=5)
-
-# Plans that may use each Telegram endpoint kind.
-PLANS_FOR_CUSTOM_BOT = {Plan.PRO, Plan.BUSINESS}
-PLANS_FOR_BUSINESS = {Plan.BUSINESS}
 
 
 class SendError(Exception):
@@ -53,11 +38,11 @@ class SendError(Exception):
         self, original: Exception, *, retryable: bool, endpoint_dead: bool = False
     ) -> None:
         super().__init__(str(original))
-        # The channel's own error (InstagramError, TelegramError); re-raised for retries so
+        # The channel's own error (e.g. InstagramError); re-raised for retries so
         # the worker's retry policy sees the real cause.
         self.original = original
         self.retryable = retryable
-        # The account/bot/connection no longer works (token revoked, bot removed); it has
+        # The account no longer works (token revoked, app removed); it has
         # been deactivated and the owner must reconnect it.
         self.endpoint_dead = endpoint_dead
 
@@ -82,7 +67,6 @@ class Gateways:
     """API clients for the channels; a missing one means that channel can't send."""
 
     instagram: InstagramClient | None = None
-    telegram: TelegramClient | None = None
 
 
 class InstagramSender:
@@ -129,127 +113,11 @@ class InstagramSender:
         return SendError(exc, retryable=exc.retryable, endpoint_dead=exc.token_invalid)
 
 
-class TelegramSender:
-    channel = Channel.TELEGRAM
-    max_text_length = tg.MAX_TEXT_LENGTH
-
-    def __init__(
-        self,
-        db: AsyncSession,
-        bot: TelegramBot,
-        client: TelegramClient,
-        chat_id: int,
-        business: TelegramBusinessConnection | None = None,
-    ) -> None:
-        self._db = db
-        self._bot = bot
-        self._client = client.for_platform(bot.platform)
-        self.channel = Channel.BALE if bot.platform == "bale" else Channel.TELEGRAM
-        self._chat_id = chat_id
-        self._business = business
-        self._token = decrypt_secret(bot.token_encrypted)
-        self.reply_window = _REPLY_WINDOW if business else None
-
-    @property
-    def _connection(self) -> str | None:
-        return self._business.connection_id if self._business else None
-
-    async def send_text(self, text: str) -> str:
-        try:
-            message_id = await self._client.send_message(
-                self._token, self._chat_id, text, business_connection_id=self._connection
-            )
-        except TelegramError as exc:
-            raise await self._error(exc) from exc
-        return self.external_id(message_id)
-
-    async def send_post(self, post: PostLink) -> str:
-        try:
-            message_id = await self._send_post(post)
-        except TelegramError as exc:
-            raise await self._error(exc) from exc
-        return self.external_id(message_id)
-
-    async def _send_post(self, post: PostLink) -> int:
-        connection = self._connection
-        same_bot = post.tg_bot_id == self._bot.id
-        # copyMessage keeps the post's photos and caption, but has no business variant and
-        # only works through the bot that is in the channel.
-        if post.tg_chat_id and post.tg_message_id and same_bot and not connection:
-            try:
-                return await self._client.copy_message(
-                    self._token, self._chat_id, post.tg_chat_id, post.tg_message_id
-                )
-            except TelegramError as exc:
-                if exc.token_invalid or exc.blocked or exc.retryable:
-                    raise
-                # The post was deleted, or the bot left the channel: fall back below.
-        photo = post.photo if (same_bot or not post.tg_chat_id) else None
-        if photo:
-            return await self._client.send_photo(
-                self._token,
-                self._chat_id,
-                photo,
-                post.caption[: tg.MAX_CAPTION_LENGTH],
-                business_connection_id=connection,
-            )
-        link = post.permalink if post.permalink.startswith("http") else None
-        if link is None:
-            raise TelegramError("nothing to send for this post", status=400)
-        return await self._client.send_message(
-            self._token, self._chat_id, link, business_connection_id=connection
-        )
-
-    async def typing(self) -> None:
-        try:
-            await self._client.send_chat_action(
-                self._token, self._chat_id, business_connection_id=self._connection
-            )
-        except TelegramError:
-            pass  # purely cosmetic
-
-    def external_id(self, message_id: int) -> str:
-        return telegram_message_key(self.endpoint_ref, self._chat_id, message_id)
-
-    @property
-    def endpoint_ref(self) -> str:
-        return business_ref(self._business) if self._business else bot_ref(self._bot)
-
-    async def _error(self, exc: TelegramError) -> SendError:
-        if exc.token_invalid:
-            self._bot.is_active = False
-            self._bot.last_error = "توکن ربات نامعتبر شده است. دوباره آن را ثبت کنید."
-            await self._db.commit()
-            logger.warning("telegram bot %s token revoked", self._bot.id)
-        return SendError(exc, retryable=exc.retryable, endpoint_dead=exc.token_invalid)
-
-
-def bot_ref(bot: TelegramBot) -> str:
-    return f"bot:{bot.id}"
-
-
-def business_ref(connection: TelegramBusinessConnection) -> str:
-    return f"biz:{connection.id}"
-
-
-def telegram_message_key(endpoint_ref: str, chat_id: int, message_id: int) -> str:
-    """Telegram message ids are only unique per chat; make them globally unique."""
-    return f"tg:{endpoint_ref}:{chat_id}:{message_id}"
-
-
-def plan_allows(shop: Shop, conversation_ref: str, bot: TelegramBot | None = None) -> bool:
-    if conversation_ref.startswith("biz:"):
-        return shop.plan in PLANS_FOR_BUSINESS
-    if bot is not None and not bot.is_shared:
-        return shop.plan in PLANS_FOR_CUSTOM_BOT
-    return True
-
-
 async def sender_for(
     db: AsyncSession, shop: Shop, conversation: Conversation, gateways: Gateways
 ) -> ChannelSender | None:
     """The sender for this conversation, or None if its endpoint can't be used right now
-    (disconnected, deactivated, channel switched off, or not included in the shop's plan)."""
+    (disconnected, deactivated or channel switched off)."""
     if conversation.channel == Channel.INSTAGRAM:
         if not get_settings().instagram_enabled or gateways.instagram is None:
             return None
@@ -259,31 +127,6 @@ async def sender_for(
         if account is None or not account.is_active:
             return None
         return InstagramSender(db, account, gateways.instagram, conversation.customer_id)
-
-    if conversation.channel in (Channel.TELEGRAM, Channel.BALE):
-        if gateways.telegram is None:
-            return None
-        kind, _, raw_id = conversation.channel_ref.partition(":")
-        try:
-            ref_id = uuid.UUID(raw_id)
-        except ValueError:
-            return None
-        business = None
-        if kind == "biz":
-            business = await db.get(TelegramBusinessConnection, ref_id)
-            if business is None or not business.is_enabled or not business.can_reply:
-                return None
-            bot = await db.get(TelegramBot, business.bot_id)
-        elif kind == "bot":
-            bot = await db.get(TelegramBot, ref_id)
-        else:
-            return None
-        if bot is None or not bot.is_active or not shop.channel_enabled(bot.platform):
-            return None
-        if not plan_allows(shop, conversation.channel_ref, bot):
-            logger.info("shop %s plan doesn't include %s", shop.id, conversation.channel_ref)
-            return None
-        return TelegramSender(db, bot, gateways.telegram, int(conversation.customer_id), business)
 
     return None
 

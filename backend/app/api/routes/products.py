@@ -22,7 +22,6 @@ from app.models import (
     ProductSource,
     ProductSourceKind,
     Shop,
-    TelegramPost,
 )
 from app.services import products
 from app.services.products import ProductSourceError
@@ -80,14 +79,12 @@ class ProductOut(BaseModel):
     stock: int | None
     description: str | None
     extra: dict[str, Any]
-    # How Javab learned this product: manual | sheet | file | teach | telegram_post
+    # How Replisto learned this product: manual | sheet | file | teach
     origin: ProductOrigin
     # False for rows read from a live Google Sheet: change them in the sheet instead.
     editable: bool = True
     image_url: str | None
     post_url: str | None
-    # The Telegram channel post the product came from, when the channel is public.
-    telegram_post_url: str | None = None
     # Exactly what the bot sees about this product when a customer asks.
     bot_view: dict[str, Any] = {}
     created_at: datetime
@@ -269,7 +266,7 @@ async def list_products(
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
 ) -> ProductPage:
-    """The shop's catalogue: everything Javab knows, however it was taught. Searchable."""
+    """The shop's catalogue: everything Replisto knows, however it was taught. Searchable."""
     if q:
         found = await products.search_products(db, shop.id, q, limit=None)
         found = [p for p in found if _matches(p, origin, stock)]
@@ -392,18 +389,11 @@ async def check_room(db: DbSession, shop: Shop, adding: int) -> None:
 
 
 async def _out_many(db: DbSession, items: list[Product]) -> list[ProductOut]:
-    post_ids = {p.telegram_post_id for p in items if p.telegram_post_id}
-    posts: dict[uuid.UUID, TelegramPost] = {}
-    if post_ids:
-        found = await db.scalars(select(TelegramPost).where(TelegramPost.id.in_(post_ids)))
-        posts = {p.id: p for p in found}
     out = []
     for product in items:
         item = ProductOut.model_validate(product)
         item.editable = product.origin != ProductOrigin.SHEET
         item.bot_view = products.product_for_bot(product)
-        post = posts.get(product.telegram_post_id) if product.telegram_post_id else None
-        item.telegram_post_url = post.public_url if post else None
         out.append(item)
     return out
 

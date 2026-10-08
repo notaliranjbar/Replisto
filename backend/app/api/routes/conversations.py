@@ -8,10 +8,11 @@ from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import and_, exists, func, or_, select
 
-from app.api.deps import CurrentShop, DbSession, HttpClient, Telegram
+from app.api.deps import CurrentShop, DbSession, HttpClient
 from app.core.timeutil import as_utc, utcnow
 from app.models import Channel, Conversation, HandoffResolution, Message, MessageSender, Shop
-from app.services.telegram_bot import send_owner_reply
+from app.services.instagram import InstagramClient
+from app.services.messaging import send_owner_reply
 
 router = APIRouter(tags=["conversations"])
 
@@ -46,14 +47,12 @@ class HandoffOut(BaseModel):
 class ConversationOut(BaseModel):
     id: uuid.UUID
     channel: Channel
-    # Telegram only: the customer wrote to the owner's own account (Telegram Business).
-    telegram_business: bool = False
-    # The customer's id on the channel (Instagram IGSID, Telegram chat id).
+    # The customer's id on the channel (Instagram IGSID).
     customer_id: str
     # Same as customer_id; kept for older panel builds.
     customer_igsid: str
     customer_username: str | None
-    # Display name where the channel gives one (Telegram).
+    # Display name where the channel gives one.
     customer_name: str | None
     # Opens the chat with the customer in the channel's app, for replying by hand.
     chat_url: str | None
@@ -88,7 +87,6 @@ class PauseIn(BaseModel):
 class HandoffItem(BaseModel):
     conversation_id: uuid.UUID
     channel: Channel
-    telegram_business: bool = False
     customer_igsid: str
     customer_username: str | None
     customer_name: str | None
@@ -193,7 +191,6 @@ async def reply(
     body: ReplyIn,
     shop: CurrentShop,
     db: DbSession,
-    telegram: Telegram,
     http: HttpClient,
 ) -> ConversationOut:
     """The owner answers the customer from the panel, on the conversation's channel.
@@ -201,7 +198,7 @@ async def reply(
     Counts as the owner's own reply: the bot steps back and an open handoff is closed.
     """
     conversation = await _get(db, shop, conversation_id)
-    error = await send_owner_reply(db, shop, conversation, body.text.strip(), telegram, http)
+    error = await send_owner_reply(db, shop, conversation, body.text.strip(), InstagramClient(http))
     if error:
         raise HTTPException(status.HTTP_409_CONFLICT, error)
     await db.refresh(conversation)
@@ -260,7 +257,6 @@ async def list_handoffs(
             HandoffItem(
                 conversation_id=conversation.id,
                 channel=conversation.channel,
-                telegram_business=conversation.channel_ref.startswith("biz:"),
                 customer_igsid=conversation.customer_id,
                 customer_username=conversation.customer_username or None,
                 customer_name=conversation.customer_name,
@@ -360,10 +356,6 @@ def _instagram_url(conversation: Conversation) -> str | None:
 
 
 def _chat_url(conversation: Conversation) -> str | None:
-    if conversation.channel == Channel.TELEGRAM:
-        if conversation.customer_username:
-            return f"https://t.me/{conversation.customer_username}"
-        return f"tg://user?id={conversation.customer_id}"
     return _instagram_url(conversation)
 
 
@@ -396,7 +388,6 @@ async def _conversation_out(db: DbSession, conversation: Conversation) -> Conver
     return ConversationOut(
         id=conversation.id,
         channel=conversation.channel,
-        telegram_business=conversation.channel_ref.startswith("biz:"),
         customer_id=conversation.customer_id,
         customer_igsid=conversation.customer_id,
         customer_username=conversation.customer_username or None,

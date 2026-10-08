@@ -1,32 +1,37 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import en from "./en";
-import fa, { type Dict } from "./fa";
+import ar, { type Dict } from "./ar";
 import { makeFormat, type Format } from "../lib/format";
 
-export type Lang = "fa" | "en";
+export type Lang = "en" | "ar";
 
-const dicts: Record<Lang, Dict> = { fa, en };
+const dicts: Record<Lang, Dict> = { en, ar };
 const STORAGE_KEY = "dm.lang";
 
 type I18n = { lang: Lang; dir: "rtl" | "ltr"; t: Dict; f: Format; setLang: (l: Lang) => void; toggleLang: () => void };
 
 const I18nContext = createContext<I18n | null>(null);
 
+const isLang = (v: string | null): v is Lang => v === "en" || v === "ar";
+
+/** The language a link to the other language switches to. */
+export const otherLang = (l: Lang): Lang => (l === "en" ? "ar" : "en");
+
 function initialLang(): Lang {
   const fromUrl = new URLSearchParams(location.search).get("lang");
-  if (fromUrl === "en" || fromUrl === "fa") return fromUrl;
+  if (isLang(fromUrl)) return fromUrl;
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "en" || saved === "fa") return saved;
+    if (isLang(saved)) return saved;
   } catch {
     // storage unavailable
   }
-  return "fa";
+  return "en";
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(initialLang);
-  const dir = lang === "fa" ? "rtl" : "ltr";
+  const dir = lang === "ar" ? "rtl" : "ltr";
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -49,7 +54,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       t: dicts[lang],
       f: makeFormat(lang, dicts[lang]),
       setLang,
-      toggleLang: () => setLang(lang === "fa" ? "en" : "fa"),
+      toggleLang: () => setLang(otherLang(lang)),
     }),
     [lang, dir, setLang],
   );

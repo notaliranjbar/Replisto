@@ -1,8 +1,7 @@
-"""The shop wallet: pay-as-you-go usage and plan fees.
+"""The shop wallet: pay-as-you-go usage.
 
 A shop tops up its wallet; every AI answer is deducted from it by the tokens it used (with a
-minimum per answer). Plans above "basic" add a monthly fee, also paid from the wallet. When the
-balance runs out the bot stops answering (the customer gets the shop's fallback message and
+minimum per answer). When the balance runs out the bot stops answering (the customer gets the shop's fallback message and
 the conversation goes to the owner) until the owner tops up.
 
 All amounts are integer rials. Every change is a row in the ledger (`WalletEntry`).
@@ -10,75 +9,20 @@ All amounts are integer rials. Every change is a row in the ledger (`WalletEntry
 
 import logging
 import math
-from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.timeutil import as_utc, utcnow
-from app.models import Plan, Shop, WalletEntry, WalletEntryKind
+from app.models import Shop, WalletEntry, WalletEntryKind
 
 logger = logging.getLogger(__name__)
 
-PLAN_PERIOD = timedelta(days=30)
 # Don't remind about an empty wallet more often than this.
 EMPTY_WALLET_REMINDER = timedelta(hours=12)
-
-
-class BillingError(Exception):
-    """User-facing (Persian) reason a billing action was refused."""
-
-
-@dataclass(frozen=True)
-class PlanInfo:
-    key: Plan
-    label: str
-    features: list[str]
-    rank: int
-
-
-PLANS: dict[Plan, PlanInfo] = {
-    Plan.BASIC: PlanInfo(
-        Plan.BASIC,
-        "پایه",
-        [
-            "ربات مشترک «جواب» در تلگرام با لینک اختصاصی فروشگاه شما",
-            "اینستاگرام (پس از فعال شدن)",
-            "پرداخت فقط به اندازه‌ی مصرف",
-        ],
-        0,
-    ),
-    Plan.PRO: PlanInfo(
-        Plan.PRO,
-        "حرفه‌ای",
-        [
-            "همه‌ی امکانات پلن پایه",
-            "ربات تلگرام اختصاصی با نام و عکس فروشگاه شما",
-        ],
-        1,
-    ),
-    Plan.BUSINESS: PlanInfo(
-        Plan.BUSINESS,
-        "بیزینس",
-        [
-            "همه‌ی امکانات پلن حرفه‌ای",
-            "جواب دادن «جواب» از طرف اکانت شخصی تلگرام شما (Telegram Business)",
-        ],
-        2,
-    ),
-}
-
-
-def plan_fee(plan: Plan) -> int:
-    settings = get_settings()
-    return {
-        Plan.BASIC: 0,
-        Plan.PRO: settings.plan_pro_monthly_rial,
-        Plan.BUSINESS: settings.plan_business_monthly_rial,
-    }[plan]
 
 
 def enabled() -> bool:
@@ -178,89 +122,6 @@ async def should_remind_empty(db: AsyncSession, shop: Shop) -> bool:
     shop.empty_wallet_notified_at = utcnow()
     await db.commit()
     return True
-
-
-async def change_plan(db: AsyncSession, shop: Shop, plan: Plan) -> None:
-    """Upgrades start now and charge the month's fee; downgrades apply when the month ends."""
-    current = PLANS[shop.plan]
-    target = PLANS[plan]
-    if plan == shop.plan:
-        shop.plan_next = None  # cancels a scheduled downgrade
-        await db.commit()
-        return
-    if target.rank > current.rank:
-        fee = plan_fee(plan)
-        if enabled() and shop.balance_rial < fee:
-            raise BillingError(
-                f"موجودی کیف پول کافی نیست. هزینه‌ی ماهانه‌ی پلن {target.label} "
-                f"{fee // 10:,} تومان است."
-            )
-        if fee and enabled():
-            await apply(
-                db,
-                shop,
-                -fee,
-                WalletEntryKind.PLAN_FEE,
-                f"هزینه‌ی ماهانه‌ی پلن {target.label}",
-                {"plan": plan.value},
-            )
-        shop.plan = plan
-        shop.plan_renews_at = utcnow() + PLAN_PERIOD if fee else None
-        shop.plan_next = None
-    elif shop.plan_renews_at is None:
-        shop.plan = plan
-        shop.plan_next = None
-    else:
-        shop.plan_next = plan
-    await db.commit()
-
-
-async def renew_plans(db: AsyncSession) -> list[tuple[Shop, str]]:
-    """Charge the next month for shops whose paid month ended, or move them to basic.
-
-    Returns (shop, Persian message for the owner) for shops whose plan changed.
-    """
-    now = utcnow()
-    due = (
-        await db.scalars(select(Shop).where(Shop.plan != Plan.BASIC, Shop.plan_renews_at <= now))
-    ).all()
-    changes: list[tuple[Shop, str]] = []
-    for shop in due:
-        target = shop.plan_next or shop.plan
-        shop.plan_next = None
-        fee = plan_fee(target)
-        if target == Plan.BASIC or fee == 0:
-            shop.plan = target
-            shop.plan_renews_at = None
-            await db.commit()
-            changes.append((shop, f"پلن شما به {PLANS[target].label} تغییر کرد."))
-            continue
-        if enabled() and shop.balance_rial < fee:
-            label = PLANS[shop.plan].label
-            shop.plan = Plan.BASIC
-            shop.plan_renews_at = None
-            await db.commit()
-            changes.append(
-                (
-                    shop,
-                    f"موجودی کیف پول برای تمدید پلن {label} کافی نبود و پلن شما به «پایه» "
-                    "برگشت. بعد از شارژ کیف پول می‌توانید دوباره آن را فعال کنید.",
-                )
-            )
-            continue
-        if enabled():
-            await apply(
-                db,
-                shop,
-                -fee,
-                WalletEntryKind.PLAN_FEE,
-                f"تمدید ماهانه‌ی پلن {PLANS[target].label}",
-                {"plan": target.value},
-            )
-        shop.plan = target
-        shop.plan_renews_at = as_utc(shop.plan_renews_at or now) + PLAN_PERIOD
-        await db.commit()
-    return changes
 
 
 def toman(rial: int) -> str:

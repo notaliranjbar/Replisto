@@ -1,4 +1,4 @@
-# پنل «جواب» (فرانت‌اند)
+# پنل Replisto (فرانت‌اند)
 
 React + TypeScript + Vite، با TanStack Query برای درخواست‌ها و Tailwind برای استایل. کل پنل RTL است و نسخه‌ی انگلیسی هم دارد (برای داور متا).
 قرارداد API و رفتار هر صفحه: [docs/FRONTEND.md](../docs/FRONTEND.md)
@@ -53,7 +53,7 @@ src/
 در Caddy:
 
 ```
-app.javab.app {
+app.replisto.app {
 	root * /srv/panel
 	try_files {path} /index.html
 	file_server

@@ -1,13 +1,13 @@
-"""Teaching Javab: turn whatever the owner sends into product and knowledge changes.
+"""Teaching Replisto: turn whatever the owner sends into product and knowledge changes.
 
 Owners describe their shop in every possible way: they type a price list or a change ("the
 black linen manteau is now 1.3 million, two left in size 44"), paste a Google Doc link with no
-particular structure, upload a PDF, forward a channel post, or connect a sheet. All of it goes
+particular structure, upload a PDF, or connect a sheet. All of it goes
 through one path:
 
     input ──► text (download / extract) ──► AI extraction ──► TeachProposal
                                                                               │
-                     owner confirms (panel or a Telegram button) ──► apply ◄──┘
+                           owner confirms in the panel ──► apply ◄──┘
 
 The proposal is shown before anything changes, so a misunderstanding never reaches the
 catalogue. The AI sees the shop's current products (with short refs like "#3") so "the price
@@ -148,9 +148,6 @@ _SOURCE_HINTS = {
     "text": "a message the owner typed",
     "url": "the content of a document the owner linked",
     "file": "the text of a file the owner uploaded",
-    "photo": "the text read from a photo the owner sent (a price list, a label...)",
-    "telegram_post": "ONE post from the shop's own Telegram channel. If it presents products "
-    "for sale, extract them; announcements and other posts contain nothing to learn",
 }
 
 
@@ -183,8 +180,8 @@ async def extract(
 ) -> Extraction:
     """Ask the AI what to learn from `text`. Raises TeachError / LLMError.
 
-    `context` is the recent conversation with the owner (in the Telegram/Bale bot), so a
-    follow-up like "make its price 2.5 million" is understood.
+    `context` is earlier input from the owner, so a follow-up like "make its price 2.5
+    million" is understood.
     """
     text = text.strip()
     if not text:
@@ -433,7 +430,6 @@ async def propose(
     *,
     source: str,
     label: str,
-    telegram_post_id: uuid.UUID | None = None,
     image_url: str | None = None,
     context: str = "",
 ) -> TeachProposal:
@@ -448,7 +444,6 @@ async def propose(
         summary=result.summary,
         # The input is kept so a follow-up message can refine this proposal.
         changes={**result.changes, "input": text[:20_000]},
-        telegram_post_id=telegram_post_id,
         image_url=image_url,
     )
     db.add(proposal)
@@ -492,7 +487,7 @@ async def apply(
         await db.scalar(select(func.count()).select_from(Product).where(Product.shop_id == shop.id))
         or 0
     )
-    origin = ProductOrigin.TELEGRAM_POST if proposal.telegram_post_id else ProductOrigin.TEACH
+    origin = ProductOrigin.TEACH
     for index, change in enumerate(changes.get("products") or []):
         if index in skip_products:
             continue
@@ -510,7 +505,6 @@ async def apply(
                 shop_id=shop.id,
                 origin=origin,
                 extra={},
-                telegram_post_id=proposal.telegram_post_id,
                 image_url=proposal.image_url,
                 **fields,
             )
@@ -642,7 +636,7 @@ def _product_line(fields: dict[str, Any]) -> str:
 
 
 def describe(proposal: TeachProposal, max_lines: int = 30) -> str:
-    """The proposal as a short Persian message (Telegram, and the panel's preview)."""
+    """The proposal as a short Persian message (the panel's preview)."""
     changes = proposal.changes or {}
     lines: list[str] = []
     if proposal.summary:

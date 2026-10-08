@@ -14,12 +14,9 @@ os.environ["PUBLIC_BASE_URL"] = "https://api.test"
 os.environ["FRONTEND_URL"] = "https://panel.test"
 os.environ["LLM_BASE_URL"] = "https://llm.test/v1"
 os.environ["LLM_MODEL"] = "test-model"
-# The suite covers Instagram even while it is switched off in production.
 os.environ["INSTAGRAM_ENABLED"] = "true"
 # Wallet charging is covered by its own tests (which switch it on).
 os.environ["BILLING_ENABLED"] = "false"
-os.environ["TELEGRAM_API_BASE"] = "https://tg.test"
-os.environ["BALE_API_BASE"] = "https://bale.test"
 os.environ["ZARINPAL_SANDBOX"] = "true"
 os.environ["ABAN_API_BASE"] = "https://aban.test"
 
@@ -35,13 +32,12 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from app.api.deps import get_http, get_instagram_client, get_queue, get_telegram_client
+from app.api.deps import get_http, get_instagram_client, get_queue
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.main import app
 from app.models import Base
 from app.services.instagram import InstagramClient
-from app.services.telegram import TelegramClient
 
 
 @dataclass
@@ -131,57 +127,6 @@ class FakeMeta:
 
 
 @dataclass
-class FakeTelegram:
-    """The Telegram Bot API (https://tg.test/bot<token>/<method>)."""
-
-    # token -> getMe result
-    bots: dict[str, dict[str, Any]] = field(default_factory=dict)
-    calls: list[tuple[str, str, dict[str, Any]]] = field(default_factory=list)
-    # Which server each call went to ("tg.test" or "bale.test"), in the order of `calls`.
-    hosts: list[str] = field(default_factory=list)
-    # method -> (error_code, description)
-    errors: dict[str, tuple[int, str]] = field(default_factory=dict)
-    files: dict[str, bytes] = field(default_factory=dict)
-    next_message_id: int = 1000
-
-    def handler(self, request: httpx.Request) -> httpx.Response:
-        path = request.url.path
-        if path.startswith("/file/bot"):
-            name = path.split("/", 3)[3]
-            return httpx.Response(200, content=self.files.get(name, b"audio"))
-        token, _, method = path.removeprefix("/bot").partition("/")
-        payload = json.loads(request.content or b"{}")
-        self.calls.append((token, method, payload))
-        self.hosts.append(request.url.host)
-        if method in self.errors:
-            code, description = self.errors[method]
-            return httpx.Response(
-                code, json={"ok": False, "error_code": code, "description": description}
-            )
-        if method == "getMe":
-            if token not in self.bots:
-                return httpx.Response(
-                    401, json={"ok": False, "error_code": 401, "description": "Unauthorized"}
-                )
-            return httpx.Response(200, json={"ok": True, "result": self.bots[token]})
-        if method == "getFile":
-            file_id = payload["file_id"]
-            return httpx.Response(
-                200,
-                json={"ok": True, "result": {"file_path": f"files/{file_id}", "file_size": 10}},
-            )
-        if method in ("sendMessage", "sendPhoto", "copyMessage"):
-            self.next_message_id += 1
-            return httpx.Response(
-                200, json={"ok": True, "result": {"message_id": self.next_message_id}}
-            )
-        return httpx.Response(200, json={"ok": True, "result": True})
-
-    def sent(self, method: str = "sendMessage") -> list[dict[str, Any]]:
-        return [payload for _, m, payload in self.calls if m == method]
-
-
-@dataclass
 class FakeZarinpal:
     """Zarinpal's sandbox payment API."""
 
@@ -259,7 +204,7 @@ class FakeAban:
 
 
 class FakeWeb:
-    """Google Sheets/Drive downloads, an OpenAI-compatible LLM, Telegram and Zarinpal, behind
+    """Google Sheets/Drive downloads, an OpenAI-compatible LLM and the payment gateways, behind
     httpx.MockTransport.
 
     - `files[url] = (status, body, content_type)` serves a Google download URL.
@@ -267,7 +212,6 @@ class FakeWeb:
     """
 
     def __init__(self) -> None:
-        self.telegram = FakeTelegram()
         self.zarinpal = FakeZarinpal()
         self.aban = FakeAban()
         self.files: dict[str, tuple[int, bytes, str]] = {}
@@ -278,8 +222,6 @@ class FakeWeb:
         self.llm_rejects: set[str] = set()
 
     def handler(self, request: httpx.Request) -> httpx.Response:
-        if request.url.host in ("tg.test", "bale.test"):
-            return self.telegram.handler(request)
         if request.url.host == "sandbox.zarinpal.com":
             return self.zarinpal.handler(request)
         if request.url.host == "aban.test":
@@ -385,7 +327,6 @@ async def client(
     app.dependency_overrides[get_queue] = lambda: queue
     app.dependency_overrides[get_instagram_client] = fake_meta.client
     app.dependency_overrides[get_http] = fake_web.client
-    app.dependency_overrides[get_telegram_client] = lambda: TelegramClient(fake_web.client())
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
     app.dependency_overrides.clear()
@@ -415,6 +356,12 @@ def _fresh_rate_limits() -> None:
     ):
         throttle.clear()
     auth._last_reset_request.clear()
+
+
+@pytest.fixture(autouse=True)
+def _email_check_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Most tests use a fresh, unverified sign-up; test_verification covers the closed panel."""
+    monkeypatch.setattr(get_settings(), "require_verified_email", False)
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 [project]
-name = "javab"
+name = "replisto"
 version = "0.1.0"
-description = "Javab: AI assistant that answers Instagram DMs for online shops"
+description = "Replisto: AI assistant that answers Instagram DMs for online shops"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",

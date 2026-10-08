@@ -23,7 +23,7 @@ class ConnectUrlOut(BaseModel):
     url: str
 
 
-INSTAGRAM_OFF = "اتصال اینستاگرام به‌زودی فعال می‌شود. فعلا از تلگرام استفاده کنید."
+INSTAGRAM_OFF = "Instagram is switched off on this server for now."
 
 
 class InstagramStatusOut(BaseModel):

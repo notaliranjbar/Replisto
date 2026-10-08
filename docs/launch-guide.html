@@ -230,7 +230,7 @@
 <main>
 
 <header class="top">
-  <span class="eyebrow">«جواب» · برای تیم (مسئول بک‌اند + علی)</span>
+  <span class="eyebrow">Replisto · برای تیم (مسئول بک‌اند + علی)</span>
   <h1>نقشه‌ی لانچ: از کد آماده تا اولین مشتری</h1>
   <p class="lede">کد بک‌اند کامل و تست‌شده است. هر چیزی که از اینجا به بعد مانده، <strong>بیرون از کد</strong> است: ساختن حساب‌ها، خریدن سرور، تنظیم متا، تست و گرفتن تأیید. این صفحه همه‌ی آن‌ها را به ترتیب درست، قدم‌به‌قدم و بدون فرض دانش قبلی توضیح می‌دهد.</p>
   <div class="facts">
@@ -338,9 +338,9 @@
         </ol>
         <div class="callout warn"><strong>چطور شانس قبولی را بالا ببرید</strong>
           <ul>
-            <li>اسم قانونی دقیقاً یکسان در همه‌جا: Companies House، Business Portfolio متا، فوتر سایت، صفحه‌ی Privacy، صورتحساب بانکی (مثلاً فقط «Javab Ltd»، نه گاهی «Javab Limited»).</li>
+            <li>اسم قانونی دقیقاً یکسان در همه‌جا: Companies House، Business Portfolio متا، فوتر سایت، صفحه‌ی Privacy، صورتحساب بانکی (مثلاً فقط «Replisto Ltd»، نه گاهی «Replisto Limited»).</li>
             <li>یک آدرس و یک شماره تلفن (قابل دریافت تماس و پیامک) در همه‌ی مدارک و فرم‌ها.</li>
-            <li>سایت <code>javab.app</code> با اسم و آدرس شرکت در فوتر، و ایمیل روی همان دامنه.</li>
+            <li>سایت <code>replisto.app</code> با اسم و آدرس شرکت در فوتر، و ایمیل روی همان دامنه.</li>
             <li>تأیید دامنه در متا با رکورد DNS (قدم ۷.۱).</li>
             <li>هیچ‌کس نمی‌تواند قبولی را تضمین کند؛ متا دلیل رد را معمولاً کلی می‌گوید. با اطلاعات هماهنگ، دوباره فرستادن معمولاً جواب می‌دهد.</li>
           </ul>
@@ -520,7 +520,7 @@ uv run python -m scripts.check_llm --price-in 0.10 --price-out 0.50</code></pre>
         <ol class="how">
           <li>در پنل DNS دامنه یک رکورد بسازید: نوع <code>A</code>، اسم <code>api</code>، مقدار = IP سرور.</li>
           <li>ممکن است تا چند ساعت طول بکشد. برای چک کردن، در کامپیوتر خودتان:
-            <pre><code>nslookup api.javab.app</code></pre>
+            <pre><code>nslookup api.replisto.app</code></pre>
             باید IP سرور را نشان دهد.</li>
         </ol>
         <p class="muted">رکورد پنل (مثلاً <code>panel</code>) را بعداً با علی می‌سازید (قدم ۴.۳).</p>
@@ -551,8 +551,8 @@ ufw allow 22 &amp;&amp; ufw allow 80 &amp;&amp; ufw allow 443 &amp;&amp; ufw --f
             <pre><code>curl -fsSL https://get.docker.com | sh</code></pre></li>
           <li>در گیت‌هاب یک توکن فقط‌خواندنی بسازید: <strong>Settings ← Developer settings ← Fine-grained tokens</strong>، دسترسی Contents: Read روی همین ریپو.</li>
           <li>کد را بگیرید (موقع پرسیدن رمز، توکن را بدهید):
-            <pre><code>git clone https://github.com/mehrshot/InstagramDMBot.git /opt/javab
-cd /opt/javab</code></pre></li>
+            <pre><code>git clone https://github.com/mehrshot/InstagramDMBot.git /opt/replisto
+cd /opt/replisto</code></pre></li>
         </ol>
       </div>
     </li>
@@ -573,10 +573,10 @@ openssl rand -hex 16                          # META_WEBHOOK_VERIFY_TOKEN</code>
               <thead><tr><th>متغیر</th><th>مقدار</th></tr></thead>
               <tbody>
                 <tr><td><code>ENVIRONMENT</code></td><td><code>production</code></td></tr>
-                <tr><td><code>API_DOMAIN</code></td><td><code>api.javab.app</code></td></tr>
-                <tr><td><code>PUBLIC_BASE_URL</code></td><td><code>https://api.javab.app</code></td></tr>
-                <tr><td><code>FRONTEND_URL</code></td><td>آدرس پنل، مثلاً <code>https://app.javab.app</code></td></tr>
-                <tr><td><code>CORS_ORIGINS</code></td><td><code>["https://app.javab.app"]</code></td></tr>
+                <tr><td><code>API_DOMAIN</code></td><td><code>api.replisto.app</code></td></tr>
+                <tr><td><code>PUBLIC_BASE_URL</code></td><td><code>https://api.replisto.app</code></td></tr>
+                <tr><td><code>FRONTEND_URL</code></td><td>آدرس پنل، مثلاً <code>https://app.replisto.app</code></td></tr>
+                <tr><td><code>CORS_ORIGINS</code></td><td><code>["https://app.replisto.app"]</code></td></tr>
                 <tr><td><code>META_APP_ID</code> / <code>META_APP_SECRET</code></td><td>قدم ۱.۶</td></tr>
                 <tr><td><code>LLM_BASE_URL</code> / <code>LLM_API_KEY</code> / <code>LLM_MODEL</code></td><td>قدم ۱.۳</td></tr>
               </tbody>
@@ -593,7 +593,7 @@ openssl rand -hex 16                          # META_WEBHOOK_VERIFY_TOKEN</code>
         <ol class="how">
           <li><pre><code>docker compose up -d --build</code></pre></li>
           <li>وضعیت: <pre><code>docker compose ps</code></pre> همه‌ی سرویس‌ها (db، redis، api، worker، caddy) باید <code>running</code> باشند.</li>
-          <li>در مرورگر باز کنید: <code>https://api.javab.app/health/ready</code> ← باید <code>{"status":"ready"}</code> ببینید. قفل HTTPS کنار آدرس یعنی گواهی خودکار گرفته شده.</li>
+          <li>در مرورگر باز کنید: <code>https://api.replisto.app/health/ready</code> ← باید <code>{"status":"ready"}</code> ببینید. قفل HTTPS کنار آدرس یعنی گواهی خودکار گرفته شده.</li>
           <li>اگر خطا بود، لاگ‌ها: <pre><code>docker compose logs -f api</code></pre> (خروجی را برای Claude بفرستید).</li>
         </ol>
         <dl class="kv"><dt>خروجی</dt><dd>بک‌اند روی اینترنت، با HTTPS</dd></dl>
@@ -604,9 +604,9 @@ openssl rand -hex 16                          # META_WEBHOOK_VERIFY_TOKEN</code>
         <div class="step-head"><span class="step-num">۲.۷</span><h3 id="s2-7-h">بکاپ خودکار و مانیتورینگ</h3><span class="chip me">مسئول بک‌اند</span><span class="chip">۳۰ دقیقه</span></div>
         <ol class="how">
           <li>بکاپ هر شب ساعت ۴ (با <code>crontab -e</code> این خط را اضافه کنید):
-            <pre><code>0 4 * * * mkdir -p /root/backups &amp;&amp; cd /opt/javab &amp;&amp; docker compose exec -T db pg_dump -U app app | gzip &gt; /root/backups/db-$(date +\%F).sql.gz</code></pre></li>
+            <pre><code>0 4 * * * mkdir -p /root/backups &amp;&amp; cd /opt/replisto &amp;&amp; docker compose exec -T db pg_dump -U app app | gzip &gt; /root/backups/db-$(date +\%F).sql.gz</code></pre></li>
           <li>هر هفته یک نسخه از <code>/root/backups</code> را بیرون از سرور هم نگه دارید (بکاپی که فقط روی همان سرور باشد، با خراب شدن سرور از دست می‌رود).</li>
-          <li>یک مانیتور رایگان (مثلاً UptimeRobot) روی <code>https://api.javab.app/health/ready</code> بگذارید تا اگر سرور خوابید، ایمیل بگیرید.</li>
+          <li>یک مانیتور رایگان (مثلاً UptimeRobot) روی <code>https://api.replisto.app/health/ready</code> بگذارید تا اگر سرور خوابید، ایمیل بگیرید.</li>
         </ol>
       </div>
     </li>
@@ -630,7 +630,7 @@ openssl rand -hex 16                          # META_WEBHOOK_VERIFY_TOKEN</code>
         <div class="step-head"><span class="step-num">۳.۱</span><h3 id="s3-1-h">آدرس بازگشت اتصال (OAuth Redirect URI)</h3><span class="chip me">مسئول بک‌اند</span></div>
         <ol class="how">
           <li>در بخش <strong>Set up Instagram business login</strong>، در قسمت Redirect URL دقیقاً این را وارد و ذخیره کنید:
-            <pre><code>https://api.javab.app/api/v1/instagram/callback</code></pre></li>
+            <pre><code>https://api.replisto.app/api/v1/instagram/callback</code></pre></li>
         </ol>
         <div class="callout warn"><strong>حتی یک حرف فرق نکند</strong><p>بدون اسلش اضافه در آخر، با <code>https</code>. هر اختلافی = خطای «Invalid redirect_uri» موقع اتصال.</p></div>
       </div>
@@ -641,7 +641,7 @@ openssl rand -hex 16                          # META_WEBHOOK_VERIFY_TOKEN</code>
         <ol class="how">
           <li>در بخش <strong>Configure webhooks</strong>:
             <div class="table-wrap" style="margin-top:6px"><table><tbody>
-              <tr><td>Callback URL</td><td><code>https://api.javab.app/webhooks/instagram</code></td></tr>
+              <tr><td>Callback URL</td><td><code>https://api.replisto.app/webhooks/instagram</code></td></tr>
               <tr><td>Verify token</td><td>همان <code>META_WEBHOOK_VERIFY_TOKEN</code> که در ‎.env گذاشتید</td></tr>
             </tbody></table></div></li>
           <li><strong>Verify and save</strong> را بزنید. اگر سرور درست کار کند، سبز می‌شود.</li>
@@ -856,9 +856,9 @@ openssl rand -hex 16                          # META_WEBHOOK_VERIFY_TOKEN</code>
         <p><strong>App settings ← Basic</strong>:</p>
         <div class="table-wrap"><table><tbody>
           <tr><td>App icon</td><td>لوگو ۱۰۲۴×۱۰۲۴</td></tr>
-          <tr><td>Privacy policy URL</td><td><code>https://app.javab.app/privacy</code></td></tr>
-          <tr><td>Terms of service URL</td><td><code>https://app.javab.app/terms</code></td></tr>
-          <tr><td>User data deletion</td><td><code>https://app.javab.app/data-deletion</code></td></tr>
+          <tr><td>Privacy policy URL</td><td><code>https://app.replisto.app/privacy</code></td></tr>
+          <tr><td>Terms of service URL</td><td><code>https://app.replisto.app/terms</code></td></tr>
+          <tr><td>User data deletion</td><td><code>https://app.replisto.app/data-deletion</code></td></tr>
           <tr><td>Category / Contact email</td><td>Business · <code>support@دامنه</code></td></tr>
         </tbody></table></div>
       </div>

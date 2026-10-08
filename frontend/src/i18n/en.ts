@@ -1,14 +1,14 @@
-import type { Dict } from "./fa";
+import type { Dict } from "./ar";
 import landing from "./landing.en";
 import panel from "./panel.en";
 import launch from "./launch.en";
 
 const en: Dict = {
-  appName: "Javab",
+  appName: "Replisto",
   tagline: "No customer goes unanswered",
   panelTitle: (shop) => `${shop} panel`,
   langName: "English",
-  otherLang: "فارسی",
+  otherLang: "العربية",
 
   theme: {
     title: "Theme",
@@ -57,6 +57,9 @@ const en: Dict = {
     notFound: "Not found.",
     fileTooBig: (mb) => `The file is larger than ${mb} MB.`,
     fileType: "This file type is not supported.",
+    conflict: "This conflicts with existing data (it may already be registered).",
+    tooMany: "Too many attempts. Wait a little and try again.",
+    forbidden: "You don't have access to this. Log in again or verify your email.",
     field: {
       email: "Enter a valid email address.",
       password: "Password must be at least 8 characters.",
@@ -74,7 +77,7 @@ const en: Dict = {
     loginTitle: "Log in",
     loginSubtitle: "Manage your business's AI teammate",
     registerTitle: "Create an account",
-    registerSubtitle: "Set up Javab for your business in minutes",
+    registerSubtitle: "Set up Replisto for your business in minutes",
     email: "Email",
     password: "Password",
     passwordHint: "At least 8 characters",
@@ -120,7 +123,7 @@ const en: Dict = {
     checklistTitle: "Set up your bot",
     checklistProgress: (done, total) => `${done} of ${total} steps done`,
     stepInstagram: "Connect Instagram",
-    stepInstagramHint: "Connect your business page so Javab receives customer messages.",
+    stepInstagramHint: "Connect your business page so Replisto receives customer messages.",
     stepKnowledge: "Add shop information",
     stepKnowledgeHint: "Shipping, payment, returns and FAQs.",
     stepProducts: "Connect products",
@@ -128,10 +131,10 @@ const en: Dict = {
     stepPlayground: "Test the bot",
     stepPlaygroundHint: "Ask questions as if you were a customer.",
     stepBot: "Turn the bot on",
-    stepBotHint: "From then on, Javab talks to your customers.",
+    stepBotHint: "From then on, Replisto talks to your customers.",
     doStep: "Start",
     botStatus: "Bot status",
-    botOn: "Javab is on and talking to your customers",
+    botOn: "Replisto is on and talking to your customers",
     botOff: "The bot is off",
     botTurnOnConfirmTitle: "Turn the bot on?",
     botTurnOnConfirmIg: "Instagram isn't connected yet; the bot won't receive messages until it is.",
@@ -163,7 +166,7 @@ const en: Dict = {
     reconnect: "Reconnect",
     disconnect: "Disconnect",
     disconnectConfirmTitle: "Disconnect Instagram?",
-    disconnectConfirmBody: "Javab will stop receiving and replying to this page's messages. Past conversations are kept.",
+    disconnectConfirmBody: "Replisto will stop receiving and replying to this page's messages. Past conversations are kept.",
     disconnected: "Disconnected",
     redirecting: "Redirecting to Instagram...",
   },
@@ -377,7 +380,7 @@ const en: Dict = {
     name: "Shop name",
     nameHint: "The bot introduces itself with this name",
     botEnabled: "Bot is on",
-    botEnabledHint: "When off, Javab doesn't reply to any message.",
+    botEnabledHint: "When off, Replisto doesn't reply to any message.",
     tone: "Tone",
     toneFriendly: "Friendly",
     toneFriendlyHint: "Like “Hi dear, yes it's in stock 😊”",

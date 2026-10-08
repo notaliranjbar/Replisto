@@ -149,7 +149,7 @@ function Hero() {
   );
 }
 
-/** The jobs Javab does for a business: five equal roles, one card each. */
+/** The jobs Replisto does for a business: five equal roles, one card each. */
 function Roles() {
   const { t } = useI18n();
   const R = t.landing.roles;
@@ -178,7 +178,7 @@ function Roles() {
 }
 
 /**
- * The messaging channels Javab works on, as identical tiles. Channels that aren't connected in
+ * The messaging channels Replisto works on, as identical tiles. Channels that aren't connected in
  * the product yet say "coming soon" instead of offering a dead button.
  */
 function Channels() {

@@ -17,15 +17,7 @@ from app.models.knowledge import (
     ProductSourceKind,
 )
 from app.models.teach import ProposalStatus, TeachProposal
-from app.models.telegram import (
-    TelegramAdmin,
-    TelegramBot,
-    TelegramBusinessConnection,
-    TelegramChannel,
-    TelegramPost,
-    TelegramSession,
-)
-from app.models.user import Plan, Shop, User
+from app.models.user import Shop, User
 
 __all__ = [
     "Base",
@@ -41,7 +33,6 @@ __all__ = [
     "MessageSender",
     "Payment",
     "PaymentStatus",
-    "Plan",
     "Product",
     "ProductOrigin",
     "ProductSource",
@@ -49,12 +40,6 @@ __all__ = [
     "ProposalStatus",
     "Shop",
     "TeachProposal",
-    "TelegramAdmin",
-    "TelegramBot",
-    "TelegramBusinessConnection",
-    "TelegramChannel",
-    "TelegramPost",
-    "TelegramSession",
     "User",
     "WalletEntry",
     "WalletEntryKind",

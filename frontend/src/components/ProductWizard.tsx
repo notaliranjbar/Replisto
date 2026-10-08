@@ -4,7 +4,7 @@ import { Check, Download, FileSpreadsheet, Info, Sheet, Upload } from "lucide-re
 import { api, apiUrl } from "../api/client";
 import { keys } from "../api/queries";
 import type { Preview, ProductField, Source } from "../api/types";
-import { useI18n } from "../i18n";
+import { useI18n, type Lang } from "../i18n";
 import { errorMessage } from "../lib/errors";
 import { useToast } from "./toast";
 import { Alert, Badge, Button, Card, Field, Input, PageLoading, Select, cx } from "./ui";
@@ -13,16 +13,28 @@ export type Kind = "google_sheet" | "upload";
 type Mapping = Record<string, string>;
 export type WizardStart = { kind?: Kind; url?: string; mapping?: Mapping };
 
-// Field labels come from the API in Persian; English panel uses these.
-const FIELD_LABELS_EN: Record<string, string> = {
-  name: "Product name",
-  sku: "Product code",
-  category: "Category",
-  color: "Color",
-  size: "Size",
-  price: "Price (Toman)",
-  stock: "Stock",
-  description: "Description",
+// Field labels come from the API in Persian; the panel uses its own.
+const FIELD_LABELS: Record<Lang, Record<string, string>> = {
+  en: {
+    name: "Product name",
+    sku: "Product code",
+    category: "Category",
+    color: "Color",
+    size: "Size",
+    price: "Price (Toman)",
+    stock: "Stock",
+    description: "Description",
+  },
+  ar: {
+    name: "اسم المنتج",
+    sku: "رمز المنتج",
+    category: "الفئة",
+    color: "اللون",
+    size: "المقاس",
+    price: "السعر (تومان)",
+    stock: "المخزون",
+    description: "الوصف",
+  },
 };
 
 /** Connect products in three steps: pick a source, check the preview, map the columns. */
@@ -343,7 +355,7 @@ function MappingForm({ fields, headers, mapping, onChange }: { fields: ProductFi
   return (
     <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
       {fields.map((fld) => {
-        const label = lang === "en" ? (FIELD_LABELS_EN[fld.key] ?? fld.label) : fld.label;
+        const label = FIELD_LABELS[lang][fld.key] ?? fld.label;
         return (
           <Field
             key={fld.key}

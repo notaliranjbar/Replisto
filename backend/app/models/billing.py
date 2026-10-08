@@ -12,7 +12,6 @@ from app.models.base import Base, Timestamps, UUIDPk, str_enum
 class WalletEntryKind(enum.StrEnum):
     TOPUP = "topup"  # paid through the gateway
     USAGE = "usage"  # an AI answer (or reading a document for the owner)
-    PLAN_FEE = "plan_fee"  # monthly fee of the pro/business plan
     BONUS = "bonus"  # free credit (sign-up gift)
     ADJUSTMENT = "adjustment"  # set by us by hand (support, card-to-card payment, refund)
 
@@ -28,7 +27,7 @@ class WalletEntry(UUIDPk, Timestamps, Base):
     # Positive adds credit, negative spends it.
     amount_rial: Mapped[int] = mapped_column(BigInteger)
     balance_after_rial: Mapped[int] = mapped_column(BigInteger)
-    # Persian, shown to the owner ("پاسخ به مشتری در تلگرام").
+    # Shown to the owner ("Customer reply on Instagram").
     description: Mapped[str] = mapped_column(String(255), default="")
     # e.g. tokens, conversation id, payment id.
     details: Mapped[dict[str, Any]] = mapped_column(default=dict)
@@ -63,7 +62,7 @@ class Payment(UUIDPk, Timestamps, Base):
 
 
 class GiftClaim(UUIDPk, Timestamps, Base):
-    """A Telegram/Bale account or a phone number that already earned a shop the sign-up gift.
+    """A phone number that already earned a shop the sign-up gift.
 
     Kept (as a hash, without the number itself) even when that shop is deleted, so deleting
     and re-creating accounts doesn't earn the gift again.
@@ -71,7 +70,7 @@ class GiftClaim(UUIDPk, Timestamps, Base):
 
     __tablename__ = "gift_claims"
 
-    # sha256 of "<kind>:<value>" with our secret: kind is telegram | bale | phone.
+    # sha256 of "<kind>:<value>" with our secret (kind is "phone").
     key: Mapped[str] = mapped_column(String(64), unique=True)
     # The shop that got the gift (no foreign key: the claim outlives the shop).
     shop_id: Mapped[uuid.UUID] = mapped_column(Uuid)

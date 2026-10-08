@@ -17,7 +17,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = "Javab"
+    app_name: str = "Replisto"
     environment: str = "development"  # development | production | test
     public_base_url: str = "http://localhost:8000"
     # The panel; users are sent back here after connecting Instagram.
@@ -69,42 +69,23 @@ class Settings(BaseSettings):
     # Longest text (a Google Doc, a pasted price list) read in one "teach the bot" request.
     teach_max_chars: int = 60_000
 
-    # Channels. Instagram stays off until the Meta app is approved; its code is kept intact.
-    instagram_enabled: bool = False
-    # WhatsApp is not built: Meta's WhatsApp Business Platform rejects +98 numbers, so it
-    # can't serve Iranian customers (docs/channels-plan.md).
-    # whatsapp_enabled: bool = False
-
-    # Telegram: the shared "Javab" bot every shop can use with its own start link. Custom
-    # (per-shop) bots and Telegram Business connections are stored in the database.
-    telegram_bot_token: str = ""
-    # Bot API host; a local Bot API server, or later Bale's Telegram-compatible API.
-    telegram_api_base: str = "https://api.telegram.org"
-    # Log outgoing Telegram calls instead of sending them (local development).
-    telegram_dry_run: bool = False
-
-    # Bale (بله): a Telegram-compatible Bot API, so the same bot code serves it. The shared
-    # "Javab" bot on Bale; shops' own Bale bots are stored like Telegram ones.
-    bale_bot_token: str = ""
-    bale_api_base: str = "https://tapi.bale.ai"
+    # Channels. Instagram is the messaging channel; switch it off to pause it server-wide
+    # (e.g. while the Meta app is in review).
+    instagram_enabled: bool = True
 
     # A safety net against one chatty customer (or a spammer) draining a shop's wallet.
     max_bot_replies_per_customer_hour: int = 30
 
     # Billing: shops top up a wallet and every AI answer is paid from it. Amounts in rial.
     billing_enabled: bool = True
-    # The sign-up gift (500,000 rial = 50,000 toman). Given once, only after the owner links
-    # their Telegram/Bale account, and (when required) verifies their mobile number.
+    # The sign-up gift (500,000 rial = 50,000 toman). Given once per person, after the owner
+    # verifies their mobile number.
     signup_credit_rial: int = 500_000
-    signup_gift_requires_phone: bool = True
     usage_rial_per_1k_prompt_tokens: int = 300
     usage_rial_per_1k_completion_tokens: int = 1_200
     usage_min_rial_per_reply: int = 500
     # The owner is told once the balance drops below this.
     low_balance_rial: int = 100_000
-    # Monthly fees of the plans above "basic" (paid from the wallet every 30 days).
-    plan_pro_monthly_rial: int = 2_000_000
-    plan_business_monthly_rial: int = 4_000_000
     topup_min_rial: int = 500_000
     topup_max_rial: int = 500_000_000
 
@@ -128,10 +109,13 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_username: str = ""
     smtp_password: str = ""
-    smtp_from: str = "Javab <no-reply@javab.app>"
+    smtp_from: str = "Replisto <no-reply@replisto.app>"
     smtp_starttls: bool = True
     password_reset_minutes: int = 30
     email_verify_days: int = 7
+    # The panel stays closed until the owner clicks the emailed link (only /me, resending
+    # the link and deleting the account work before that).
+    require_verified_email: bool = True
 
     # SMS for verifying mobile numbers: "kavenegar" or "smsir" (both send a code with a
     # template approved in their panel). Empty: codes are only logged (development).
@@ -147,25 +131,12 @@ class Settings(BaseSettings):
     login_max_failures: int = 5
     login_failure_window_minutes: int = 15
 
-    # Error monitoring: Sentry (or a Sentry-compatible service such as GlitchTip), and/or
-    # error alerts sent by the shared Telegram bot to an operations chat.
+    # Error monitoring: Sentry (or a Sentry-compatible service such as GlitchTip).
     sentry_dsn: str = ""
-    ops_telegram_chat_id: str = ""
-    # Telegram user ids of the team (comma separated): the shared Telegram bot gives them the
-    # admin panel (/ops). Get your id from @userinfobot.
-    ops_admin_telegram_ids: str = ""
 
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
-
-    @property
-    def ops_admin_ids(self) -> set[int]:
-        ids = set()
-        for part in self.ops_admin_telegram_ids.replace(" ", "").split(","):
-            if part.lstrip("-").isdigit():
-                ids.add(int(part))
-        return ids
 
     @property
     def llm_configured(self) -> bool:

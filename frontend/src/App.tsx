@@ -1,6 +1,8 @@
 import { lazy, Suspense, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router";
+import { useMe } from "./api/queries";
 import { useAuth } from "./auth/AuthContext";
+import { CheckYourEmail } from "./components/verify";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -37,6 +39,14 @@ function RequireAuth({ children }: { children: ReactNode }) {
     const next = location.pathname + location.search;
     return <Navigate to={`/login${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`} replace />;
   }
+  return <EmailGate>{children}</EmailGate>;
+}
+
+/** The panel opens only after the emailed link is clicked (the API refuses it before that too). */
+function EmailGate({ children }: { children: ReactNode }) {
+  const { data: me, isPending } = useMe();
+  if (isPending) return <div className="min-h-dvh bg-slate-50" />;
+  if (me && !me.email_verified_at) return <CheckYourEmail me={me} />;
   return children;
 }
 

@@ -1,4 +1,4 @@
-"""The product catalogue in Javab: products added by hand, search, and how a live Google Sheet
+"""The product catalogue in Replisto: products added by hand, search, and how a live Google Sheet
 coexists with products taught any other way."""
 
 from httpx import AsyncClient

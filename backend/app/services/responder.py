@@ -2,7 +2,7 @@
 
 The LLM gets the shop's knowledge and a product overview in its system prompt, and tools:
 - search_products: looks up the shop's product table (price, colour, size, stock)
-- share_posts: attaches a product's post (Instagram post card, Telegram channel post or photo),
+- share_posts: attaches a product's post (Instagram post card),
   sent after the message
 - handoff_to_human: used when the answer isn't in the shop's data; the question goes to the
   owner and is flagged "unanswered" so the owner can fill the gap.
@@ -172,7 +172,7 @@ _TONES = {
     "(محاوره‌ای) as people write in chat messages",
     "formal": "polite and respectful, in standard formal Persian (رسمی و مودبانه)",
 }
-_CHANNEL_NAMES = {Channel.INSTAGRAM: "Instagram DM", Channel.TELEGRAM: "Telegram"}
+_CHANNEL_NAMES = {Channel.INSTAGRAM: "Instagram DM"}
 
 
 def build_system_prompt(
