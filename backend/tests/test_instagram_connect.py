@@ -57,7 +57,7 @@ async def test_connect_flow(
 
     status = (await client.get("/api/v1/instagram", headers=auth_headers)).json()
     assert status["connected"] and status["active"]
-    assert status["username"] == "mahsa.boutique"
+    assert status["username"] == "layla.boutique"
     assert status["ig_user_id"] == fake_meta.ig_user_id
 
     account = await db.scalar(select(InstagramAccount))
@@ -113,7 +113,7 @@ async def test_same_page_cannot_join_two_shops(
     await _connect(client, auth_headers)
     other = await client.post(
         "/api/v1/auth/register",
-        json={"email": "other@shop.ir", "password": "strongpass1", "shop_name": "Other"},
+        json={"email": "other@shop.com", "password": "strongpass1", "shop_name": "Other"},
     )
     other_headers = {"Authorization": f"Bearer {other.json()['access_token']}"}
     resp = await _connect(client, other_headers)
@@ -147,8 +147,8 @@ async def _make_account(db: AsyncSession, email: str, ig_id: str, expires_in: ti
 
 
 async def test_refresh_expiring_tokens(db: AsyncSession, fake_meta: FakeMeta) -> None:
-    soon = await _make_account(db, "a@x.ir", "1", timedelta(days=3))
-    later = await _make_account(db, "b@x.ir", "2", timedelta(days=40))
+    soon = await _make_account(db, "a@x.com", "1", timedelta(days=3))
+    later = await _make_account(db, "b@x.com", "2", timedelta(days=40))
     later_token = later.access_token_encrypted
 
     assert await refresh_expiring_tokens(db, fake_meta.client()) == 1
@@ -159,7 +159,7 @@ async def test_refresh_expiring_tokens(db: AsyncSession, fake_meta: FakeMeta) ->
 
 
 async def test_refresh_revoked_token_deactivates(db: AsyncSession, fake_meta: FakeMeta) -> None:
-    account = await _make_account(db, "a@x.ir", "1", timedelta(days=1))
+    account = await _make_account(db, "a@x.com", "1", timedelta(days=1))
     fake_meta.refresh_error = (400, {"error": {"message": "Session invalid", "code": 190}})
     assert await refresh_expiring_tokens(db, fake_meta.client()) == 0
     await db.refresh(account)

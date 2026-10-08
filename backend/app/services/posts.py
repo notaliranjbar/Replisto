@@ -24,7 +24,7 @@ from app.services.instagram import InstagramClient
 logger = logging.getLogger(__name__)
 
 # How a shared post is recorded in the conversation (panel and the bot's own history).
-POST_MARKER = "[پست]"
+POST_MARKER = "[post]"
 MAX_POSTS_PER_REPLY = 3
 
 _PERMALINK = re.compile(r"instagram\.com/(?:[\w.]+/)?(p|reel|tv)/([\w-]+)", re.IGNORECASE)

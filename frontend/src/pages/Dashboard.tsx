@@ -37,21 +37,17 @@ export default function Dashboard() {
   const s = data.setup;
   const L = t.launch.dashboard;
   const igOk = s.instagram_connected && s.instagram_active;
-  const channelOk = igOk || s.telegram_available || s.bale_available;
+  const channelOk = igOk;
   const tried = me ? getFlag(playgroundKey(me.shop.id)) : false;
-  // Telegram and Bale are separate; send the owner to whichever the server runs.
-  const messengerPage = s.telegram_available || !s.bale_available ? "/telegram" : "/bale";
 
   const steps: Step[] = [
-    { done: s.telegram_owner_linked || s.bale_owner_linked, title: L.stepTelegramLink, hint: L.stepTelegramLinkHint, to: messengerPage },
     { done: s.knowledge_entries > 0, title: t.dashboard.stepKnowledge, hint: t.dashboard.stepKnowledgeHint, to: "/knowledge" },
     { done: s.product_count > 0, title: L.stepTeach, hint: L.stepTeachHint, to: "/products" },
     { done: tried, title: t.dashboard.stepPlayground, hint: t.dashboard.stepPlaygroundHint, to: "/playground" },
     { done: s.bot_enabled, title: t.dashboard.stepBot, hint: t.dashboard.stepBotHint },
-    { done: data.last_7_days.conversations > 0, title: L.stepTelegramShare, hint: L.stepTelegramShareHint, to: messengerPage },
   ];
   if (s.instagram_available) {
-    steps.splice(1, 0, { done: igOk, title: t.dashboard.stepInstagram, hint: t.dashboard.stepInstagramHint, to: "/instagram", optional: true });
+    steps.unshift({ done: igOk, title: t.dashboard.stepInstagram, hint: t.dashboard.stepInstagramHint, to: "/instagram" });
   }
   // the optional products step doesn't keep the checklist on screen
   const allDone = steps.every((x) => x.done || x.optional);
@@ -98,7 +94,6 @@ export default function Dashboard() {
           {L.pending(f.num(data.pending_proposals))}
         </Alert>
       )}
-      {!s.telegram_available && !s.bale_available && <Alert kind="warning">{L.telegramNotReady}</Alert>}
       {s.instagram_available && s.instagram_connected && !s.instagram_active && (
         <Alert kind="warning" action={<LinkButton to="/instagram" size="sm" variant="secondary">{t.dashboard.alertIgInactiveAction}</LinkButton>}>
           {t.dashboard.alertIgInactive}
@@ -142,7 +137,7 @@ export default function Dashboard() {
             <div className="min-w-0 flex-1">
               <div className="text-sm text-slate-500">{L.walletTitle}</div>
               <div className="mt-0.5 font-bold text-ink-950">
-                <span className="num text-xl">{f.num(data.wallet.balance_toman)}</span> <span className="text-sm font-medium text-slate-500">{t.launch.billing.toman}</span>
+                <span className="num text-xl">{f.usd(data.wallet.balance_cents)}</span>
               </div>
             </div>
             <span className="text-xs font-semibold text-brand-700">{L.walletAction}</span>
@@ -169,7 +164,7 @@ export default function Dashboard() {
         title={t.dashboard.botTurnOnConfirmTitle}
         body={
           <ul className="list-disc space-y-1 ps-5">
-            {!channelOk && <li>{L.telegramNotReady}</li>}
+            {!channelOk && <li>{s.instagram_available ? t.dashboard.botTurnOnConfirmIg : t.launch.instagramSoon.body}</li>}
             {s.knowledge_entries === 0 && <li>{t.dashboard.botTurnOnConfirmKnowledge}</li>}
           </ul>
         }

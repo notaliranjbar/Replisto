@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import and_, exists, func, or_, select
 
 from app.api.deps import CurrentShop, DbSession, HttpClient
+from app.core.i18n import localize
 from app.core.timeutil import as_utc, utcnow
 from app.models import Channel, Conversation, HandoffResolution, Message, MessageSender, Shop
 from app.services.instagram import InstagramClient
@@ -36,7 +37,7 @@ class HandoffOut(BaseModel):
     # open: the customer is waiting for the owner. resolved: the owner replied or closed it.
     status: Literal["open", "resolved"]
     handed_off_at: datetime
-    # Short Persian reason written by the bot, e.g. «مشتری فاکتور رسمی می‌خواهد».
+    # Short reason written by the bot, e.g. "The customer wants a formal invoice".
     reason: str | None
     # What the customer asked; grows if they keep writing while waiting.
     question: str
@@ -315,7 +316,7 @@ async def resolve_unanswered(message_id: uuid.UUID, shop: CurrentShop, db: DbSes
     message = await db.get(Message, message_id)
     conversation = await db.get(Conversation, message.conversation_id) if message else None
     if message is None or conversation is None or conversation.shop_id != shop.id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "پیام پیدا نشد")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Message not found")
     message.unanswered_resolved = True
     await db.commit()
 
@@ -345,7 +346,7 @@ async def _question_for(db: DbSession, message: Message) -> str:
 async def _get(db: DbSession, shop: Shop, conversation_id: uuid.UUID) -> Conversation:
     conversation = await db.get(Conversation, conversation_id)
     if conversation is None or conversation.shop_id != shop.id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "گفتگو پیدا نشد")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
     return conversation
 
 
@@ -365,7 +366,7 @@ def _handoff_out(conversation: Conversation) -> HandoffOut | None:
     return HandoffOut(
         status="open" if conversation.handoff_open else "resolved",
         handed_off_at=conversation.handoff_at,
-        reason=conversation.handoff_reason,
+        reason=localize(conversation.handoff_reason),
         question=conversation.handoff_question or "",
         resolved_at=conversation.handoff_resolved_at,
         resolved_by=conversation.handoff_resolved_by,

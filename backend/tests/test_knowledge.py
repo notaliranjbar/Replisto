@@ -20,14 +20,14 @@ async def test_sections_describe_the_form(client: AsyncClient, auth_headers: dic
 
 async def test_single_section_upsert_and_clear(client: AsyncClient, auth_headers: dict) -> None:
     url = f"{API}/single/shipping"
-    first = await client.put(url, headers=auth_headers, json={"content": "پست پیشتاز ۳ روزه"})
+    first = await client.put(url, headers=auth_headers, json={"content": "3-day express post"})
     assert first.status_code == 200
-    second = await client.put(url, headers=auth_headers, json={"content": "تیپاکس ۲ روزه"})
+    second = await client.put(url, headers=auth_headers, json={"content": "2-day courier"})
     assert second.json()["id"] == first.json()["id"]  # updated, not duplicated
 
     listing = (await client.get(API, headers=auth_headers)).json()
-    assert [e["content"] for e in listing["entries"]] == ["تیپاکس ۲ روزه"]
-    assert listing["chars_used"] == len("تیپاکس ۲ روزه")
+    assert [e["content"] for e in listing["entries"]] == ["2-day courier"]
+    assert listing["chars_used"] == len("2-day courier")
 
     cleared = await client.put(url, headers=auth_headers, json={"content": "  "})
     assert cleared.json() is None
@@ -45,16 +45,16 @@ async def test_faq_crud(client: AsyncClient, auth_headers: dict) -> None:
     created = await client.post(
         API,
         headers=auth_headers,
-        json={"section": "faq", "title": "جنس پارچه؟", "content": "کتان ترک"},
+        json={"section": "faq", "title": "What's the fabric?", "content": "Premium linen"},
     )
     assert created.status_code == 201
     entry_id = created.json()["id"]
 
     patched = await client.patch(
-        f"{API}/{entry_id}", headers=auth_headers, json={"content": "کتان ترک درجه یک"}
+        f"{API}/{entry_id}", headers=auth_headers, json={"content": "Premium linen"}
     )
-    assert patched.json()["content"] == "کتان ترک درجه یک"
-    assert patched.json()["title"] == "جنس پارچه؟"
+    assert patched.json()["content"] == "Premium linen"
+    assert patched.json()["title"] == "What's the fabric?"
 
     assert (await client.delete(f"{API}/{entry_id}", headers=auth_headers)).status_code == 204
     assert (await client.delete(f"{API}/{entry_id}", headers=auth_headers)).status_code == 404
@@ -62,11 +62,11 @@ async def test_faq_crud(client: AsyncClient, auth_headers: dict) -> None:
 
 async def test_entries_are_private_to_their_shop(client: AsyncClient, auth_headers: dict) -> None:
     created = await client.post(
-        API, headers=auth_headers, json={"section": "faq", "content": "راز"}
+        API, headers=auth_headers, json={"section": "faq", "content": "Secret"}
     )
     other = await client.post(
         "/api/v1/auth/register",
-        json={"email": "b@shop.ir", "password": "strongpass1", "shop_name": "B"},
+        json={"email": "b@shop.com", "password": "strongpass1", "shop_name": "B"},
     )
     other_headers = {"Authorization": f"Bearer {other.json()['access_token']}"}
     entry_id = created.json()["id"]
@@ -90,18 +90,18 @@ async def test_upload_text_and_docx(client: AsyncClient, auth_headers: dict) -> 
     txt = await client.post(
         f"{API}/upload",
         headers=auth_headers,
-        files={"file": ("info.txt", "ارسال رایگان بالای ۲ میلیون".encode(), "text/plain")},
+        files={"file": ("info.txt", b"Free shipping over $200", "text/plain")},
     )
     assert txt.status_code == 201
     assert txt.json()["section"] == "file"
     assert txt.json()["source_filename"] == "info.txt"
-    assert txt.json()["content"] == "ارسال رایگان بالای ۲ میلیون"
+    assert txt.json()["content"] == "Free shipping over $200"
 
     document = docx.Document()
-    document.add_paragraph("شرایط مرجوعی: ۷ روز")
+    document.add_paragraph("Returns: within 7 days")
     table = document.add_table(rows=1, cols=2)
-    table.rows[0].cells[0].text = "سایز ۴۴"
-    table.rows[0].cells[1].text = "قد ۱۰۵"
+    table.rows[0].cells[0].text = "Size M"
+    table.rows[0].cells[1].text = "length 105"
     buffer = io.BytesIO()
     document.save(buffer)
     doc = await client.post(
@@ -110,8 +110,8 @@ async def test_upload_text_and_docx(client: AsyncClient, auth_headers: dict) -> 
         files={"file": ("rules.docx", buffer.getvalue(), "application/octet-stream")},
     )
     assert doc.status_code == 201
-    assert "شرایط مرجوعی: ۷ روز" in doc.json()["content"]
-    assert "سایز ۴۴ | قد ۱۰۵" in doc.json()["content"]
+    assert "Returns: within 7 days" in doc.json()["content"]
+    assert "Size M | length 105" in doc.json()["content"]
 
 
 async def test_upload_rejections(client: AsyncClient, auth_headers: dict) -> None:
@@ -125,20 +125,20 @@ async def test_upload_rejections(client: AsyncClient, auth_headers: dict) -> Non
     assert (await upload("broken.pdf", b"not a pdf"))[0] == 422
     assert (await upload("empty.txt", b"   "))[0] == 422
     status, detail = await upload("menu.jpg", b"\xff\xd8fake")  # no LLM configured
-    assert status == 422 and "عکس" in detail
+    assert status == 422 and "image" in detail
 
 
 async def test_upload_image_uses_llm(
     client: AsyncClient, auth_headers: dict, fake_web, llm_on
 ) -> None:
-    fake_web.llm_replies = [{"content": "مانتو کتان: ۱,۲۵۰,۰۰۰ تومان"}]
+    fake_web.llm_replies = [{"content": "Linen dress: $125"}]
     resp = await client.post(
         f"{API}/upload",
         headers=auth_headers,
         files={"file": ("prices.png", b"\x89PNGfake", "image/png")},
     )
     assert resp.status_code == 201
-    assert resp.json()["content"] == "مانتو کتان: ۱,۲۵۰,۰۰۰ تومان"
+    assert resp.json()["content"] == "Linen dress: $125"
     content = fake_web.llm_requests[0]["messages"][0]["content"]
     assert content[1]["image_url"]["url"].startswith("data:image/png;base64,")
 

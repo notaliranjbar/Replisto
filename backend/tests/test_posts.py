@@ -45,41 +45,41 @@ def _post(shop_id, media_id: str, code: str, caption: str, days_ago: int) -> Ins
 
 def test_post_key_ignores_url_noise() -> None:
     assert post_key("https://www.instagram.com/p/AbC_1-2/?igsh=xyz") == "p/AbC_1-2"
-    assert post_key("instagram.com/mahsa.shop/reel/Zz9/") == "reel/Zz9"
+    assert post_key("instagram.com/layla.shop/reel/Zz9/") == "reel/Zz9"
     assert post_key("https://example.com/p/AbC") is None
 
 
 def test_link_products() -> None:
     shop_id = uuid.uuid4()
     posts = [
-        _post(shop_id, "1", "OLD", "مانتو کتان مشکی", 30),
-        _post(shop_id, "2", "NEW", "مانتو كتان جدید رسید", 2),  # Arabic kaf, still a match
-        _post(shop_id, "3", "SKU", "کالکشن تابستون، کد S-220", 5),
-        _post(shop_id, "4", "EXP", "عکس دلخواه صاحب پیج", 40),
+        _post(shop_id, "1", "OLD", "Black linen dress", 30),
+        _post(shop_id, "2", "NEW", "New linen dress just arrived", 2),  # Arabic kaf, still a match
+        _post(shop_id, "3", "SKU", "Summer collection, code S-220", 5),
+        _post(shop_id, "4", "EXP", "A photo the page owner chose", 40),
     ]
     items = [
-        Product(shop_id=shop_id, name="مانتو کتان", extra={}),
-        Product(shop_id=shop_id, name="شومیز حریر", sku="S-220", extra={}),
+        Product(shop_id=shop_id, name="Linen dress", extra={}),
+        Product(shop_id=shop_id, name="Silk blouse", sku="S-220", extra={}),
         # Owner's explicit link wins over any caption match.
         Product(
             shop_id=shop_id,
-            name="شال نخی",
+            name="Cotton scarf",
             post_url="https://instagram.com/p/EXP?utm=1",
             extra={},
         ),
         # Explicit link to a post we haven't read: still shareable, as a plain link.
         Product(
-            shop_id=shop_id, name="کیف", post_url="https://www.instagram.com/p/GONE/", extra={}
+            shop_id=shop_id, name="Bag", post_url="https://www.instagram.com/p/GONE/", extra={}
         ),
-        # "مانتو" alone must not grab a post about another product.
-        Product(shop_id=shop_id, name="مانتو", extra={}),
+        # "Dress" alone must not grab a post about another product.
+        Product(shop_id=shop_id, name="Dress", extra={}),
     ]
     links = link_products(items, posts)
-    assert links["مانتو کتان"].media_id == "2"  # newest matching post
-    assert links["شومیز حریر"].media_id == "3"  # by product code
-    assert links["شال نخی"].media_id == "4"
-    assert links["کیف"] == PostLink(None, "https://www.instagram.com/p/GONE/")
-    assert "مانتو" in links  # its name is inside "مانتو کتان" captions: acceptable, newest wins
+    assert links["Linen dress"].media_id == "2"  # newest matching post
+    assert links["Silk blouse"].media_id == "3"  # by product code
+    assert links["Cotton scarf"].media_id == "4"
+    assert links["Bag"] == PostLink(None, "https://www.instagram.com/p/GONE/")
+    assert "Dress" in links  # its name is inside "Linen dress" captions: acceptable, newest wins
 
 
 async def test_sync_reads_all_pages(db: AsyncSession, fake_meta: FakeMeta) -> None:
@@ -94,7 +94,7 @@ async def test_sync_reads_all_pages(db: AsyncSession, fake_meta: FakeMeta) -> No
         {
             "id": f"m{i}",
             "permalink": f"https://www.instagram.com/p/C{i}/",
-            "caption": f"پست {i}",
+            "caption": f"Post {i}",
             "media_type": "IMAGE",
             "media_url": f"https://cdn.test/{i}.jpg",
             "timestamp": "2026-09-20T10:15:30+0000",
@@ -114,16 +114,18 @@ async def test_sync_reads_all_pages(db: AsyncSession, fake_meta: FakeMeta) -> No
 
 @pytest.fixture
 async def shop(db: AsyncSession) -> Shop:
-    shop = Shop(owner_id=uuid.uuid4(), name="مزون", fallback_message="همکارم جواب میده")
+    shop = Shop(
+        owner_id=uuid.uuid4(), name="Boutique", fallback_message="A teammate will reply soon"
+    )
     db.add(shop)
     await db.flush()
     db.add_all(
         [
-            Product(shop_id=shop.id, name="مانتو کتان", price=1250000, stock=3, extra={}),
-            Product(shop_id=shop.id, name="شومیز حریر", price=890000, stock=7, extra={}),
-            Product(shop_id=shop.id, name="شال", price=300000, stock=2, extra={}),
-            _post(shop.id, "m1", "MANTO", "مانتو کتان جدید", 1),
-            _post(shop.id, "m2", "HARIR", "شومیز حریر سفید", 2),
+            Product(shop_id=shop.id, name="Linen dress", price=125, stock=3, extra={}),
+            Product(shop_id=shop.id, name="Silk blouse", price=89, stock=7, extra={}),
+            Product(shop_id=shop.id, name="Scarf", price=30, stock=2, extra={}),
+            _post(shop.id, "m1", "MANTO", "New linen dress", 1),
+            _post(shop.id, "m2", "HARIR", "White silk blouse", 2),
         ]
     )
     await db.commit()
@@ -139,19 +141,19 @@ async def test_bot_shares_recommended_posts(
 ) -> None:
     fake_web.llm_replies = [
         FakeWeb.tool_call("share_posts", {"post_refs": ["P2", "P1", "P9"]}),
-        {"content": "شومیز حریر و مانتو کتان پیشنهادمه، پست‌هاشون رو برات فرستادم"},
+        {"content": "I'd suggest the silk blouse and the linen dress, I've sent you their posts"},
     ]
     reply = await _responder(db, fake_web).generate(
-        shop, [ChatTurn("customer", "برای مهمونی چی پیشنهاد میدی؟")]
+        shop, [ChatTurn("customer", "What would you suggest for a party?")]
     )
     assert reply is not None
-    # Refs follow the overview (cheapest first): P1 = شومیز حریر (m2), P2 = مانتو کتان (m1).
+    # Refs follow the overview (cheapest first): P1 = Silk blouse (m2), P2 = Linen dress (m1).
     assert [p.media_id for p in reply.posts] == ["m1", "m2"]
     first = fake_web.llm_requests[0]
     system = first["messages"][0]["content"]
     # Products with a post are marked in the overview; the one without a post is not.
-    assert "مانتو کتان; 1,250,000 toman; post P" in system
-    assert "- شال; 300,000 toman" in system and "شال; 300,000 toman; post" not in system
+    assert "Linen dress; $125; post P" in system
+    assert "- Scarf; $30" in system and "Scarf; $30; post" not in system
     assert "SHARING POSTS" in system
     assert "share_posts" in {t["function"]["name"] for t in first["tools"]}
     shared = fake_web.llm_requests[1]["messages"][-1]["content"]
@@ -159,13 +161,13 @@ async def test_bot_shares_recommended_posts(
 
 
 async def test_no_share_tool_without_posts(db: AsyncSession, fake_web: FakeWeb, llm_on) -> None:
-    shop = Shop(owner_id=uuid.uuid4(), name="بی‌پست")
+    shop = Shop(owner_id=uuid.uuid4(), name="No posts")
     db.add(shop)
     await db.flush()
-    db.add(Product(shop_id=shop.id, name="مانتو", extra={}))
+    db.add(Product(shop_id=shop.id, name="Dress", extra={}))
     await db.commit()
-    fake_web.llm_replies = [{"content": "سلام"}]
-    await _responder(db, fake_web).generate(shop, [ChatTurn("customer", "سلام")])
+    fake_web.llm_replies = [{"content": "Hi"}]
+    await _responder(db, fake_web).generate(shop, [ChatTurn("customer", "Hi")])
     request = fake_web.llm_requests[0]
     assert "share_posts" not in {t["function"]["name"] for t in request["tools"]}
     assert "SHARING POSTS" not in request["messages"][0]["content"]
@@ -176,12 +178,12 @@ async def test_post_is_never_sent_twice(
 ) -> None:
     fake_web.llm_replies = [
         FakeWeb.tool_call("share_posts", {"post_refs": ["P1", "P2"]}),
-        {"content": "اینم پست‌ها"},
+        {"content": "Here are the posts"},
     ]
     history = [
-        ChatTurn("customer", "مانتو دارید؟"),
-        ChatTurn("bot", "[پست] https://www.instagram.com/p/MANTO/"),
-        ChatTurn("customer", "یه چیز دیگه هم نشونم بده"),
+        ChatTurn("customer", "Do you have dresses?"),
+        ChatTurn("bot", "[post] https://www.instagram.com/p/MANTO/"),
+        ChatTurn("customer", "Show me something else too"),
     ]
     reply = await _responder(db, fake_web).generate(shop, history)
     assert reply is not None
@@ -190,14 +192,16 @@ async def test_post_is_never_sent_twice(
 
 async def test_share_limit(db: AsyncSession, shop: Shop, fake_web: FakeWeb, llm_on) -> None:
     for i in range(3, 6):
-        db.add(Product(shop_id=shop.id, name=f"کالای {i}", price=i, extra={}))
-        db.add(_post(shop.id, f"m{i}", f"K{i}", f"کالای {i}", i))
+        db.add(Product(shop_id=shop.id, name=f"Item {i}", price=i, extra={}))
+        db.add(_post(shop.id, f"m{i}", f"K{i}", f"Item {i}", i))
     await db.commit()
     fake_web.llm_replies = [
         FakeWeb.tool_call("share_posts", {"post_refs": ["P1", "P2", "P3", "P4", "P5"]}),
         {"content": "ok"},
     ]
-    reply = await _responder(db, fake_web).generate(shop, [ChatTurn("customer", "همه رو نشون بده")])
+    reply = await _responder(db, fake_web).generate(
+        shop, [ChatTurn("customer", "Show me everything")]
+    )
     assert reply is not None and len(reply.posts) == 3
 
 
@@ -206,7 +210,7 @@ async def test_share_limit(db: AsyncSession, shop: Shop, fake_web: FakeWeb, llm_
 
 @pytest.fixture
 async def live_shop(sessions: async_sessionmaker, db: AsyncSession) -> Shop:
-    shop = Shop(owner_id=uuid.uuid4(), name="s", bot_enabled=True, fallback_message="همکارم")
+    shop = Shop(owner_id=uuid.uuid4(), name="s", bot_enabled=True, fallback_message="teammate")
     db.add(shop)
     await db.flush()
     db.add(
@@ -226,10 +230,10 @@ class WithPosts:
         self.posts = list(posts)
 
     async def generate(self, shop: Shop, history: list[ChatTurn], **_: object) -> Reply:
-        return Reply(text="پستش رو برات فرستادم", posts=self.posts)
+        return Reply(text="I've sent you its post", posts=self.posts)
 
 
-async def _ask(db, queue, fake_meta, responder, text: str = "مانتو؟") -> None:
+async def _ask(db, queue, fake_meta, responder, text: str = "Dress?") -> None:
     event = MessagingEvent(
         account_ig_id=ACCOUNT,
         customer_igsid=CUSTOMER,
@@ -260,14 +264,14 @@ async def test_posts_are_sent_as_cards_after_the_text(
     )
     await _ask(db, queue, fake_meta, responder)
     assert [m["message"] for m in fake_meta.sent] == [
-        {"text": "پستش رو برات فرستادم"},
+        {"text": "I've sent you its post"},
         {"attachment": {"type": "MEDIA_SHARE", "payload": {"id": "m1"}}},
         {"text": "https://www.instagram.com/p/LINKONLY/"},
     ]
     texts = [m.text for m in (await db.scalars(select(Message).order_by(Message.created_at)))]
     assert texts[-2:] == [
-        "[پست] https://www.instagram.com/p/MANTO/",
-        "[پست] https://www.instagram.com/p/LINKONLY/",
+        "[post] https://www.instagram.com/p/MANTO/",
+        "[post] https://www.instagram.com/p/LINKONLY/",
     ]
 
 
@@ -291,7 +295,7 @@ async def test_echo_of_shared_post_is_not_the_owner(
         Message(
             conversation_id=conversation.id,
             sender=MessageSender.BOT,
-            text="[پست] https://www.instagram.com/p/MANTO/",
+            text="[post] https://www.instagram.com/p/MANTO/",
         )
     )
     await db.commit()
@@ -326,7 +330,7 @@ def test_story_reply_is_marked() -> None:
                             "timestamp": 1,
                             "message": {
                                 "mid": "s1",
-                                "text": "قیمتش؟",
+                                "text": "How much?",
                                 "reply_to": {"story": {"id": "st1", "url": "https://x"}},
                             },
                         }
@@ -335,7 +339,7 @@ def test_story_reply_is_marked() -> None:
             ],
         }
     )
-    assert event.display_text == "قیمتش؟ [story_reply]"
+    assert event.display_text == "How much? [story_reply]"
 
 
 # ---------------------------------------------------------------- panel
@@ -347,7 +351,7 @@ async def test_posts_endpoint(client: AsyncClient, auth_headers: dict, fake_meta
         {
             "id": "m1",
             "permalink": "https://www.instagram.com/p/MANTO/",
-            "caption": "مانتو کتان جدید",
+            "caption": "New linen dress",
             "timestamp": "2026-09-20T10:15:30+0000",
         }
     ]
@@ -357,17 +361,17 @@ async def test_posts_endpoint(client: AsyncClient, auth_headers: dict, fake_meta
     state = parse_qs(urlparse(url).query)["state"][0]
     await client.get("/api/v1/instagram/callback", params={"code": "c", "state": state})
 
-    csv = "نام محصول,قیمت\nمانتو کتان,1250000\nشال,300000\n".encode()
+    csv = b"Product name,Price\nLinen dress,125\nScarf,30\n"
     await client.post(
         "/api/v1/products/file",
         headers=auth_headers,
         files={"file": ("p.csv", csv, "text/csv")},
-        data={"column_mapping": '{"name": "نام محصول", "price": "قیمت"}'},
+        data={"column_mapping": '{"name": "Product name", "price": "Price"}'},
     )
     body = (await client.get("/api/v1/instagram/posts", headers=auth_headers)).json()
     assert body["total"] == 1 and body["synced_at"] is not None
-    assert body["items"][0]["products"] == ["مانتو کتان"]
-    assert body["products_without_post"] == ["شال"]
+    assert body["items"][0]["products"] == ["Linen dress"]
+    assert body["products_without_post"] == ["Scarf"]
 
     fake_meta.media = []
     synced = await client.post("/api/v1/instagram/posts/sync", headers=auth_headers)

@@ -13,7 +13,7 @@ export type Kind = "google_sheet" | "upload";
 type Mapping = Record<string, string>;
 export type WizardStart = { kind?: Kind; url?: string; mapping?: Mapping };
 
-// Field labels come from the API in Persian; the panel uses its own.
+// The panel uses its own field labels, translated.
 const FIELD_LABELS: Record<Lang, Record<string, string>> = {
   en: {
     name: "Product name",
@@ -21,7 +21,7 @@ const FIELD_LABELS: Record<Lang, Record<string, string>> = {
     category: "Category",
     color: "Color",
     size: "Size",
-    price: "Price (Toman)",
+    price: "Price",
     stock: "Stock",
     description: "Description",
   },
@@ -31,7 +31,7 @@ const FIELD_LABELS: Record<Lang, Record<string, string>> = {
     category: "الفئة",
     color: "اللون",
     size: "المقاس",
-    price: "السعر (تومان)",
+    price: "السعر",
     stock: "المخزون",
     description: "الوصف",
   },

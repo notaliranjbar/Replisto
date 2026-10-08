@@ -2,24 +2,22 @@ import { ExternalLink, Images } from "lucide-react";
 import { useI18n } from "../i18n";
 import { cx } from "./ui";
 
-/** How the backend records a shared post in a conversation: "[پست] <permalink>". */
-export const POST_MARKER = "[پست]";
+/** How the backend records a shared post in a conversation: "[post] <permalink>". */
+export const POST_MARKER = "[post]";
 
 export function sharedPostUrl(text: string): string | null {
   if (!text.startsWith(POST_MARKER)) return null;
   const ref = text.slice(POST_MARKER.length).trim();
-  // "img:<url>" is a product photo; "tg:<chat>/<id>" a private channel post (no public link)
+  // "img:<url>" is a product photo
   if (ref.startsWith("img:")) return ref.slice(4);
-  if (ref.startsWith("tg:")) return "";
   return ref;
 }
 
 type Post = { permalink: string; caption?: string | null; preview_url?: string | null };
 
-/** A product post the bot sent (an Instagram post card, a Telegram channel post or a photo). */
+/** A product post the bot sent (an Instagram post card or a photo). */
 export function PostCard({ post, className, fluid }: { post: Post; className?: string; fluid?: boolean }) {
   const { t } = useI18n();
-  const telegram = /^https?:\/\/t\.me\//.test(post.permalink) || post.permalink === "";
   const image = /\.(jpe?g|png|webp|gif)(\?|$)/i.test(post.permalink);
   return (
     <a
@@ -40,7 +38,7 @@ export function PostCard({ post, className, fluid }: { post: Post; className?: s
         </span>
       )}
       <span className="min-w-0 flex-1">
-        <span className="block text-xs font-semibold text-slate-800">{telegram ? t.launch.catalogue.viewPost : t.posts.cardTitle}</span>
+        <span className="block text-xs font-semibold text-slate-800">{t.posts.cardTitle}</span>
         {post.caption && <span className="user-text line-clamp-2 text-xs text-slate-500">{post.caption}</span>}
         <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-brand-700">
           {t.posts.view}

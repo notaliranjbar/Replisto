@@ -12,7 +12,7 @@ class Channel(enum.StrEnum):
     """Where a conversation happens. The bot itself is the same on every channel."""
 
     INSTAGRAM = "instagram"
-    # WHATSAPP = "whatsapp"  # disabled: Meta's WhatsApp Business Platform rejects +98 numbers
+    # WHATSAPP = "whatsapp"  # not built yet
 
 
 class HandoffResolution(enum.StrEnum):

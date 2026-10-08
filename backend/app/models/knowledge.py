@@ -90,7 +90,7 @@ class Product(UUIDPk, Timestamps, Base):
     category: Mapped[str | None] = mapped_column(String(120))
     color: Mapped[str | None] = mapped_column(String(64))
     size: Mapped[str | None] = mapped_column(String(64))
-    price: Mapped[Decimal | None] = mapped_column(Numeric(14, 0))  # Toman, no decimals
+    price: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))  # In the shop's currency
     stock: Mapped[int | None] = mapped_column(Integer)
     description: Mapped[str | None] = mapped_column(Text)
     # Any extra sheet columns we don't model explicitly, kept so the bot can still use them.

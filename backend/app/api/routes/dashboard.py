@@ -9,6 +9,7 @@ from sqlalchemy import and_, func, select
 
 from app.api.deps import LLM, CurrentShop, DbSession
 from app.core.config import get_settings
+from app.core.i18n import localize
 from app.core.timeutil import utcnow
 from app.models import (
     Conversation,
@@ -54,14 +55,14 @@ class Stats(BaseModel):
 class GiftStatus(BaseModel):
     """The sign-up gift: given once the owner verifies their mobile number."""
 
-    amount_toman: int  # 0: no gift on this server
+    amount_cents: int  # 0: no gift on this server
     granted: bool
     phone_verified: bool
 
 
 class WalletStatus(BaseModel):
     enabled: bool
-    balance_toman: int
+    balance_cents: int
     low_balance: bool
     gift: GiftStatus
 
@@ -164,8 +165,9 @@ async def dashboard(shop: CurrentShop, db: DbSession) -> DashboardOut:
         open_handoffs=open_handoffs or 0,
         wallet=WalletStatus(
             enabled=settings.billing_enabled,
-            balance_toman=shop.balance_rial // 10,
-            low_balance=settings.billing_enabled and shop.balance_rial < settings.low_balance_rial,
+            balance_cents=shop.balance_cents,
+            low_balance=settings.billing_enabled
+            and shop.balance_cents < settings.low_balance_cents,
             gift=GiftStatus(**await gifts.status(db, shop)),
         ),
         pending_proposals=await exists(
@@ -179,7 +181,7 @@ async def dashboard(shop: CurrentShop, db: DbSession) -> DashboardOut:
             knowledge_entries=knowledge_count or 0,
             products_connected=source is not None,
             product_count=product_count or 0,
-            product_error=source.last_error if source else None,
+            product_error=localize(source.last_error) if source else None,
             ai_ready=get_settings().llm_configured,
             bot_enabled=shop.bot_enabled,
         ),
@@ -220,7 +222,7 @@ async def playground_chat(
     """
     if body.messages[-1].role != "customer":
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, "آخرین پیام باید از طرف مشتری باشد"
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "The last message must be from the customer"
         )
     history = [ChatTurn(sender=m.role, text=m.text) for m in body.messages]
     responder = LLMResponder(llm, db) if llm.configured else PlaceholderResponder()
@@ -229,14 +231,14 @@ async def playground_chat(
     except LLMError:
         raise HTTPException(
             status.HTTP_502_BAD_GATEWAY,
-            "سرویس هوش مصنوعی پاسخ نداد. چند لحظه بعد دوباره امتحان کنید.",
+            "The AI service didn't respond. Please try again in a moment.",
         ) from None
     if reply is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "پیامی برای پاسخ وجود ندارد")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "There's no message to answer")
     return PlaygroundOut(
         reply=reply.text,
         unanswered=reply.unanswered,
-        handoff_reason=reply.handoff_reason,
+        handoff_reason=localize(reply.handoff_reason),
         product_lookups=reply.tool_trace,
         posts=[
             PostCard(permalink=p.permalink, caption=p.caption[:300], preview_url=p.preview_url)

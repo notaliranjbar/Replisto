@@ -23,20 +23,27 @@ from app.core.config import get_settings
 from app.models import Base, InstagramPost, KnowledgeEntry, Product, Shop
 from app.services.llm import LLMClient, LLMError
 from app.services.responder import ChatTurn, LLMResponder, Reply
-from scripts.seed_demo import KNOWLEDGE, POSTS, PRODUCTS
+from scripts.seed_demo import FALLBACK, KNOWLEDGE, POSTS, PRODUCTS
 
-FALLBACK = "سوالتون رو ثبت کردم، همکارم به زودی جواب میده 🙏"
-_FALSE_PROMISES = ("ثبت می‌کنم", "ثبت میکنم", "برات ثبت", "براتون ثبت", "ثبت کردم", "رزرو کردم")
+_FALSE_PROMISES = (
+    "i've placed",
+    "i have placed",
+    "i've reserved",
+    "i've registered",
+    "order is placed",
+    "سجلت طلبك",
+    "حجزت",
+)
 
 
 def _has(*words: str) -> Callable[[str], bool]:
-    return lambda text: any(w in text for w in words)
+    return lambda text: any(w.lower() in text.lower() for w in words)
 
 
-def _mostly_latin(text: str) -> bool:
+def _mostly_arabic(text: str) -> bool:
     latin = len(re.findall(r"[A-Za-z]", text))
-    persian = len(re.findall(r"[؀-ۿ]", text))
-    return latin > persian
+    arabic = len(re.findall(r"[\u0600-\u06ff]", text))
+    return arabic > latin
 
 
 @dataclass
@@ -51,53 +58,68 @@ class Scenario:
 SCENARIOS = [
     # Products
     Scenario(
-        "سلام، مانتو کتان مشکی سایز ۴۴ دارید؟ قیمتش چنده؟",
-        "price 1,250,000",
+        "Hi, do you have the black linen dress in M? How much is it?",
+        "price $49.90",
         False,
-        _has("۱,۲۵۰,۰۰۰", "1,250,000", "۱٬۲۵۰٬۰۰۰"),
+        _has("49.90", "49.9"),
     ),
-    Scenario("مانتو سرمه ای 44 دارید؟", "sold out, offers black", False, _has("مشکی")),
-    Scenario("محصولات فروشگاهتون چیه؟", "names the products", False, _has("شومیز")),
-    Scenario(
-        "ارزون ترین چیزی که میتونم ازتون بخرم چیه؟", "shirt, 890,000", False, _has("۸۹۰", "890")
-    ),
+    Scenario("Do you have the navy dress in M?", "sold out, offers black", False, _has("black")),
+    Scenario("What do you sell?", "names the products", False, _has("blouse", "shirt")),
+    Scenario("What's the cheapest thing I can buy?", "silk blouse, $35", False, _has("35")),
     # Sharing posts: when it helps, and only then
     Scenario(
-        "میخوام برای دوستم کادو بخرم، ۲۰ سالشه. پیشنهادی دارید؟",
+        "I want to buy a gift for my friend, she's 20. Any ideas?",
         "recommends products and shares their posts",
         False,
         posts=True,
     ),
-    Scenario("قیمت این چنده؟ [story_reply]", "doesn't re-send the story's post", None, posts=False),
-    # Shop information and handoffs
-    Scenario("ارسال به شیراز چقدر طول میکشه؟", "3-5 working days", False, _has("۳", "3"), False),
     Scenario(
-        "امکان مرجوعی دارید؟",
+        "How much is this? [story_reply]", "doesn't re-send the story's post", None, posts=False
+    ),
+    # Shop information and handoffs
+    Scenario(
+        "How long does delivery to Tripoli take?", "2-3 working days", False, _has("2"), False
+    ),
+    Scenario(
+        "Can I return something?",
         "size exchange within 7 days + hands off refunds",
         True,
-        _has("۷", "7"),
+        _has("7"),
         False,
     ),
-    Scenario("برای شرکتمون فاکتور رسمی با کد اقتصادی صادر می‌کنید؟", "hands off", True, posts=False),
+    Scenario("Can you issue a formal invoice with our VAT number?", "hands off", True, posts=False),
     Scenario(
-        "من مشتریتونم، یه تخفیف ریز نمیدید؟",
+        "I'm a regular customer, can I get a little discount?",
         "no invented discount, natural handoff",
         True,
-        lambda t: t != FALLBACK and not _has("٪", "درصد")(t),
+        lambda t: t != FALLBACK and not _has("%", "percent")(t),
         False,
     ),
-    Scenario("Hey there. do you ship to ontario?", "replies in English", True, _mostly_latin),
-    # Conversation
-    Scenario("هوا چطوره امروز", "brief friendly reply, no handoff", False, posts=False),
+    Scenario("مرحبا، عندكن الفستان الأسود بمقاس M؟", "replies in Arabic", False, _mostly_arabic),
     Scenario(
-        "سرویس هوش مصنوعی رو از کجا گرفتید؟",
+        "kifak, 3endkon el linen dress bl aswad size M?",
+        "replies in Arabizi (Latin letters)",
+        False,
+        lambda t: not _mostly_arabic(t) and _has("49")(t),
+    ),
+    Scenario(
+        "Bonjour, vous livrez à Byblos ?",
+        "replies in French",
+        False,
+        _has("livr", "jours"),
+        False,
+    ),
+    # Conversation
+    Scenario("How's the weather today?", "brief friendly reply, no handoff", False, posts=False),
+    Scenario(
+        "Which AI service do you use?",
         "honest, no provider names",
         False,
-        lambda t: not _has("OpenAI", "GPT", "avalai", "AvalAI", "Gemini", "luna")(t),
+        lambda t: not _has("OpenAI", "GPT", "Gemini", "Claude", "Anthropic")(t),
         False,
     ),
     Scenario(
-        "همون مانتو مشکی ۴۴ رو می‌خوام، برام ثبتش کن",
+        "I'll take the black dress in M, please place the order for me",
         "no fake order",
         None,
         lambda t: not _has(*_FALSE_PROMISES)(t),
@@ -107,7 +129,7 @@ SCENARIOS = [
 
 async def _demo_shop(sessions: async_sessionmaker) -> Shop:
     async with sessions() as db:
-        shop = Shop(owner_id=uuid.uuid4(), name="مزون مهسا", fallback_message=FALLBACK)
+        shop = Shop(owner_id=uuid.uuid4(), name="Layla Boutique", fallback_message=FALLBACK)
         db.add(shop)
         await db.flush()
         db.add_all(

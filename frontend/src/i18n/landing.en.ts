@@ -38,17 +38,17 @@ const landing: Dict["landing"] = {
     label: "An example sales conversation",
     example: "Example",
     shop: "Customer conversation",
-    customer: "neda_k",
+    customer: "sara_k",
     botOn: "Replisto is on",
     auto: "Auto-reply by Replisto",
     typing: "Replisto is typing",
     m1: "Hi, do you have the black linen coat in size 44?",
-    m2: "Hi! Yes, it's in stock. There are 2 left in black, size 44, and it's 1,250,000 toman.",
+    m2: "Hi! Yes, it's in stock. There are 2 left in black, size 44, and it's $125.",
     lookup: "Stock checked in your product list",
     postTitle: "Product card",
     postCaption: "Summer linen coat, in 4 colours",
-    m3: "How long does shipping to Shiraz take?",
-    m4: "Express post takes 3 to 5 working days, and shipping is 85,000 toman.",
+    m3: "How long does delivery to Jounieh take?",
+    m4: "Delivery to Jounieh takes 2 to 3 working days, and it costs $4.",
     m5: "Can you issue an official invoice for a company?",
     m6: "Let me check that with my colleague — we'll reply right here.",
     handedOff: "Handed to you",
@@ -74,7 +74,7 @@ const landing: Dict["landing"] = {
     eyebrow: "Channels",
     title: "Works where your customers already are",
     lead: "Connect your business's messaging channels; Replisto works across all of them with the same knowledge and the same voice.",
-    names: { instagram: "Instagram", whatsapp: "WhatsApp", telegram: "Telegram", bale: "Bale" },
+    names: { instagram: "Instagram", whatsapp: "WhatsApp" },
     connect: (name) => `Connect ${name}`,
     live: "Live",
     soon: "Coming soon",
@@ -90,8 +90,8 @@ const landing: Dict["landing"] = {
     questions: [
       { q: "How much is this one?", time: "01:12" },
       { q: "Do you have it in size 46?", time: "01:40" },
-      { q: "How many days to Mashhad?", time: "02:05" },
-      { q: "Can I pay by card transfer?", time: "02:31" },
+      { q: "How many days to Tripoli?", time: "02:05" },
+      { q: "Can I pay cash on delivery?", time: "02:31" },
       { q: "Can I exchange it if it doesn't fit?", time: "03:18" },
     ],
     points: [
@@ -119,14 +119,13 @@ const landing: Dict["landing"] = {
       bullets: [
         "Google Sheets syncs automatically every 5 minutes",
         "If a colour or size is sold out, it suggests the variants still in stock",
-        "Learns product photos and details from your Telegram channel posts",
+        "Shares the matching Instagram post when a customer wants to see a product",
       ],
     },
     handoff: {
       title: "Hands the conversation to you when it should",
       body: "A question your info doesn't cover gets a polite holding reply and is handed to you, shown above everything else in your panel.",
       bullets: [
-        "You hear about it right away in your own Telegram or Bale, and reply from there",
         "Browser notification and a count in the tab title",
         "Replying to the customer yourself closes the handoff automatically",
         "While you're in the conversation, Replisto stays quiet for that customer",
@@ -143,8 +142,8 @@ const landing: Dict["landing"] = {
     knowledge: {
       title: "Business info",
       sections: [
-        { label: "Shipping", text: "Express post, 3–5 working days; same-day courier in Tehran" },
-        { label: "Payment", text: "Card transfer or online payment gateway" },
+        { label: "Shipping", text: "All over Lebanon in 2–3 working days; same day in Beirut" },
+        { label: "Payment", text: "Cash on delivery or Whish Money" },
         { label: "Returns", text: "Within 7 days, with the tag intact" },
       ],
       file: "shipping-terms.pdf",
@@ -163,7 +162,7 @@ const landing: Dict["landing"] = {
         { label: "Navy · 46", stock: "× 2" },
         { label: "Black · 44", stock: "× 2" },
       ],
-      price: "1,250,000 toman",
+      price: "$125",
       source: "Google Sheets · synced 3 minutes ago",
     },
     handoff: {
@@ -185,10 +184,10 @@ const landing: Dict["landing"] = {
       emoji: "Emoji",
       question: "Does this bag come in cream?",
       replies: {
-        friendly: "Hi there! Yes, we have it in cream too! It's 890,000 toman.",
-        friendlyEmoji: "Hi there! Yes, we have it in cream too! 😍 It's 890,000 toman.",
-        formal: "Hello. Yes, this bag is also available in cream. The price is 890,000 toman.",
-        formalEmoji: "Hello. Yes, this bag is also available in cream 🙂 The price is 890,000 toman.",
+        friendly: "Hi there! Yes, we have it in cream too! It's $89.",
+        friendlyEmoji: "Hi there! Yes, we have it in cream too! 😍 It's $89.",
+        formal: "Hello. Yes, this bag is also available in cream. The price is $89.",
+        formalEmoji: "Hello. Yes, this bag is also available in cream 🙂 The price is $89.",
       },
       rules: "Rules",
       rulesText: "Never offer discounts. Don't talk about competitors.",
@@ -200,7 +199,7 @@ const landing: Dict["landing"] = {
     title: "From sign-up to first conversation in four steps",
     lead: "Nothing to install and no technical knowledge needed — it all happens in the panel.",
     steps: [
-      { title: "Connect a channel", body: "Your shop's own link on Telegram and Bale is ready; put it in your bio and channel. No passwords needed. Instagram is coming soon." },
+      { title: "Connect Instagram", body: "Connect your Instagram business account through Meta's official login. No passwords needed." },
       { title: "Info and products", body: "Enter shipping, payment, returns and FAQs, and connect your product list." },
       { title: "Test Replisto", body: "Ask questions as a customer on the test page and see the replies. Nothing is sent to anyone." },
       { title: "Go live", body: "Flip one switch. From then on, Replisto talks to your customers and you only see what's handed to you." },
@@ -226,11 +225,11 @@ const landing: Dict["landing"] = {
     items: [
       {
         q: "Which channels does Replisto work on?",
-        a: "Today, Telegram and Bale. Every shop gets its own link that takes customers straight to that shop's assistant; you can also have your own bot with your shop's name, or let it answer from your personal Telegram account. Instagram is coming soon.",
+        a: "Today, Instagram direct messages. WhatsApp is coming soon.",
       },
       {
         q: "Do you need my account passwords to connect?",
-        a: "No. Telegram and Bale connect with a one-time link from the panel, and we never ask for any password. You can disconnect any time from the panel.",
+        a: "No. Instagram connects through Meta's official login, and we never ask for any password. You can disconnect any time from the panel.",
       },
       {
         q: "What happens when Replisto doesn't know an answer?",
@@ -242,7 +241,7 @@ const landing: Dict["landing"] = {
       },
       {
         q: "How do I add my products?",
-        a: "Any way you like: describe them to the bot in your own words, send a PDF, Word or Excel file, connect a Google Sheet, or forward your Telegram channel posts. Before saving, it shows you a summary of what it understood for your OK.",
+        a: "Any way you like: describe them to the bot in your own words, send a PDF, Word or Excel file, or connect a Google Sheet. Before saving, it shows you a summary of what it understood for your OK.",
       },
       {
         q: "Does it reply to comments too?",

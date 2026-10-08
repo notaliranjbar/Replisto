@@ -12,15 +12,15 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  MessageCircle,
   Package,
-  Send,
   Settings,
   UserRound,
   Wallet,
   X,
 } from "lucide-react";
-import { useDashboard, useMe } from "../api/queries";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "../api/client";
+import { keys, useDashboard, useMe } from "../api/queries";
 import { useAuth } from "../auth/AuthContext";
 import { otherLang, useI18n } from "../i18n";
 import { useHandoffWatcher } from "../lib/notifications";
@@ -37,20 +37,38 @@ type Group = { label?: string; items: Item[] };
  * with everything else. Full-height pages size themselves with --chrome-top/--chrome-bottom.
  */
 export default function Layout() {
-  const { t, f } = useI18n();
+  const { t, f, lang } = useI18n();
   const { data: me } = useMe();
   const { data: dash } = useDashboard();
   const gift = dash?.wallet.gift;
-  const giftWaiting = !!dash?.wallet.enabled && !!gift && !gift.granted && gift.amount_toman > 0;
+  const giftWaiting = !!dash?.wallet.enabled && !!gift && !gift.granted && gift.amount_cents > 0;
   const [drawer, setDrawer] = useState(false);
   const location = useLocation();
 
   useHandoffWatcher(dash);
 
+  // The shop remembers the panel's language: the bot writes handoff reasons and summaries
+  // for the owner in it. On a switch, reload server text so it comes back in the new language.
+  const qc = useQueryClient();
+  const firstLang = useRef(lang);
+  useEffect(() => {
+    if (firstLang.current !== lang) {
+      firstLang.current = lang;
+      qc.invalidateQueries();
+    }
+    if (me && me.shop.language !== lang) {
+      api("/shop", { method: "PATCH", json: { language: lang } })
+        .then(() => qc.invalidateQueries({ queryKey: keys.me }))
+        .catch(() => {
+          // not important enough to bother the owner; retried on the next visit
+        });
+    }
+  }, [lang, me, qc]);
+
   // Close the mobile drawer on navigation
   useEffect(() => setDrawer(false), [location.pathname]);
 
-  // "(2) پنل مزون مهسا" in the browser tab
+  // "(2) Layla Boutique panel" in the browser tab
   useEffect(() => {
     const base = me ? t.panelTitle(me.shop.name) : t.appName;
     const n = dash?.open_handoffs ?? 0;
@@ -78,8 +96,6 @@ export default function Layout() {
     {
       label: t.panel.nav.groupSetup,
       items: [
-        { to: "/telegram", label: t.launch.nav.telegram, icon: <Send />, tag: dash && !dash.setup.telegram_available ? t.launch.nav.soon : undefined },
-        { to: "/bale", label: t.launch.nav.bale, icon: <MessageCircle />, tag: dash && !dash.setup.bale_available ? t.launch.nav.soon : undefined },
         { to: "/settings", label: t.nav.settings, icon: <Settings /> },
         { to: "/billing", label: t.launch.nav.billing, icon: <Wallet /> },
         { to: "/instagram", label: t.nav.instagram, icon: <Camera />, tag: dash && !dash.setup.instagram_available ? t.launch.nav.soon : undefined },
@@ -105,7 +121,7 @@ export default function Layout() {
               className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-ink-900 ring-1 ring-brand-100 transition-colors hover:bg-brand-100"
             >
               <Gift className="size-5 shrink-0 text-brand-600" aria-hidden />
-              <span className="min-w-0 flex-1">{t.launch.gift.banner(f.num(gift.amount_toman))}</span>
+              <span className="min-w-0 flex-1">{t.launch.gift.banner(f.usd(gift.amount_cents))}</span>
               <span className="font-bold text-brand-700">{t.launch.gift.bannerAction}</span>
             </Link>
           )}
@@ -117,7 +133,7 @@ export default function Layout() {
             >
               <Wallet className="size-5 shrink-0 text-amber-500" aria-hidden />
               <span className="min-w-0 flex-1">
-                {dash.wallet.balance_toman <= 0 ? t.launch.emptyBalance : t.launch.lowBalance(f.num(dash.wallet.balance_toman))}
+                {dash.wallet.balance_cents <= 0 ? t.launch.emptyBalance : t.launch.lowBalance(f.usd(dash.wallet.balance_cents))}
               </span>
               <span className="font-bold">{t.launch.topUpNow}</span>
             </Link>

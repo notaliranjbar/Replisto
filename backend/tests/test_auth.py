@@ -3,10 +3,10 @@ from httpx import AsyncClient
 from app.core.security import create_token, decrypt_secret, encrypt_secret
 
 REGISTER = {
-    "email": "Owner@Shop.ir",
+    "email": "Owner@Shop.com",
     "password": "strongpass1",
-    "full_name": "مهسا",
-    "shop_name": "مزون مهسا",
+    "full_name": "Layla",
+    "shop_name": "Layla Boutique",
 }
 
 
@@ -23,14 +23,14 @@ async def test_register_creates_user_and_shop(client: AsyncClient) -> None:
     me = await client.get("/api/v1/me", headers={"Authorization": f"Bearer {token}"})
     assert me.status_code == 200
     body = me.json()
-    assert body["email"] == "owner@shop.ir"  # normalized
-    assert body["shop"]["name"] == "مزون مهسا"
+    assert body["email"] == "owner@shop.com"  # normalized
+    assert body["shop"]["name"] == "Layla Boutique"
     assert body["shop"]["bot_enabled"] is False
 
 
 async def test_register_duplicate_email(client: AsyncClient) -> None:
     await client.post("/api/v1/auth/register", json=REGISTER)
-    resp = await client.post("/api/v1/auth/register", json={**REGISTER, "email": "owner@shop.ir"})
+    resp = await client.post("/api/v1/auth/register", json={**REGISTER, "email": "owner@shop.com"})
     assert resp.status_code == 409
 
 
@@ -42,15 +42,15 @@ async def test_register_rejects_short_password(client: AsyncClient) -> None:
 async def test_login(client: AsyncClient) -> None:
     await client.post("/api/v1/auth/register", json=REGISTER)
     ok = await client.post(
-        "/api/v1/auth/login", json={"email": "owner@shop.ir", "password": "strongpass1"}
+        "/api/v1/auth/login", json={"email": "owner@shop.com", "password": "strongpass1"}
     )
     assert ok.status_code == 200
     bad = await client.post(
-        "/api/v1/auth/login", json={"email": "owner@shop.ir", "password": "wrongpass1"}
+        "/api/v1/auth/login", json={"email": "owner@shop.com", "password": "wrongpass1"}
     )
     assert bad.status_code == 401
     unknown = await client.post(
-        "/api/v1/auth/login", json={"email": "nobody@shop.ir", "password": "strongpass1"}
+        "/api/v1/auth/login", json={"email": "nobody@shop.com", "password": "strongpass1"}
     )
     assert unknown.status_code == 401
 

@@ -266,10 +266,10 @@ function ConversationView({ id }: { id: string }) {
           </div>
           <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <ChannelIcon channel={c.channel} />
-            {channelLabel(c.channel, c.telegram_business)}
+            {channelLabel(c.channel)}
             {c.customer_username && (
               <a
-                href={c.channel === "telegram" ? `https://t.me/${c.customer_username}` : `https://instagram.com/${c.customer_username}`}
+                href={`https://instagram.com/${c.customer_username}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 dir="ltr"
@@ -356,7 +356,7 @@ function ConversationView({ id }: { id: string }) {
         <div ref={bottom} />
       </div>
 
-      <Composer conversation={c} onSent={onUpdated} openLabel={t.launch.channel.openIn(channelLabel(c.channel, c.telegram_business))} />
+      <Composer conversation={c} onSent={onUpdated} openLabel={t.launch.channel.openIn(channelLabel(c.channel))} />
     </>
   );
 }

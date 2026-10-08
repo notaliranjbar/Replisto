@@ -1,16 +1,16 @@
 """Local stand-in for Meta, to exercise the DM pipeline before the Meta app is approved.
 
   # 1. attach a fake Instagram page to a registered user's shop and switch the bot on
-  uv run python -m scripts.simulate link --email owner@shop.ir
+  uv run python -m scripts.simulate link --email owner@shop.com
 
   # 2. send a signed webhook as if a customer had written to that page
-  uv run python -m scripts.simulate dm --text "سلام، این مانتو سایز ۴۴ داره؟"
+  uv run python -m scripts.simulate dm --text "Hi, do you have this dress in M?"
 
   # a burst of short messages gets a single combined reply
-  uv run python -m scripts.simulate dm --text "سلام" --text "این مانتو" --text "سایز ۴۴ داره؟"
+  uv run python -m scripts.simulate dm --text "Hi" --text "this dress" --text "do you have M?"
 
   # 3. or as if the owner had answered by hand (pauses the bot for that customer)
-  uv run python -m scripts.simulate dm --echo --text "بله عزیزم موجوده"
+  uv run python -m scripts.simulate dm --echo --text "Yes, it's in stock!"
 
 Run the API with QUEUE_BACKEND=inline and INSTAGRAM_DRY_RUN=true: the bot's reply then
 shows up in the server log instead of being sent to Instagram.

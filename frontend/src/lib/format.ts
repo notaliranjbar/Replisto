@@ -36,7 +36,38 @@ export function makeFormat(lang: Lang, t: Dict) {
     ["minute", 60],
   ];
 
+  const moneyFormats = new Map<string, Intl.NumberFormat>();
+  const moneyFormat = (currency: string) => {
+    let fmt = moneyFormats.get(currency);
+    if (!fmt) {
+      try {
+        fmt = new Intl.NumberFormat(locale, { style: "currency", currency });
+      } catch {
+        // not an ISO currency code: fall back to dollars
+        fmt = new Intl.NumberFormat(locale, { style: "currency", currency: "USD" });
+      }
+      moneyFormats.set(currency, fmt);
+    }
+    return fmt;
+  };
+  const cents2 = new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const whole = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+  // Lebanon writes "$25" (not "US$") and "4,000,000 ل.ل." / "LBP"; the mark keeps "$25"
+  // in order inside Arabic text.
+  const dollars = (v: number) => `\u200E$${Number.isInteger(v) ? whole.format(v) : cents2.format(v)}`;
+  const lira = (v: number) => `${whole.format(v)} ${lang === "ar" ? "ل.ل." : "LBP"}`;
+
   return {
+    /** Wallet amounts (US cents) → "$12.50" */
+    usd: (cents: number) => `\u200E$${cents2.format(cents / 100)}`,
+    /** A product price in the shop's currency → "$49.90", "AED 49.90" */
+    money: (amount: number | string, currency: string) => {
+      const v = typeof amount === "string" ? Number(amount) : amount;
+      if (!Number.isFinite(v)) return String(amount);
+      if (currency === "USD") return dollars(v);
+      if (currency === "LBP") return lira(v);
+      return moneyFormat(currency).format(v);
+    },
     /** 1250000 → "1,250,000" */
     num: (n: number | string | null | undefined) => {
       if (n === null || n === undefined || n === "") return "";

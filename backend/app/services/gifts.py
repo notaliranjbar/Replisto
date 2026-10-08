@@ -32,7 +32,7 @@ def _phone_key(owner: User) -> str | None:
 
 
 def amount() -> int:
-    return get_settings().signup_credit_rial if billing.enabled() else 0
+    return get_settings().signup_credit_cents if billing.enabled() else 0
 
 
 async def status(db: AsyncSession, shop: Shop) -> dict[str, bool | int]:
@@ -40,14 +40,14 @@ async def status(db: AsyncSession, shop: Shop) -> dict[str, bool | int]:
     owner = await db.get(User, shop.owner_id)
     assert owner is not None
     return {
-        "amount_toman": amount() // 10,
+        "amount_cents": amount(),
         "granted": shop.signup_gift_at is not None,
         "phone_verified": _phone_key(owner) is not None,
     }
 
 
 async def check(db: AsyncSession, shop: Shop) -> int:
-    """Give the gift if the shop just became eligible; returns the rials given (0 if not)."""
+    """Give the gift if the shop just became eligible; returns the cents given (0 if not)."""
     owner = await db.get(User, shop.owner_id)
     if owner is None:
         return 0
@@ -74,8 +74,8 @@ async def check(db: AsyncSession, shop: Shop) -> int:
     shop.signup_gift_at = utcnow()
     if not await _commit(db):
         return 0
-    await billing.apply(db, shop, credit, WalletEntryKind.BONUS, "هدیه‌ی شروع کار")
-    logger.info("sign-up gift of %s rial given to shop %s", credit, shop.id)
+    await billing.apply(db, shop, credit, WalletEntryKind.BONUS, "Welcome gift")
+    logger.info("sign-up gift of %s cents given to shop %s", credit, shop.id)
     return credit
 
 

@@ -21,57 +21,58 @@ class SectionInfo:
 SECTIONS: list[SectionInfo] = [
     SectionInfo(
         KnowledgeSection.ABOUT,
-        "معرفی فروشگاه",
-        "فروشگاه شما چی می‌فروشه و چه چیزی باید درباره‌اش بدونیم؟",
-        "مثال: مزون مهسا، تولیدکننده‌ی مانتو و شومیز زنانه از سال ۱۳۹۸. همه‌ی لباس‌ها دوخت خودمونه.",
+        "About the shop",
+        "What does your shop sell, and what should we know about it?",
+        "e.g. Layla Boutique in Achrafieh makes women's dresses and blouses, all sewn in our "
+        "own studio since 2019.",
         False,
     ),
     SectionInfo(
         KnowledgeSection.SHIPPING,
-        "ارسال",
-        "روش‌های ارسال، هزینه، زمان تحویل، ارسال به شهرستان و خارج از کشور",
-        "مثال: ارسال با پست پیشتاز ۳ تا ۵ روز کاری، هزینه ۸۵ هزار تومان. خرید بالای ۲ میلیون رایگان.",
+        "Shipping",
+        "Shipping methods, costs, delivery times, other cities and international shipping",
+        "e.g. Delivery all over Lebanon in 2-3 working days for $4. Free on orders over $100.",
         False,
     ),
     SectionInfo(
         KnowledgeSection.PAYMENT,
-        "پرداخت",
-        "روش‌های پرداخت و نحوه‌ی ثبت سفارش",
-        "مثال: کارت‌به‌کارت یا درگاه سایت. پرداخت در محل فقط برای تهران.",
+        "Payment",
+        "Payment methods and how to order",
+        "e.g. Cash on delivery, or Whish Money before delivery.",
         False,
     ),
     SectionInfo(
         KnowledgeSection.RETURNS,
-        "مرجوعی و تعویض",
-        "شرایط و مهلت تعویض یا مرجوعی",
-        "مثال: تا ۷ روز بعد از تحویل، در صورت سالم بودن و داشتن اتیکت، امکان تعویض سایز هست.",
+        "Returns and exchanges",
+        "Conditions and time limits for exchanges and returns",
+        "e.g. Size exchanges within 7 days of delivery, unworn and with tags attached.",
         False,
     ),
     SectionInfo(
         KnowledgeSection.CONTACT,
-        "راه‌های ارتباط و ساعت کاری",
-        "سایت، تلفن، آدرس حضوری، ساعت پاسخگویی",
-        "مثال: سایت mahsa.shop، پشتیبانی ۱۰ صبح تا ۸ شب، جمعه‌ها تعطیل.",
+        "Contact and opening hours",
+        "Website, phone, store address, support hours",
+        "e.g. layla.shop, Achrafieh, open 10am-7pm, closed on Sundays.",
         False,
     ),
     SectionInfo(
         KnowledgeSection.FAQ,
-        "سوال‌های پرتکرار",
-        "سوال‌هایی که مشتری‌ها زیاد می‌پرسن و جوابشون",
-        "سوال: جنس پارچه چیه؟ / جواب: کتان ترک درجه یک",
+        "Frequently asked questions",
+        "Questions customers often ask, and their answers",
+        "Q: What's the fabric? / A: Premium linen",
         True,
     ),
     SectionInfo(
         KnowledgeSection.FREE_TEXT,
-        "توضیحات دیگر",
-        "هر اطلاعات دیگری که ربات باید بدونه",
-        "مثال: تخفیف ۱۵٪ مخصوص خرید اول با کد FIRST15",
+        "Other details",
+        "Anything else the bot should know",
+        "e.g. 15% off your first order with the code FIRST15",
         True,
     ),
     SectionInfo(
         KnowledgeSection.FILE,
-        "فایل‌های آپلودشده",
-        "متن استخراج‌شده از فایل‌ها. قابل ویرایش است.",
+        "Uploaded files",
+        "Text extracted from your files. You can edit it.",
         "",
         True,
     ),
@@ -89,7 +90,7 @@ SUPPORTED_EXTENSIONS = sorted(TEXT_TYPES | {".pdf", ".docx"} | IMAGE_TYPES.keys(
 
 
 class ExtractionError(Exception):
-    """User-facing (Persian) explanation of why a file could not be read."""
+    """User-facing explanation of why a file could not be read."""
 
 
 async def extract_text(filename: str, data: bytes, llm: LLMClient) -> str:
@@ -102,19 +103,21 @@ async def extract_text(filename: str, data: bytes, llm: LLMClient) -> str:
         text = _docx_text(data)
     elif ext in IMAGE_TYPES:
         if not llm.configured:
-            raise ExtractionError("خواندن عکس فعلا فعال نیست. لطفا متن را تایپ کنید.")
+            raise ExtractionError(
+                "Reading images isn't available yet. Please type the text instead."
+            )
         try:
             text = await llm.extract_text_from_image(data, IMAGE_TYPES[ext])
         except LLMError as exc:
-            raise ExtractionError("خواندن عکس با خطا مواجه شد. دوباره تلاش کنید.") from exc
+            raise ExtractionError("Reading the image failed. Please try again.") from exc
     else:
-        allowed = "، ".join(SUPPORTED_EXTENSIONS)
-        raise ExtractionError(f"این نوع فایل پشتیبانی نمی‌شود. فرمت‌های مجاز: {allowed}")
+        allowed = ", ".join(SUPPORTED_EXTENSIONS)
+        raise ExtractionError(f"This file type isn't supported. Allowed formats: {allowed}")
 
     text = "\n".join(line.rstrip() for line in text.splitlines()).strip()
     if not text:
         raise ExtractionError(
-            "متنی در این فایل پیدا نشد. اگر PDF اسکن‌شده است، عکس صفحه‌ها را آپلود کنید."
+            "No text was found in this file. If it's a scanned PDF, upload photos of the pages."
         )
     return text
 
@@ -125,7 +128,7 @@ def _decode(data: bytes) -> str:
             return data.decode(encoding)
         except UnicodeDecodeError:
             continue
-    raise ExtractionError("کدگذاری فایل متنی قابل تشخیص نیست. فایل را با UTF-8 ذخیره کنید.")
+    raise ExtractionError("Couldn't read the text file's encoding. Save it as UTF-8.")
 
 
 def _pdf_text(data: bytes) -> str:
@@ -136,7 +139,7 @@ def _pdf_text(data: bytes) -> str:
         reader = PdfReader(io.BytesIO(data))
         return "\n\n".join(page.extract_text() or "" for page in reader.pages)
     except (PdfReadError, ValueError) as exc:
-        raise ExtractionError("فایل PDF خراب است یا رمز دارد.") from exc
+        raise ExtractionError("The PDF is damaged or password-protected.") from exc
 
 
 def _docx_text(data: bytes) -> str:
@@ -145,7 +148,7 @@ def _docx_text(data: bytes) -> str:
     try:
         document = docx.Document(io.BytesIO(data))
     except Exception as exc:  # python-docx raises several unrelated types for bad files
-        raise ExtractionError("فایل Word قابل خواندن نیست.") from exc
+        raise ExtractionError("Couldn't read the Word file.") from exc
     parts = [p.text for p in document.paragraphs]
     for table in document.tables:
         for row in table.rows:

@@ -34,7 +34,7 @@ export default function Login() {
   const hasFieldErrors = error instanceof ApiError && Object.keys(error.fields).length > 0;
   let message: string | null = null;
   if (error != null && !hasFieldErrors) {
-    // the server's text is Persian; show our own for the common case
+    // show our own, translated text for the common case
     message = error instanceof ApiError && error.status === 401 ? t.auth.wrongCredentials : errorMessage(error, t);
   }
 

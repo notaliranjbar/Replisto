@@ -48,6 +48,10 @@ class ShopOut(BaseModel):
     fallback_message: str
     forbidden_rules: str
     handoff_pause_minutes: int
+    # ISO 4217 code of the product prices' currency (USD, LBP, ...).
+    currency: str
+    # The owner's panel language; the panel keeps it in sync.
+    language: Literal["en", "ar"]
 
 
 class ShopUpdate(BaseModel):
@@ -58,6 +62,8 @@ class ShopUpdate(BaseModel):
     fallback_message: str | None = Field(default=None, min_length=1, max_length=1000)
     forbidden_rules: str | None = Field(default=None, max_length=4000)
     handoff_pause_minutes: int | None = Field(default=None, ge=0, le=7 * 24 * 60)
+    currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
+    language: Literal["en", "ar"] | None = None
 
 
 class UserOut(BaseModel):
@@ -67,7 +73,7 @@ class UserOut(BaseModel):
     email: str
     full_name: str
     email_verified_at: datetime | None
-    # Verified mobile number (+98912...), or null.
+    # Verified mobile number in E.164 form (+96170123456), or null.
     phone: str | None
     phone_verified_at: datetime | None
     shop: ShopOut

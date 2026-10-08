@@ -5,11 +5,12 @@ import { api } from "../api/client";
 import { keys } from "../api/queries";
 import type { Shop, ShopUpdate } from "../api/types";
 import { useToast } from "../components/toast";
-import { Alert, Button, Card, Field, Input, LinkButton, PageHeader, PageLoading, Textarea, Toggle, cx } from "../components/ui";
+import { Alert, Button, Card, Field, Input, LinkButton, PageHeader, PageLoading, Select, Textarea, Toggle, cx } from "../components/ui";
 import { useI18n } from "../i18n";
 import { errorMessage, fieldError } from "../lib/errors";
 
-type Form = Omit<Shop, "id" | "tone" | "slug"> & { tone: "friendly" | "formal" };
+// The language is kept in sync by the panel (Layout), not edited here.
+type Form = Omit<Shop, "id" | "tone" | "slug" | "language"> & { tone: "friendly" | "formal" };
 
 function toForm(s: Shop): Form {
   return {
@@ -20,8 +21,13 @@ function toForm(s: Shop): Form {
     fallback_message: s.fallback_message,
     forbidden_rules: s.forbidden_rules,
     handoff_pause_minutes: s.handoff_pause_minutes,
+    currency: s.currency,
   };
 }
+
+// Lebanese shops price in dollars or lira; a few others for shops selling abroad. A shop
+// already set to another code keeps it in the list.
+const CURRENCIES = ["USD", "LBP", "EUR", "AED", "SAR", "QAR", "KWD", "GBP", "CAD", "AUD"];
 
 export default function Settings() {
   const { t } = useI18n();
@@ -110,6 +116,17 @@ export default function Settings() {
         <Row title={S.identity.title} desc={S.identity.desc}>
           <Field label={t.settings.name} hint={t.settings.nameHint} error={err("name") ?? (!form.name.trim() ? t.errors.field.name : undefined)}>
             {(id) => <Input id={id} maxLength={120} value={form.name} onChange={(e) => set("name", e.target.value)} />}
+          </Field>
+          <Field label={t.settings.currency} hint={t.settings.currencyHint} className="mt-4" error={err("currency")}>
+            {(id) => (
+              <Select id={id} dir="ltr" value={form.currency} onChange={(e) => set("currency", e.target.value)}>
+                {(CURRENCIES.includes(form.currency) ? CURRENCIES : [form.currency, ...CURRENCIES]).map((code) => (
+                  <option key={code} value={code}>
+                    {code}
+                  </option>
+                ))}
+              </Select>
+            )}
           </Field>
         </Row>
 

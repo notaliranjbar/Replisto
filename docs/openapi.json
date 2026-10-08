@@ -2824,6 +2824,53 @@
           }
         ]
       }
+    },
+    "/api/v1/billing/transfer": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Submit Transfer",
+        "description": "The owner sent money with Whish Money or OMT; the team checks it, then it's credited.",
+        "operationId": "submit_transfer_api_v1_billing_transfer_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2869,9 +2916,9 @@
             "type": "boolean",
             "title": "Enabled"
           },
-          "balance_toman": {
+          "balance_cents": {
             "type": "integer",
-            "title": "Balance Toman"
+            "title": "Balance Cents"
           },
           "low_balance": {
             "type": "boolean",
@@ -2888,25 +2935,41 @@
             "type": "string",
             "title": "Gateway"
           },
-          "topup_min_toman": {
+          "topup_min_cents": {
             "type": "integer",
-            "title": "Topup Min Toman"
+            "title": "Topup Min Cents"
           },
-          "topup_max_toman": {
+          "topup_max_cents": {
             "type": "integer",
-            "title": "Topup Max Toman"
+            "title": "Topup Max Cents"
+          },
+          "transfer_accounts": {
+            "items": {
+              "$ref": "#/components/schemas/TransferAccountOut"
+            },
+            "type": "array",
+            "title": "Transfer Accounts"
+          },
+          "pending_transfers": {
+            "items": {
+              "$ref": "#/components/schemas/TransferOut"
+            },
+            "type": "array",
+            "title": "Pending Transfers"
           }
         },
         "type": "object",
         "required": [
           "enabled",
-          "balance_toman",
+          "balance_cents",
           "low_balance",
           "pricing",
           "topup_available",
           "gateway",
-          "topup_min_toman",
-          "topup_max_toman"
+          "topup_min_cents",
+          "topup_max_cents",
+          "transfer_accounts",
+          "pending_transfers"
         ],
         "title": "BillingOut"
       },
@@ -2920,7 +2983,7 @@
           "column_mapping": {
             "type": "string",
             "title": "Column Mapping",
-            "description": "JSON object, e.g. {\"name\": \"نام محصول\"}"
+            "description": "JSON object, e.g. {\"name\": \"Product name\"}"
           }
         },
         "type": "object",
@@ -3485,9 +3548,9 @@
       },
       "GiftStatus": {
         "properties": {
-          "amount_toman": {
+          "amount_cents": {
             "type": "integer",
-            "title": "Amount Toman"
+            "title": "Amount Cents"
           },
           "granted": {
             "type": "boolean",
@@ -3500,7 +3563,7 @@
         },
         "type": "object",
         "required": [
-          "amount_toman",
+          "amount_cents",
           "granted",
           "phone_verified"
         ],
@@ -3954,15 +4017,15 @@
             "type": "string",
             "title": "Phone"
           },
-          "gift_toman": {
+          "gift_cents": {
             "type": "integer",
-            "title": "Gift Toman"
+            "title": "Gift Cents"
           }
         },
         "type": "object",
         "required": [
           "phone",
-          "gift_toman"
+          "gift_cents"
         ],
         "title": "PhoneVerifiedOut"
       },
@@ -4230,32 +4293,32 @@
       },
       "PricingOut": {
         "properties": {
-          "per_1k_prompt_tokens_toman": {
+          "per_1k_prompt_tokens_cents": {
             "type": "number",
-            "title": "Per 1K Prompt Tokens Toman"
+            "title": "Per 1K Prompt Tokens Cents"
           },
-          "per_1k_completion_tokens_toman": {
+          "per_1k_completion_tokens_cents": {
             "type": "number",
-            "title": "Per 1K Completion Tokens Toman"
+            "title": "Per 1K Completion Tokens Cents"
           },
-          "min_per_answer_toman": {
+          "min_per_answer_cents": {
             "type": "number",
-            "title": "Min Per Answer Toman"
+            "title": "Min Per Answer Cents"
           },
-          "typical_answer_toman": {
+          "typical_answer_cents": {
             "type": "integer",
-            "title": "Typical Answer Toman"
+            "title": "Typical Answer Cents"
           }
         },
         "type": "object",
         "required": [
-          "per_1k_prompt_tokens_toman",
-          "per_1k_completion_tokens_toman",
-          "min_per_answer_toman",
-          "typical_answer_toman"
+          "per_1k_prompt_tokens_cents",
+          "per_1k_completion_tokens_cents",
+          "min_per_answer_cents",
+          "typical_answer_cents"
         ],
         "title": "PricingOut",
-        "description": "What usage costs (toman). An answer costs by the AI tokens it used, with a minimum."
+        "description": "What usage costs (US cents). An answer costs by the AI tokens it used, with a minimum."
       },
       "ProductIn": {
         "properties": {
@@ -4316,16 +4379,20 @@
           "price": {
             "anyOf": [
               {
-                "type": "integer",
-                "maximum": 10000000000000.0,
+                "type": "number",
+                "maximum": 1000000000000.0,
                 "minimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$"
               },
               {
                 "type": "null"
               }
             ],
             "title": "Price",
-            "description": "Toman"
+            "description": "In the shop's currency"
           },
           "stock": {
             "anyOf": [
@@ -4642,16 +4709,20 @@
           "price": {
             "anyOf": [
               {
-                "type": "integer",
-                "maximum": 10000000000000.0,
+                "type": "number",
+                "maximum": 1000000000000.0,
                 "minimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$"
               },
               {
                 "type": "null"
               }
             ],
             "title": "Price",
-            "description": "Toman"
+            "description": "In the shop's currency"
           },
           "stock": {
             "anyOf": [
@@ -5147,6 +5218,18 @@
           "handoff_pause_minutes": {
             "type": "integer",
             "title": "Handoff Pause Minutes"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "title": "Language"
           }
         },
         "type": "object",
@@ -5158,7 +5241,9 @@
           "use_emoji",
           "fallback_message",
           "forbidden_rules",
-          "handoff_pause_minutes"
+          "handoff_pause_minutes",
+          "currency",
+          "language"
         ],
         "title": "ShopOut"
       },
@@ -5251,6 +5336,33 @@
               }
             ],
             "title": "Handoff Pause Minutes"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "en",
+                  "ar"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
           }
         },
         "type": "object",
@@ -5413,16 +5525,16 @@
       },
       "TopupIn": {
         "properties": {
-          "amount_toman": {
+          "amount_cents": {
             "type": "integer",
             "maximum": 1000000000.0,
             "exclusiveMinimum": 0.0,
-            "title": "Amount Toman"
+            "title": "Amount Cents"
           }
         },
         "type": "object",
         "required": [
-          "amount_toman"
+          "amount_cents"
         ],
         "title": "TopupIn"
       },
@@ -5438,6 +5550,101 @@
           "payment_url"
         ],
         "title": "TopupOut"
+      },
+      "TransferAccountOut": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "whish",
+              "omt"
+            ],
+            "title": "Method"
+          },
+          "account": {
+            "type": "string",
+            "title": "Account"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "account"
+        ],
+        "title": "TransferAccountOut"
+      },
+      "TransferIn": {
+        "properties": {
+          "amount_cents": {
+            "type": "integer",
+            "maximum": 1000000000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Amount Cents"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "whish",
+              "omt"
+            ],
+            "title": "Method"
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 3,
+            "title": "Reference"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount_cents",
+          "method",
+          "reference"
+        ],
+        "title": "TransferIn"
+      },
+      "TransferOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "amount_cents": {
+            "type": "integer",
+            "title": "Amount Cents"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "method",
+          "amount_cents",
+          "reference",
+          "created_at"
+        ],
+        "title": "TransferOut"
       },
       "UnansweredOut": {
         "properties": {
@@ -5638,13 +5845,13 @@
           "kind": {
             "$ref": "#/components/schemas/WalletEntryKind"
           },
-          "amount_toman": {
-            "type": "number",
-            "title": "Amount Toman"
+          "amount_cents": {
+            "type": "integer",
+            "title": "Amount Cents"
           },
-          "balance_after_toman": {
-            "type": "number",
-            "title": "Balance After Toman"
+          "balance_after_cents": {
+            "type": "integer",
+            "title": "Balance After Cents"
           },
           "description": {
             "type": "string",
@@ -5665,8 +5872,8 @@
         "required": [
           "id",
           "kind",
-          "amount_toman",
-          "balance_after_toman",
+          "amount_cents",
+          "balance_after_cents",
           "description",
           "details",
           "created_at"
@@ -5700,9 +5907,9 @@
             "type": "boolean",
             "title": "Enabled"
           },
-          "balance_toman": {
+          "balance_cents": {
             "type": "integer",
-            "title": "Balance Toman"
+            "title": "Balance Cents"
           },
           "low_balance": {
             "type": "boolean",
@@ -5715,7 +5922,7 @@
         "type": "object",
         "required": [
           "enabled",
-          "balance_toman",
+          "balance_cents",
           "low_balance",
           "gift"
         ],

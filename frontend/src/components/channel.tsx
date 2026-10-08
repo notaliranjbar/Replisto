@@ -7,18 +7,13 @@ import { Button, cx } from "./ui";
 
 /** The channel's logo in its own colour, for conversation lists and headers. */
 export function ChannelIcon({ channel, className }: { channel: Channel; className?: string }) {
-  const tone = channel === "telegram" ? "text-sky-500" : channel === "bale" ? "text-emerald-500" : "text-pink-600";
-  return <ChannelMark channel={channel} className={cx("size-3.5", tone, className)} />;
+  return <ChannelMark channel={channel} className={cx("size-3.5", "text-pink-600", className)} />;
 }
 
-/** "تلگرام" / "اکانت تلگرام شما" / "اینستاگرام" for a conversation. */
+/** The channel's name for a conversation ("Instagram"). */
 export function useChannelLabel() {
   const { t } = useI18n();
-  return (channel: Channel, business?: boolean) => {
-    if (channel === "telegram") return business ? t.launch.channel.business : t.launch.channel.telegram;
-    if (channel === "bale") return t.launch.channel.bale;
-    return t.launch.channel.instagram;
-  };
+  return (_channel: Channel) => t.launch.channel.instagram;
 }
 
 export function CopyButton({ value, size = "sm" }: { value: string; size?: "sm" | "md" }) {
@@ -36,7 +31,7 @@ export function CopyButton({ value, size = "sm" }: { value: string; size?: "sm" 
   }
   return (
     <Button size={size} variant="secondary" icon={done ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />} onClick={copy}>
-      {done ? t.launch.telegram.copied : t.launch.telegram.copy}
+      {done ? t.launch.clipboard.copied : t.launch.clipboard.copy}
     </Button>
   );
 }

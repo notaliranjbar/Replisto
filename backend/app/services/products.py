@@ -24,55 +24,65 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.text import normalize, parse_int
+from app.core.text import normalize, parse_decimal, parse_int
 from app.core.timeutil import as_utc, utcnow
 from app.models import Product, ProductOrigin, ProductSource, ProductSourceKind
 
 # Our canonical fields, in the order the panel shows them. `name` is the only required one.
 FIELDS = ("name", "sku", "category", "color", "size", "price", "stock", "description", "post_url")
 FIELD_LABELS = {
-    "name": "نام محصول",
-    "sku": "کد محصول",
-    "category": "دسته‌بندی",
-    "color": "رنگ",
-    "size": "سایز",
-    "price": "قیمت (تومان)",
-    "stock": "موجودی",
-    "description": "توضیحات",
-    "post_url": "لینک پست اینستاگرام",
+    "name": "Product name",
+    "sku": "SKU",
+    "category": "Category",
+    "color": "Colour",
+    "size": "Size",
+    "price": "Price",
+    "stock": "Stock",
+    "description": "Description",
+    "post_url": "Instagram post link",
 }
+# Header names recognised for each field, in English and Arabic.
 _SYNONYMS = {
     "name": [
-        "نام محصول",
-        "نام کالا",
-        "نام",
+        "product name",
+        "اسم المنتج",
         "اسم",
-        "محصول",
-        "کالا",
-        "عنوان",
+        "الاسم",
+        "المنتج",
+        "منتج",
         "name",
         "product",
         "title",
+        "item",
     ],
-    "sku": ["کد محصول", "کد کالا", "کد", "شناسه", "sku", "code", "id"],
-    "category": ["دسته بندی", "دسته", "گروه", "نوع", "category", "type"],
-    "color": ["رنگ", "color", "colour"],
-    "size": ["سایز", "اندازه", "size"],
-    "price": ["قیمت", "مبلغ", "price", "فی"],
-    "stock": ["موجودی", "تعداد", "انبار", "stock", "qty", "quantity", "inventory"],
-    "description": ["توضیحات", "توضیح", "شرح", "جنس", "description", "desc", "details"],
-    "post_url": ["لینک پست", "پست اینستاگرام", "پست", "اینستاگرام", "post", "instagram"],
+    "sku": ["sku", "رمز المنتج", "كود المنتج", "الرمز", "كود", "رمز", "code", "id"],
+    "category": ["category", "الفئه", "فئه", "التصنيف", "تصنيف", "النوع", "type"],
+    "color": ["colour", "color", "اللون", "لون"],
+    "size": ["size", "المقاس", "مقاس", "الحجم"],
+    "price": ["price", "السعر", "سعر", "الثمن"],
+    "stock": ["stock", "المخزون", "مخزون", "الكميه", "كميه", "qty", "quantity", "inventory"],
+    "description": [
+        "description",
+        "الوصف",
+        "وصف",
+        "التفاصيل",
+        "الخامه",
+        "desc",
+        "details",
+        "material",
+    ],
+    "post_url": ["post link", "رابط المنشور", "منشور", "انستغرام", "post", "instagram"],
 }
 TEMPLATE_HEADERS = [FIELD_LABELS[f] for f in FIELDS]
 TEMPLATE_EXAMPLE = [
-    "مانتو کتان",
+    "Linen dress",
     "M-101",
-    "مانتو",
-    "مشکی",
-    "44",
-    "1250000",
+    "Dresses",
+    "Black",
+    "M",
+    "49.90",
     "3",
-    "کتان ترک",
+    "100% linen",
     "https://www.instagram.com/p/XXXXXXXXXXX/",
 ]
 
@@ -80,12 +90,12 @@ _SHEETS_HOST = "docs.google.com"
 _DRIVE_HOST = "drive.google.com"
 _XLSX_MAGIC = b"PK"
 
-_OUT_OF_STOCK_WORDS = ("ناموجود", "تمام", "تموم", "اتمام", "ندار", "out", "sold")
-_IN_STOCK_WORDS = ("موجود", "دارد", "داریم", "هست", "yes", "available", "in stock")
+_OUT_OF_STOCK_WORDS = ("غير متوفر", "غير متاح", "نفد", "نفذ", "out", "sold")
+_IN_STOCK_WORDS = ("متوفر", "متاح", "موجود", "yes", "available", "in stock")
 
 
 class ProductSourceError(Exception):
-    """User-facing (Persian) explanation of why the product table could not be used."""
+    """User-facing explanation of why the product table could not be used."""
 
 
 @dataclass
@@ -104,11 +114,11 @@ def download_url(url: str) -> str:
     """
     parsed = urlparse(url.strip())
     if parsed.scheme not in ("http", "https"):
-        raise ProductSourceError("لینک نامعتبر است.")
+        raise ProductSourceError("Invalid link.")
     if parsed.hostname == _SHEETS_HOST:
         match = re.search(r"/spreadsheets/d/([\w-]+)", parsed.path)
         if not match:
-            raise ProductSourceError("لینک گوگل شیت نامعتبر است.")
+            raise ProductSourceError("Invalid Google Sheets link.")
         gid = parse_qs(parsed.query).get("gid", [None])[0]
         if gid is None:
             gid_match = re.search(r"gid=(\d+)", parsed.fragment)
@@ -118,26 +128,26 @@ def download_url(url: str) -> str:
         match = re.search(r"/file/d/([\w-]+)", parsed.path)
         file_id = match.group(1) if match else parse_qs(parsed.query).get("id", [None])[0]
         if not file_id:
-            raise ProductSourceError("لینک گوگل درایو نامعتبر است.")
+            raise ProductSourceError("Invalid Google Drive link.")
         return f"https://{_DRIVE_HOST}/uc?export=download&id={file_id}"
-    raise ProductSourceError("فقط لینک گوگل شیت یا فایل گوگل درایو پشتیبانی می‌شود.")
+    raise ProductSourceError("Only Google Sheets links or Google Drive files are supported.")
 
 
 async def fetch_table(http: httpx.AsyncClient, url: str) -> Table:
     try:
         resp = await http.get(download_url(url), follow_redirects=True, timeout=30)
     except httpx.HTTPError as exc:
-        raise ProductSourceError("دسترسی به گوگل ممکن نشد. کمی بعد دوباره تلاش کنید.") from exc
+        raise ProductSourceError("Couldn't reach Google. Please try again in a moment.") from exc
     content_type = resp.headers.get("content-type", "")
     if resp.status_code in (401, 403, 404) or "text/html" in content_type:
         raise ProductSourceError(
-            "فایل در دسترس نیست. در گوگل شیت از Share گزینه‌ی "
-            "«Anyone with the link» با دسترسی Viewer را انتخاب کنید."
+            "The file isn't accessible. In Google Sheets, open Share and set "
+            "“Anyone with the link” as Viewer."
         )
     if resp.is_error:
-        raise ProductSourceError("گوگل خطا برگرداند. کمی بعد دوباره تلاش کنید.")
+        raise ProductSourceError("Google returned an error. Please try again in a moment.")
     if len(resp.content) > get_settings().upload_max_bytes:
-        raise ProductSourceError("فایل محصولات بیش از حد بزرگ است.")
+        raise ProductSourceError("The product file is too large.")
     return parse_table(resp.content, "xlsx" if resp.content[:2] == _XLSX_MAGIC else "csv")
 
 
@@ -149,13 +159,13 @@ def parse_table(data: bytes, kind: str) -> Table:
     raw_rows = _xlsx_rows(data) if kind == "xlsx" else _csv_rows(data)
     header_index = next((i for i, r in enumerate(raw_rows) if sum(1 for c in r if c) >= 2), None)
     if header_index is None:
-        raise ProductSourceError("جدول خالی است یا ردیف عنوان ستون‌ها پیدا نشد.")
+        raise ProductSourceError("The table is empty, or its header row couldn't be found.")
 
     headers: list[str] = []
     for i, cell in enumerate(raw_rows[header_index]):
-        name = cell or f"ستون {i + 1}"
+        name = cell or f"Column {i + 1}"
         while name in headers:
-            name += " (تکراری)"
+            name += " (duplicate)"
         headers.append(name)
 
     rows = []
@@ -165,7 +175,7 @@ def parse_table(data: bytes, kind: str) -> Table:
         rows.append({h: (raw[i] if i < len(raw) else "") for i, h in enumerate(headers)})
     limit = get_settings().product_row_limit
     if len(rows) > limit:
-        raise ProductSourceError(f"تعداد ردیف‌ها ({len(rows)}) از سقف مجاز ({limit}) بیشتر است.")
+        raise ProductSourceError(f"The table has {len(rows)} rows, over the limit of {limit}.")
     return Table(headers=headers, rows=rows)
 
 
@@ -177,7 +187,7 @@ def _csv_rows(data: bytes) -> list[list[str]]:
         except UnicodeDecodeError:
             continue
     else:
-        raise ProductSourceError("کدگذاری فایل CSV قابل تشخیص نیست. فایل را با UTF-8 ذخیره کنید.")
+        raise ProductSourceError("Couldn't read the CSV file's encoding. Save it as UTF-8.")
     return [[c.strip() for c in row] for row in csv.reader(io.StringIO(text))]
 
 
@@ -187,7 +197,7 @@ def _xlsx_rows(data: bytes) -> list[list[str]]:
     try:
         workbook = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
     except Exception as exc:  # openpyxl raises many types for corrupt files
-        raise ProductSourceError("فایل اکسل قابل خواندن نیست.") from exc
+        raise ProductSourceError("Couldn't read the Excel file.") from exc
     sheet = workbook.worksheets[0]
     rows = [[_cell_text(c) for c in row] for row in sheet.iter_rows(values_only=True)]
     workbook.close()
@@ -217,7 +227,7 @@ def suggest_mapping(headers: list[str]) -> dict[str, str]:
             for synonym in _SYNONYMS[field]:
                 target = normalize(synonym)
                 if not exact and len(target) < 3:
-                    continue  # "id", "فی": substring matches would hit unrelated headers
+                    continue  # "id": substring matches would hit unrelated headers
                 hit = next(
                     (
                         h
@@ -237,12 +247,12 @@ def suggest_mapping(headers: list[str]) -> dict[str, str]:
 def validate_mapping(mapping: dict[str, str], headers: list[str]) -> None:
     unknown_fields = set(mapping) - set(FIELDS)
     if unknown_fields:
-        raise ProductSourceError(f"فیلد نامعتبر: {', '.join(sorted(unknown_fields))}")
+        raise ProductSourceError(f"Unknown field: {', '.join(sorted(unknown_fields))}")
     missing = [h for h in mapping.values() if h not in headers]
     if missing:
-        raise ProductSourceError(f"این ستون‌ها در جدول نیستند: {'، '.join(missing)}")
+        raise ProductSourceError(f"These columns aren't in the table: {', '.join(missing)}")
     if "name" not in mapping:
-        raise ProductSourceError("ستون «نام محصول» باید مشخص شود.")
+        raise ProductSourceError("Choose the “Product name” column.")
 
 
 def parse_stock(value: str) -> int | None:
@@ -252,7 +262,7 @@ def parse_stock(value: str) -> int | None:
     text = normalize(value)
     if not text:
         return None
-    if any(w in text for w in _OUT_OF_STOCK_WORDS):  # before "موجود", which "ناموجود" contains
+    if any(w in text for w in _OUT_OF_STOCK_WORDS):  # before "متوفر", which "غير متوفر" contains
         return 0
     if any(w in text for w in _IN_STOCK_WORDS):
         return 1  # available, count unknown
@@ -279,7 +289,7 @@ def rows_to_products(table: Table, mapping: dict[str, str]) -> list[dict[str, An
         name = get("name")
         if not name:
             continue
-        price = parse_int(get("price"))
+        price = parse_decimal(get("price"))
         products.append(
             {
                 "name": name[:255],
@@ -287,7 +297,7 @@ def rows_to_products(table: Table, mapping: dict[str, str]) -> list[dict[str, An
                 "category": get("category")[:120] or None,
                 "color": get("color")[:64] or None,
                 "size": get("size")[:64] or None,
-                "price": Decimal(price) if price is not None else None,
+                "price": price,
                 "stock": parse_stock(get("stock")) if "stock" in mapping else None,
                 "description": get("description") or None,
                 "post_url": instagram_url(get("post_url")),
@@ -396,7 +406,7 @@ def product_for_bot(p: Product) -> dict[str, Any]:
         if getattr(p, key):
             info[key] = getattr(p, key)
     if p.price is not None:
-        info["price_toman"] = int(p.price)
+        info["price"] = price_number(p.price)
     if p.stock is not None:
         info["in_stock"] = p.stock > 0
         info["stock_count"] = p.stock
@@ -430,8 +440,22 @@ def _in_stock(p: Product) -> bool:
     return p.stock is None or p.stock > 0
 
 
+def price_number(price: Decimal) -> int | float:
+    """A price as a JSON number: 1250 or 49.9."""
+    return int(price) if price == price.to_integral_value() else float(price)
+
+
+def _money(price: Decimal, currency: str) -> str:
+    """'$1,250', '$49.90' for USD; '1,250 AED' for other currencies."""
+    number = f"{int(price):,}" if price == price.to_integral_value() else f"{price:,.2f}"
+    return f"${number}" if currency == "USD" else f"{number} {currency}"
+
+
 def catalogue_overview(
-    items: list[Product], max_lines: int = 80, post_refs: dict[str, str] | None = None
+    items: list[Product],
+    max_lines: int = 80,
+    post_refs: dict[str, str] | None = None,
+    currency: str = "USD",
 ) -> str:
     """One line per product name, cheapest first: price range, in-stock colours and sizes.
 
@@ -448,15 +472,19 @@ def catalogue_overview(
 
     rows: list[tuple[int, str]] = []
     for name, variants in groups.items():
-        prices = sorted({int(v.price) for v in variants if v.price is not None})
+        prices = sorted({v.price for v in variants if v.price is not None})
         available = [v for v in variants if _in_stock(v)]
         parts = [f"- {name}"]
         category = next((v.category for v in variants if v.category), None)
         if category:
             parts[0] += f" ({category})"
         if prices:
-            price = f"{prices[0]:,}" if len(prices) == 1 else f"{prices[0]:,} to {prices[-1]:,}"
-            parts.append(f"{price} toman")
+            price = (
+                _money(prices[0], currency)
+                if len(prices) == 1
+                else f"{_money(prices[0], currency)} to {_money(prices[-1], currency)}"
+            )
+            parts.append(price)
         if not available:
             parts.append("out of stock")
         else:

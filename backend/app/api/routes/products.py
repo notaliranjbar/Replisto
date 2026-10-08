@@ -15,6 +15,7 @@ from sqlalchemy import delete, func, select
 from app.api.deps import CurrentShop, DbSession, HttpClient
 from app.api.uploads import read_upload
 from app.core.config import get_settings
+from app.core.i18n import localize
 from app.core.timeutil import utcnow
 from app.models import (
     Product,
@@ -59,7 +60,7 @@ class SourceOut(BaseModel):
     column_mapping: dict[str, str] = {}
     product_count: int = 0
     last_synced_at: datetime | None = None
-    # Persian message when the last sync failed (e.g. sheet no longer shared). The previous
+    # Message when the last sync failed (e.g. sheet no longer shared). The previous
     # product data stays in use until a sync succeeds.
     last_error: str | None = None
 
@@ -73,7 +74,7 @@ class ProductOut(BaseModel):
     category: str | None
     color: str | None
     size: str | None
-    # Toman.
+    # In the shop's currency.
     price: Decimal | None
     # None: unknown; 0: out of stock.
     stock: int | None
@@ -112,7 +113,9 @@ class ProductIn(BaseModel):
     category: str | None = Field(default=None, max_length=120)
     color: str | None = Field(default=None, max_length=64)
     size: str | None = Field(default=None, max_length=64)
-    price: int | None = Field(default=None, ge=0, le=10**13, description="Toman")
+    price: Decimal | None = Field(
+        default=None, ge=0, le=10**12, decimal_places=2, description="In the shop's currency"
+    )
     stock: int | None = Field(default=None, ge=0, le=10**7)
     description: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=2000)
@@ -127,7 +130,9 @@ class ProductPatch(BaseModel):
     category: str | None = Field(default=None, max_length=120)
     color: str | None = Field(default=None, max_length=64)
     size: str | None = Field(default=None, max_length=64)
-    price: int | None = Field(default=None, ge=0, le=10**13, description="Toman")
+    price: Decimal | None = Field(
+        default=None, ge=0, le=10**12, decimal_places=2, description="In the shop's currency"
+    )
     stock: int | None = Field(default=None, ge=0, le=10**7)
     description: str | None = Field(default=None, max_length=5000)
     image_url: str | None = Field(default=None, max_length=2000)
@@ -135,8 +140,8 @@ class ProductPatch(BaseModel):
 
 
 SHEET_LOCKED = (
-    "این محصول از گوگل شیت خوانده می‌شود و هر چند دقیقه دوباره از آن به‌روز می‌شود؛ "
-    "تغییرش را در خود شیت بدهید."
+    "This product comes from your Google Sheet and is re-read from it every few minutes; "
+    "change it in the sheet itself."
 )
 
 
@@ -144,7 +149,7 @@ SHEET_LOCKED = (
 async def fields() -> list[FieldOut]:
     """Our product fields, for the column-mapping step."""
     return [
-        FieldOut(key=f, label=products.FIELD_LABELS[f], required=f == "name")
+        FieldOut(key=f, label=localize(products.FIELD_LABELS[f]) or "", required=f == "name")
         for f in products.FIELDS
     ]
 
@@ -202,17 +207,17 @@ async def import_file(
     file: UploadFile,
     shop: CurrentShop,
     db: DbSession,
-    column_mapping: str = Form(description='JSON object, e.g. {"name": "نام محصول"}'),
+    column_mapping: str = Form(description='JSON object, e.g. {"name": "Product name"}'),
 ) -> SourceOut:
     """One-off import of an Excel/CSV file (not re-synced; upload again to update)."""
     try:
         mapping = json.loads(column_mapping)
     except ValueError:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, "column_mapping باید JSON باشد"
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "column_mapping must be JSON"
         ) from None
     if not isinstance(mapping, dict) or not all(isinstance(v, str) for v in mapping.values()):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "column_mapping نامعتبر است")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Invalid column_mapping")
     table = await _parse_upload(file)
     try:
         products.validate_mapping(mapping, table.headers)
@@ -230,7 +235,7 @@ async def import_file(
 async def sync_now(shop: CurrentShop, db: DbSession, http: HttpClient) -> SourceOut:
     source = await _get_source(db, shop)
     if source is None or source.kind != ProductSourceKind.GOOGLE_SHEET:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "گوگل شیتی متصل نیست.")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "No Google Sheet is connected.")
     try:
         await products.sync_source(db, source, http)
     except ProductSourceError as exc:
@@ -372,7 +377,7 @@ def _matches(product: Product, origin: ProductOrigin | None, stock: str | None) 
 async def _get_product(db: DbSession, shop: Shop, product_id: uuid.UUID) -> Product:
     product = await db.get(Product, product_id)
     if product is None or product.shop_id != shop.id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "محصول پیدا نشد")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found")
     return product
 
 
@@ -384,7 +389,7 @@ async def check_room(db: DbSession, shop: Shop, adding: int) -> None:
     if (count or 0) + adding > limit:
         raise HTTPException(
             status.HTTP_413_CONTENT_TOO_LARGE,
-            f"تعداد محصولات از سقف مجاز ({limit:,}) بیشتر می‌شود.",
+            f"This would go over the limit of {limit:,} products.",
         )
 
 
@@ -421,7 +426,7 @@ async def _parse_upload(file: UploadFile) -> products.Table:
         kind = "csv"
     else:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, "فقط فایل‌های xlsx و csv پشتیبانی می‌شوند."
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "Only .xlsx and .csv files are supported."
         )
     try:
         return products.parse_table(data, kind)
@@ -462,5 +467,5 @@ async def _source_out(db: DbSession, shop: Shop) -> SourceOut:
         column_mapping=source.column_mapping,
         product_count=count or 0,
         last_synced_at=source.last_synced_at,
-        last_error=source.last_error,
+        last_error=localize(source.last_error),
     )

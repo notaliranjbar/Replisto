@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, FileSpreadsheet, Lock, Minus, Package, Pencil, Plus, RefreshCw, Search, Sheet, Trash2, Upload } from "lucide-react";
 import { api } from "../api/client";
-import { keys } from "../api/queries";
+import { keys, useMe } from "../api/queries";
 import type { Product, ProductIn, ProductOrigin, ProductPage, ProductSummary, Source } from "../api/types";
 import ProductWizard, { type WizardStart } from "../components/ProductWizard";
 import { PendingProposals, TeachBox } from "../components/teach";
@@ -202,6 +202,7 @@ function useProductMutations() {
 
 function Catalogue({ onEdit }: { onEdit: (p: Product) => void }) {
   const { t, f } = useI18n();
+  const currency = useMe().data?.shop.currency ?? "USD";
   const C = t.launch.catalogue;
   const [q, setQ] = useState("");
   const [search, setSearch] = useState("");
@@ -297,8 +298,8 @@ function Catalogue({ onEdit }: { onEdit: (p: Product) => void }) {
         <div className={cx("transition-opacity", isFetching && "opacity-60")}>
           <ul className="divide-y divide-slate-100">
             {data.items.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5 transition-colors hover:bg-brand-50/30 sm:px-6">
-                <button type="button" onClick={() => onEdit(p)} className="min-w-48 flex-1 text-start">
+              <li key={p.id} className="flex flex-wrap items-center gap-x-1 gap-y-2 px-5 py-3.5 transition-colors hover:bg-brand-50/30 sm:gap-x-4 sm:px-6">
+                <button type="button" onClick={() => onEdit(p)} className="min-w-48 flex-1 basis-full text-start sm:basis-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold text-ink-950" dir="auto">
                       {p.name}
@@ -316,8 +317,9 @@ function Catalogue({ onEdit }: { onEdit: (p: Product) => void }) {
                     ))}
                   </div>
                 </button>
-                <div className="num w-32 text-end text-sm font-bold text-ink-950">{p.price != null ? `${f.num(p.price)} ${t.launch.billing.toman}` : "—"}</div>
-                <div className="flex w-36 items-center justify-end gap-1">
+                {/* phones: price, stock and actions share one row under the name */}
+                <div className="num me-auto text-sm font-bold text-ink-950 sm:me-0 sm:w-32 sm:text-end">{p.price != null ? f.money(p.price, currency) : "—"}</div>
+                <div className="flex items-center justify-end gap-1 sm:w-36">
                   {p.editable && (
                     <Button
                       size="sm"
@@ -415,15 +417,27 @@ function toForm(p: Product): FormState {
   };
 }
 
-const PERSIAN_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
+const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 
-/** "۱,۲۵۰,۰۰۰" → 1250000; empty → null. */
+/** Arabic-Indic digits and the Arabic decimal separator → ASCII. */
+function asciiNumber(s: string): string {
+  return Array.from(s)
+    .map((c) => (ARABIC_DIGITS.includes(c) ? String(ARABIC_DIGITS.indexOf(c)) : c === "٫" ? "." : c))
+    .join("");
+}
+
+/** "١٢" → 12; empty → null. */
 function digits(s: string): number | null {
-  const d = Array.from(s)
-    .map((c) => (PERSIAN_DIGITS.includes(c) ? String(PERSIAN_DIGITS.indexOf(c)) : c))
-    .join("")
-    .replace(/[^\d]/g, "");
+  const d = asciiNumber(s).replace(/[^\d]/g, "");
   return d === "" ? null : Number(d);
+}
+
+/** "$1,250.50" → 1250.5; empty → null. */
+function amount(s: string): number | null {
+  const d = asciiNumber(s).replace(/[^\d.]/g, "");
+  if (d === "" || d === ".") return null;
+  const v = Number(d);
+  return Number.isFinite(v) ? Math.round(v * 100) / 100 : null;
 }
 
 function ProductModal({ product, onClose }: { product: Product | "new" | null; onClose: () => void }) {
@@ -434,6 +448,7 @@ function ProductModal({ product, onClose }: { product: Product | "new" | null; o
   const [form, setForm] = useState<FormState>(EMPTY);
   const editing = product && product !== "new" ? product : null;
   const locked = editing ? !editing.editable : false;
+  const currency = useMe().data?.shop.currency ?? "USD";
 
   useEffect(() => {
     setForm(product && product !== "new" ? toForm(product) : EMPTY);
@@ -447,7 +462,7 @@ function ProductModal({ product, onClose }: { product: Product | "new" | null; o
         category: form.category.trim() || null,
         color: form.color.trim() || null,
         size: form.size.trim() || null,
-        price: digits(form.price),
+        price: amount(form.price),
         stock: digits(form.stock),
         description: form.description.trim() || null,
         image_url: form.image_url.trim() || null,
@@ -464,14 +479,14 @@ function ProductModal({ product, onClose }: { product: Product | "new" | null; o
     onError: (err) => toast.error(errorMessage(err, t)),
   });
 
-  const field = (key: FormKey, label: string, opts: { ltr?: boolean; numeric?: boolean; hint?: string } = {}) => (
+  const field = (key: FormKey, label: string, opts: { ltr?: boolean; numeric?: boolean; decimal?: boolean; hint?: string } = {}) => (
     <Field label={label} hint={opts.hint}>
       {(id) => (
         <Input
           id={id}
           value={form[key]}
           dir={opts.ltr ? "ltr" : "auto"}
-          inputMode={opts.numeric ? "numeric" : undefined}
+          inputMode={opts.numeric ? "numeric" : opts.decimal ? "decimal" : undefined}
           disabled={locked}
           onChange={(e) => setForm({ ...form, [key]: e.target.value })}
           data-autofocus={key === "name" ? true : undefined}
@@ -505,7 +520,7 @@ function ProductModal({ product, onClose }: { product: Product | "new" | null; o
         {locked && <Alert kind="info">{C.sheetLocked}</Alert>}
         {field("name", C.name)}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {field("price", C.price, { numeric: true, ltr: true })}
+          {field("price", `${C.price} (${currency})`, { decimal: true, ltr: true })}
           {field("stock", C.stock, { numeric: true, ltr: true, hint: C.stockHint })}
           {field("color", C.color)}
           {field("size", C.size)}
@@ -519,12 +534,6 @@ function ProductModal({ product, onClose }: { product: Product | "new" | null; o
           {field("image_url", C.imageUrl, { ltr: true })}
           {field("post_url", C.postUrl, { ltr: true })}
         </div>
-        {editing?.telegram_post_url && (
-          <a href={editing.telegram_post_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
-            {C.viewPost}
-            <ExternalLink className="size-3.5" aria-hidden />
-          </a>
-        )}
         {knows.length > 0 && (
           <div className="rounded-xl bg-brand-50/60 p-4 ring-1 ring-brand-100">
             <div className="mb-2 text-xs font-bold text-brand-800">{C.botKnows}</div>

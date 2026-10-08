@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@fontsource-variable/vazirmatn";
+@import "@fontsource-variable/rubik";
 
 /*
  * Replisto design tokens.
@@ -18,7 +18,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "Vazirmatn Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Rubik Variable", ui-sans-serif, system-ui, sans-serif;
 
   --color-brand-50: #f5f1fe;
   --color-brand-100: #ebe3fd;
@@ -416,5 +416,17 @@ body {
   }
   .draw-in {
     stroke-dashoffset: 0;
+  }
+}
+
+/*
+ * Phones: iOS Safari zooms the page into any form field whose text is under 16px, so fields
+ * get 16px there. Unlayered, so it wins over the text-sm utilities.
+ */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 16px;
   }
 }

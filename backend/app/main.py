@@ -5,8 +5,11 @@ from contextlib import asynccontextmanager
 import httpx
 from arq import create_pool
 from arq.connections import RedisSettings
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException
+from starlette.responses import Response
 
 from app.api.routes import (
     account,
@@ -22,6 +25,7 @@ from app.api.routes import (
     webhooks,
 )
 from app.core.config import get_settings
+from app.core.i18n import LanguageMiddleware, localize
 from app.core.monitoring import setup_monitoring
 from app.core.queue import ArqQueue, InlineQueue
 
@@ -48,6 +52,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await redis.aclose()
 
 
+async def _localized_http_error(request: Request, exc: HTTPException) -> Response:
+    """Error messages are raised in English; the owner reads them in the panel's language."""
+    if isinstance(exc.detail, str):
+        exc.detail = localize(exc.detail)
+    return await http_exception_handler(request, exc)
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
@@ -59,6 +70,8 @@ def create_app() -> FastAPI:
         redoc_url=None,
         openapi_url=None if settings.is_production else "/openapi.json",
     )
+    app.add_middleware(LanguageMiddleware)
+    app.add_exception_handler(HTTPException, _localized_http_error)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

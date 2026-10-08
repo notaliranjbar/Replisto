@@ -20,15 +20,17 @@ CUSTOMER = "998877"
 
 @pytest.fixture
 async def shop(db: AsyncSession) -> Shop:
-    user = User(email="owner@shop.ir", password_hash="x")
-    user.shop = Shop(name="مزون مهسا", bot_enabled=True, fallback_message="همکارم جواب میده")
+    user = User(email="owner@shop.com", password_hash="x")
+    user.shop = Shop(
+        name="Layla Boutique", bot_enabled=True, fallback_message="A teammate will reply soon"
+    )
     db.add(user)
     await db.flush()
     db.add(
         InstagramAccount(
             shop_id=user.shop.id,
             ig_user_id=ACCOUNT,
-            username="mahsa.boutique",
+            username="layla.boutique",
             access_token_encrypted=encrypt_secret("page-token"),
         )
     )
@@ -37,7 +39,7 @@ async def shop(db: AsyncSession) -> Shop:
 
 
 def _event(
-    mid: str, text: str = "سلام", *, echo: bool = False, at: datetime | None = None
+    mid: str, text: str = "Hi", *, echo: bool = False, at: datetime | None = None
 ) -> MessagingEvent:
     return MessagingEvent(
         account_ig_id=ACCOUNT,
@@ -76,7 +78,7 @@ async def _messages(db: AsyncSession) -> list[Message]:
 async def test_customer_message_is_stored_and_answered(
     db: AsyncSession, shop: Shop, queue: RecordingQueue, fake_meta: FakeMeta
 ) -> None:
-    await _receive(db, queue, _event("m1", "این مانتو سایز ۴۴ داره؟"))
+    await _receive(db, queue, _event("m1", "Does this dress come in M?"))
 
     [job] = queue.jobs
     assert job.function == "reply_conversation"
@@ -86,7 +88,7 @@ async def test_customer_message_is_stored_and_answered(
 
     [sent] = fake_meta.sent
     assert sent["recipient"] == {"id": CUSTOMER}
-    assert sent["message"] == {"text": "همکارم جواب میده"}
+    assert sent["message"] == {"text": "A teammate will reply soon"}
     assert sent["token"] == "page-token"
 
     customer, bot = await _messages(db)
@@ -110,9 +112,9 @@ async def test_burst_of_messages_gets_one_reply(
     db: AsyncSession, shop: Shop, queue: RecordingQueue, fake_meta: FakeMeta
 ) -> None:
     now = utcnow()
-    await _receive(db, queue, _event("m1", "سلام", at=now))
-    await _receive(db, queue, _event("m2", "این مانتو", at=now + timedelta(seconds=1)))
-    await _receive(db, queue, _event("m3", "سایز ۴۴ داره؟", at=now + timedelta(seconds=2)))
+    await _receive(db, queue, _event("m1", "Hi", at=now))
+    await _receive(db, queue, _event("m2", "this dress", at=now + timedelta(seconds=1)))
+    await _receive(db, queue, _event("m3", "Do you have M?", at=now + timedelta(seconds=2)))
     assert len(queue.jobs) == 3
 
     await _run_reply_jobs(db, queue, fake_meta)
@@ -133,9 +135,9 @@ async def test_owner_reply_pauses_bot(
     db: AsyncSession, shop: Shop, queue: RecordingQueue, fake_meta: FakeMeta
 ) -> None:
     now = utcnow()
-    await _receive(db, queue, _event("m1", "قیمت؟", at=now))
+    await _receive(db, queue, _event("m1", "Price?", at=now))
     # The owner answers by hand before the debounce delay is over.
-    await _receive(db, queue, _event("o1", "۱۲۰ تومن عزیزم", echo=True))
+    await _receive(db, queue, _event("o1", "It's 120, dear", echo=True))
     await _run_reply_jobs(db, queue, fake_meta)
     assert fake_meta.sent == []
 
@@ -144,7 +146,7 @@ async def test_owner_reply_pauses_bot(
     assert as_utc(conversation.bot_paused_until) > utcnow() + timedelta(minutes=100)
 
     # While paused, new customer messages are recorded but not answered.
-    await _receive(db, queue, _event("m2", "مرسی", at=now + timedelta(seconds=10)))
+    await _receive(db, queue, _event("m2", "Thanks", at=now + timedelta(seconds=10)))
     await _run_reply_jobs(db, queue, fake_meta)
     assert fake_meta.sent == []
     senders = [m.sender for m in await _messages(db)]
@@ -157,7 +159,7 @@ async def test_echo_of_bot_reply_does_not_pause_bot(
     await _receive(db, queue, _event("m1"))
     await _run_reply_jobs(db, queue, fake_meta)
     # Meta echoes our own message back with the mid the send call returned.
-    await _receive(db, queue, _event("bot-mid-1", "همکارم جواب میده", echo=True))
+    await _receive(db, queue, _event("bot-mid-1", "A teammate will reply soon", echo=True))
 
     conversation = await db.scalar(select(Conversation))
     assert conversation is not None and conversation.bot_paused_until is None
@@ -171,10 +173,10 @@ async def test_echo_racing_the_send_is_matched_to_bot_message(
     conversation = await db.scalar(select(Conversation))
     assert conversation is not None
     # A bot message saved just before sending, whose send call hasn't returned yet.
-    db.add(Message(conversation_id=conversation.id, sender=MessageSender.BOT, text="در حال ارسال"))
+    db.add(Message(conversation_id=conversation.id, sender=MessageSender.BOT, text="Sending"))
     await db.commit()
 
-    await _receive(db, queue, _event("bot-mid-9", "در حال ارسال", echo=True))
+    await _receive(db, queue, _event("bot-mid-9", "Sending", echo=True))
 
     await db.refresh(conversation)
     assert conversation.bot_paused_until is None
@@ -237,7 +239,7 @@ async def test_long_reply_is_split_into_chunks(
 ) -> None:
     class LongResponder:
         async def generate(self, shop: Shop, history: list[Message], **_: object) -> Reply:
-            return Reply(text=("جمله‌ای درباره‌ی محصول. " * 120).strip())
+            return Reply(text=("A sentence about the product. " * 120).strip())
 
     await _receive(db, queue, _event("m1"))
     conversation = await db.scalar(select(Conversation))

@@ -40,16 +40,18 @@ async def inbox(
         await db.flush()
         db.add_all(
             [
-                Message(conversation_id=happy.id, sender=MessageSender.CUSTOMER, text="قیمت؟"),
-                Message(conversation_id=happy.id, sender=MessageSender.BOT, text="۱۲۰ تومن"),
-                Message(conversation_id=stuck.id, sender=MessageSender.CUSTOMER, text="سلام"),
+                Message(conversation_id=happy.id, sender=MessageSender.CUSTOMER, text="Price?"),
+                Message(conversation_id=happy.id, sender=MessageSender.BOT, text="120"),
+                Message(conversation_id=stuck.id, sender=MessageSender.CUSTOMER, text="Hi"),
                 Message(
-                    conversation_id=stuck.id, sender=MessageSender.CUSTOMER, text="فاکتور میدید؟"
+                    conversation_id=stuck.id,
+                    sender=MessageSender.CUSTOMER,
+                    text="Do you give invoices?",
                 ),
                 Message(
                     conversation_id=stuck.id,
                     sender=MessageSender.BOT,
-                    text="همکارم جواب میده",
+                    text="A teammate will reply soon",
                     unanswered=True,
                 ),
             ]
@@ -65,7 +67,7 @@ async def test_list_and_filter(client: AsyncClient, auth_headers: dict, inbox: d
     assert first["id"] == inbox["stuck"]  # most recent first
     assert first["customer_username"] is None
     assert first["open_unanswered"] == 1
-    assert second["last_message"]["text"] == "۱۲۰ تومن"
+    assert second["last_message"]["text"] == "120"
 
     only = await client.get(
         "/api/v1/conversations", headers=auth_headers, params={"filter": "unanswered"}
@@ -97,7 +99,7 @@ async def test_detail_pause_resume(client: AsyncClient, auth_headers: dict, inbo
 async def test_other_shop_cannot_see_conversation(client: AsyncClient, inbox: dict) -> None:
     other = await client.post(
         "/api/v1/auth/register",
-        json={"email": "b@shop.ir", "password": "strongpass1", "shop_name": "B"},
+        json={"email": "b@shop.com", "password": "strongpass1", "shop_name": "B"},
     )
     headers = {"Authorization": f"Bearer {other.json()['access_token']}"}
     assert (await client.get("/api/v1/conversations", headers=headers)).json()["total"] == 0
@@ -109,7 +111,7 @@ async def test_unanswered_list_and_resolve(
     client: AsyncClient, auth_headers: dict, inbox: dict
 ) -> None:
     [item] = (await client.get("/api/v1/unanswered", headers=auth_headers)).json()
-    assert item["question"] == "سلام\nفاکتور میدید؟"
+    assert item["question"] == "Hi\nDo you give invoices?"
     assert item["conversation_id"] == inbox["stuck"]
 
     resp = await client.post(
@@ -142,8 +144,8 @@ async def test_dashboard(client: AsyncClient, auth_headers: dict, inbox: dict) -
 
 
 async def test_fallback_is_not_repeated(db: AsyncSession, fake_meta: FakeMeta) -> None:
-    user = User(email="o@x.ir", password_hash="x")
-    user.shop = Shop(name="s", bot_enabled=True, fallback_message="همکارم جواب میده")
+    user = User(email="o@x.com", password_hash="x")
+    user.shop = Shop(name="s", bot_enabled=True, fallback_message="A teammate will reply soon")
     db.add(user)
     await db.flush()
     db.add(
@@ -167,8 +169,8 @@ async def test_fallback_is_not_repeated(db: AsyncSession, fake_meta: FakeMeta) -
             db, conversation.id, now, fake_meta.client(), PlaceholderResponder()
         )
 
-    await customer_says("فاکتور میدید؟")
-    await customer_says("؟؟")
+    await customer_says("Do you give invoices?")
+    await customer_says("??")
     assert len(fake_meta.sent) == 1  # the second fallback is suppressed...
     flagged = await db.scalar(
         select(func.count()).select_from(Message).where(Message.unanswered.is_(True))
@@ -192,7 +194,7 @@ async def test_change_password_and_delete_account(
     )
     assert ok.status_code == 204
     login = await client.post(
-        "/api/v1/auth/login", json={"email": "owner@shop.ir", "password": "newpass123"}
+        "/api/v1/auth/login", json={"email": "owner@shop.com", "password": "newpass123"}
     )
     assert login.status_code == 200
 

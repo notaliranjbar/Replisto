@@ -1,12 +1,15 @@
 """Fill a local database with a realistic demo shop, so the panel can be built against real data.
 
   uv run python -m scripts.seed_demo
+  uv run python -m scripts.seed_demo --language ar     # an owner using the panel in Arabic
 
-Log in with  demo@shop.ir / demopass123 . Safe to re-run: it recreates the demo account.
+Log in with  demo@shop.com / demopass123 . Safe to re-run: it recreates the demo account.
 """
 
+import argparse
 import asyncio
 from datetime import timedelta
+from decimal import Decimal
 
 from sqlalchemy import select
 
@@ -32,57 +35,68 @@ from app.models import (
 )
 from app.services.accounts import delete_user
 
-EMAIL = "demo@shop.ir"
+EMAIL = "demo@shop.com"
 PASSWORD = "demopass123"
-# The same credit a new shop gets as its gift (50,000 toman by default).
-DEMO_CREDIT_RIAL = get_settings().signup_credit_rial
+# The same credit a new shop gets as its gift ($5 by default).
+DEMO_CREDIT_CENTS = get_settings().signup_credit_cents
 
 KNOWLEDGE = [
-    (KnowledgeSection.ABOUT, "", "مزون مهسا، تولیدکننده‌ی مانتو و شومیز زنانه از سال ۱۳۹۸."),
+    (
+        KnowledgeSection.ABOUT,
+        "",
+        "Layla Boutique in Achrafieh, Beirut, makes women's dresses and blouses since 2019.",
+    ),
     (
         KnowledgeSection.SHIPPING,
         "",
-        "ارسال با پست پیشتاز ۳ تا ۵ روز کاری، هزینه ۸۵ هزار تومان. خرید بالای ۲ میلیون رایگان.",
+        "Delivery all over Lebanon in 2-3 working days for $4; same day inside Beirut. "
+        "Free on orders over $100.",
     ),
-    (KnowledgeSection.PAYMENT, "", "کارت‌به‌کارت یا درگاه سایت. پرداخت در محل فقط تهران."),
-    (KnowledgeSection.RETURNS, "", "تا ۷ روز بعد از تحویل امکان تعویض سایز هست."),
-    (KnowledgeSection.FAQ, "جنس پارچه؟", "کتان ترک درجه یک، بدون آبرفت."),
-    (KnowledgeSection.FAQ, "راهنمای سایز؟", "سایز ۳۸ تا ۴۴ معادل S تا XL."),
+    (
+        KnowledgeSection.PAYMENT,
+        "",
+        "Cash on delivery (dollars or lira at the daily rate), or Whish Money before delivery.",
+    ),
+    (KnowledgeSection.CONTACT, "", "Open Monday to Saturday, 10am-7pm. Closed on Sundays."),
+    (KnowledgeSection.RETURNS, "", "Size exchanges within 7 days of delivery."),
+    (KnowledgeSection.FAQ, "What's the fabric?", "Premium linen, pre-washed so it won't shrink."),
+    (KnowledgeSection.FAQ, "Size guide?", "S to XL; S fits US 4-6, M fits 8-10, L fits 12-14."),
 ]
 PRODUCTS = [
-    ("M-101", "مانتو کتان", "مانتو", "مشکی", "40", 1250000, 4),
-    ("M-101", "مانتو کتان", "مانتو", "مشکی", "44", 1250000, 3),
-    ("M-101", "مانتو کتان", "مانتو", "سرمه‌ای", "44", 1250000, 0),
-    ("S-220", "شومیز حریر", "شومیز", "سفید", "آزاد", 890000, 7),
-    ("S-221", "شومیز لینن", "شومیز", "کرم", "آزاد", 950000, 2),
+    ("D-101", "Linen dress", "Dresses", "Black", "S", Decimal("49.90"), 4),
+    ("D-101", "Linen dress", "Dresses", "Black", "M", Decimal("49.90"), 3),
+    ("D-101", "Linen dress", "Dresses", "Navy", "M", Decimal("49.90"), 0),
+    ("B-220", "Silk blouse", "Blouses", "White", "One size", Decimal("35.00"), 7),
+    ("B-221", "Linen shirt", "Blouses", "Cream", "One size", Decimal("38.00"), 2),
 ]
+FALLBACK = "Thanks for your message! A teammate will get back to you shortly 🙏"
 # (username, [(sender, text, unanswered, minutes_ago)], paused)
 CONVERSATIONS = [
     (
         "sara.style",
         [
-            ("customer", "سلام، مانتو کتان مشکی سایز ۴۴ دارید؟", False, 42),
-            ("bot", "سلام عزیزم 🌸 بله موجوده، قیمتش ۱,۲۵۰,۰۰۰ تومانه.", False, 41),
-            ("customer", "ارسال به شیراز چقدر طول میکشه؟", False, 40),
-            ("bot", "با پست پیشتاز ۳ تا ۵ روز کاری میرسه و هزینه‌اش ۸۵ هزار تومانه.", False, 39),
+            ("customer", "Hi! Do you have the black linen dress in size M?", False, 42),
+            ("bot", "Hi there 🌸 Yes, it's in stock in M, and it's $49.90.", False, 41),
+            ("customer", "How long does delivery to Jounieh take?", False, 40),
+            ("bot", "Delivery takes 2-3 working days and costs $4.", False, 39),
         ],
         False,
     ),
     (
-        "neda_k",
+        "rita.khoury",
         [
-            ("customer", "سلام", False, 15),
-            ("customer", "فاکتور رسمی برای شرکت میدید؟", False, 15),
-            ("bot", "سوالتون رو ثبت کردم، همکارم به زودی جواب میده 🙏", True, 14),
+            ("customer", "مرحبا", False, 15),
+            ("customer", "فيكن تعملولي فاتورة رسمية للشركة؟", False, 15),
+            ("bot", "أهلا فيكي! رح خلّي حدا من الفريق يجاوبك عن الفاتورة بأسرع وقت 🙏", True, 14),
         ],
         False,
     ),
     (
-        "maryam.r",
+        "maya.haddad",
         [
-            ("customer", "سرمه‌ای ۴۴ کی موجود میشه؟", False, 8),
-            ("bot", "سوالتون رو ثبت کردم، همکارم به زودی جواب میده 🙏", True, 7),
-            ("owner", "سلام مریم جان، هفته‌ی بعد میرسه 🌷", False, 3),
+            ("customer", "hi, aymta byerja3 el navy bl M?", False, 8),
+            ("bot", FALLBACK, True, 7),
+            ("owner", "Hi Maya, it's back next week 🌷", False, 3),
         ],
         True,
     ),
@@ -92,22 +106,36 @@ CONVERSATIONS = [
 POSTS = [
     (
         "17900000000000001",
-        "DEMOmanto01",
-        "مانتو کتان ترک 🖤 مشکی و سرمه‌ای، سایز ۴۰ تا ۴۴\nکد M-101 · دوخت خودمون",
+        "DEMOdress01",
+        "Linen dress 🖤 black and navy, sizes S to M\nCode D-101 · made in our studio",
         3,
     ),
-    ("17900000000000002", "DEMOharir02", "شومیز حریر سفید، سبک و خنک برای مهمونی‌ها 🤍 فری‌سایز", 9),
-    ("17900000000000003", "DEMOlinen03", "شومیز لینن کرم ☀️ مناسب تابستون", 15),
-    ("17900000000000004", "DEMOstudio4", "پشت صحنه‌ی عکاسی کالکشن جدید 📸", 20),
+    ("17900000000000002", "DEMOsilk002", "Silk blouse in white, light and breezy 🤍 one size", 9),
+    ("17900000000000003", "DEMOlinen03", "Linen shirt in cream ☀️ made for summer", 15),
+    ("17900000000000004", "DEMOstudio4", "Behind the scenes of our new collection shoot 📸", 20),
 ]
-# username -> (question, reason, handed off minutes ago, resolved minutes ago or None)
+# username -> (question, reason by panel language, handed off minutes ago, resolved minutes
+# ago or None). The bot writes reasons in the owner's panel language.
 HANDOFFS = {
-    "neda_k": ("سلام\nفاکتور رسمی برای شرکت میدید؟", "مشتری فاکتور رسمی می‌خواهد", 14, None),
-    "maryam.r": ("سرمه‌ای ۴۴ کی موجود میشه؟", "زمان موجود شدن کالا مشخص نیست", 7, 3),
+    "rita.khoury": (
+        "مرحبا\nفيكن تعملولي فاتورة رسمية للشركة؟",
+        {
+            "en": "The customer wants a formal invoice for a company",
+            "ar": "العميلة تريد فاتورة رسمية للشركة",
+        },
+        14,
+        None,
+    ),
+    "maya.haddad": (
+        "hi, aymta byerja3 el navy bl M?",
+        {"en": "Restock date unknown", "ar": "موعد عودة المقاس إلى المخزون غير معروف"},
+        7,
+        3,
+    ),
 }
 
 
-async def main() -> None:
+async def main(language: str) -> None:
     async with SessionLocal() as db:
         old = await db.scalar(select(User.id).where(User.email == EMAIL))
         if old is not None:
@@ -117,13 +145,15 @@ async def main() -> None:
         user = User(
             email=EMAIL,
             password_hash=hash_password(PASSWORD),
-            full_name="مهسا",
+            full_name="Layla",
             email_verified_at=now,
         )
         user.shop = Shop(
-            name="مزون مهسا",
+            name="Layla Boutique",
             bot_enabled=True,
-            balance_rial=DEMO_CREDIT_RIAL,
+            fallback_message=FALLBACK,
+            language=language,
+            balance_cents=DEMO_CREDIT_CENTS,
             signup_gift_at=now,
         )
         db.add(user)
@@ -134,7 +164,7 @@ async def main() -> None:
             InstagramAccount(
                 shop_id=shop_id,
                 ig_user_id="17840000000000000",
-                username="mahsa.boutique",
+                username="layla.boutique",
                 access_token_encrypted=encrypt_secret("demo-token"),
                 token_expires_at=now + timedelta(days=55),
                 posts_synced_at=now - timedelta(hours=2),
@@ -158,9 +188,9 @@ async def main() -> None:
             WalletEntry(
                 shop_id=shop_id,
                 kind=WalletEntryKind.BONUS,
-                amount_rial=DEMO_CREDIT_RIAL,
-                balance_after_rial=DEMO_CREDIT_RIAL,
-                description="هدیه‌ی شروع کار",
+                amount_cents=DEMO_CREDIT_CENTS,
+                balance_after_cents=DEMO_CREDIT_CENTS,
+                description="Welcome gift",
                 details={},
             )
         )
@@ -190,10 +220,10 @@ async def main() -> None:
             )
             handoff = HANDOFFS.get(username)
             if handoff:
-                question, reason, minutes_ago, resolved_minutes_ago = handoff
+                question, reasons, minutes_ago, resolved_minutes_ago = handoff
                 conversation.handoff_at = now - timedelta(minutes=minutes_ago)
                 conversation.handoff_question = question
-                conversation.handoff_reason = reason
+                conversation.handoff_reason = reasons[language]
                 if resolved_minutes_ago is not None:
                     conversation.handoff_resolved_at = now - timedelta(minutes=resolved_minutes_ago)
                     conversation.handoff_resolved_by = HandoffResolution.OWNER_REPLY
@@ -217,4 +247,6 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description="Create the demo shop.")
+    parser.add_argument("--language", choices=["en", "ar"], default="en")
+    asyncio.run(main(parser.parse_args().language))

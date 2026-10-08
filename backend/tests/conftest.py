@@ -17,8 +17,8 @@ os.environ["LLM_MODEL"] = "test-model"
 os.environ["INSTAGRAM_ENABLED"] = "true"
 # Wallet charging is covered by its own tests (which switch it on).
 os.environ["BILLING_ENABLED"] = "false"
-os.environ["ZARINPAL_SANDBOX"] = "true"
-os.environ["ABAN_API_BASE"] = "https://aban.test"
+os.environ["STRIPE_API_BASE"] = "https://stripe.test"
+os.environ["TWILIO_API_BASE"] = "https://twilio.test"
 
 import json
 from collections.abc import AsyncIterator
@@ -63,7 +63,7 @@ class FakeMeta:
     """Stands in for Meta's servers behind a real InstagramClient (via httpx.MockTransport)."""
 
     ig_user_id: str = "17841400000000001"
-    username: str = "mahsa.boutique"
+    username: str = "layla.boutique"
     sent: list[dict[str, Any]] = field(default_factory=list)
     subscribed: bool = False
     # When set, the send endpoint answers with this (status, body) instead of succeeding.
@@ -127,84 +127,67 @@ class FakeMeta:
 
 
 @dataclass
-class FakeZarinpal:
-    """Zarinpal's sandbox payment API."""
+class FakeStripe:
+    """Stripe's Checkout Sessions API."""
 
-    requests: list[dict[str, Any]] = field(default_factory=list)
-    verifies: list[dict[str, Any]] = field(default_factory=list)
-    verify_code: int = 100
-
-    def handler(self, request: httpx.Request) -> httpx.Response:
-        body = json.loads(request.content)
-        if request.url.path.endswith("/request.json"):
-            self.requests.append(body)
-            return httpx.Response(
-                200, json={"data": {"code": 100, "authority": f"A{len(self.requests):035d}"}}
-            )
-        self.verifies.append(body)
-        if self.verify_code not in (100, 101):
-            return httpx.Response(200, json={"data": [], "errors": {"code": self.verify_code}})
-        return httpx.Response(
-            200,
-            json={"data": {"code": self.verify_code, "ref_id": 201, "card_pan": "6037****1234"}},
-        )
-
-
-@dataclass
-class FakeAban:
-    """Aban Gateway's invoice API (card-to-card with automatic confirmation)."""
-
-    invoices: dict[str, dict[str, Any]] = field(default_factory=dict)
-    created: list[dict[str, Any]] = field(default_factory=list)
-    verifies: list[str] = field(default_factory=list)
-    # When set, creating an invoice fails with this (status, error code).
+    sessions: dict[str, dict[str, Any]] = field(default_factory=dict)
+    created: list[dict[str, str]] = field(default_factory=list)
+    # When set, creating a session fails with this (status, error code).
     create_error: tuple[int, str] | None = None
 
-    def pay(self, invoice_id: str) -> None:
-        """The owner transferred the exact amount and the bank SMS arrived."""
-        self.invoices[invoice_id]["status"] = "paid"
+    def pay(self, session_id: str) -> None:
+        """The owner completed the checkout."""
+        self.sessions[session_id].update(
+            status="complete", payment_status="paid", payment_intent=f"pi_{session_id[-6:]}"
+        )
+
+    def expire(self, session_id: str) -> None:
+        self.sessions[session_id]["status"] = "expired"
 
     def handler(self, request: httpx.Request) -> httpx.Response:
-        if request.headers.get("authorization") != "Bearer ag_test_token":
-            return httpx.Response(401, json={"detail": "bad token"})
+        if request.headers.get("authorization") != "Bearer sk_test_key":
+            return httpx.Response(401, json={"error": {"type": "invalid_request_error"}})
         path = request.url.path
-        if request.method == "POST" and path == "/api/v1/invoices":
+        if request.method == "POST" and path == "/v1/checkout/sessions":
             if self.create_error:
                 status, code = self.create_error
                 return httpx.Response(status, json={"error": {"code": code, "message": code}})
-            body = json.loads(request.content)
-            self.created.append(body)
-            invoice_id = f"inv_{len(self.created):020d}"
-            invoice = {
-                "invoice_id": invoice_id,
-                "status": "pending",
-                "amount_rial": body["amount_rial"],
-                "payable_rial": body["amount_rial"] + 3240,
-                "order_id": body.get("order_id"),
-                "payment_url": f"https://abangateway.ir/pay/{invoice_id}",
-                "verified": False,
+            form = {k: v[0] for k, v in parse_qs(request.content.decode()).items()}
+            self.created.append(form)
+            session_id = f"cs_test_{len(self.created):060d}"
+            session = {
+                "id": session_id,
+                "object": "checkout.session",
+                "status": "open",
+                "payment_status": "unpaid",
+                "payment_intent": None,
+                "amount_total": int(form["line_items[0][price_data][unit_amount]"]),
+                "currency": form["line_items[0][price_data][currency]"],
+                "client_reference_id": form["client_reference_id"],
+                "url": f"https://checkout.stripe.com/c/pay/{session_id}",
             }
-            self.invoices[invoice_id] = invoice
-            return httpx.Response(201, json=invoice)
-        parts = path.split("/")  # ['', 'api', 'v1', 'invoices', id, action?]
-        invoice = self.invoices.get(parts[4]) if len(parts) > 4 else None
-        if invoice is None:
-            return httpx.Response(404, json={"error": {"code": "invoice_not_found"}})
-        if request.method == "GET":
-            return httpx.Response(200, json=invoice)
-        if parts[-1] == "verify":
-            self.verifies.append(invoice["invoice_id"])
-            if invoice["status"] != "paid":
-                return httpx.Response(402, json={"error": {"code": "not_yet_paid"}})
-            if invoice["verified"]:
-                return httpx.Response(409, json={"error": {"code": "already_verified"}})
-            invoice["verified"] = True
-            return httpx.Response(200, json={"verified": True, **invoice})
-        return httpx.Response(404, json={"error": {"code": "invalid_request"}})
+            self.sessions[session_id] = session
+            return httpx.Response(200, json=session)
+        session = self.sessions.get(path.rsplit("/", 1)[-1])
+        if request.method == "GET" and session is not None:
+            return httpx.Response(200, json=session)
+        return httpx.Response(404, json={"error": {"code": "resource_missing"}})
+
+
+@dataclass
+class FakeTwilio:
+    """Twilio's Messages API."""
+
+    sent: list[dict[str, str]] = field(default_factory=list)
+
+    def handler(self, request: httpx.Request) -> httpx.Response:
+        form = {k: v[0] for k, v in parse_qs(request.content.decode()).items()}
+        self.sent.append(form)
+        return httpx.Response(201, json={"sid": f"SM{len(self.sent):032d}", "status": "queued"})
 
 
 class FakeWeb:
-    """Google Sheets/Drive downloads, an OpenAI-compatible LLM and the payment gateways, behind
+    """Google Sheets/Drive downloads, an OpenAI-compatible LLM, Stripe and Twilio, behind
     httpx.MockTransport.
 
     - `files[url] = (status, body, content_type)` serves a Google download URL.
@@ -212,8 +195,8 @@ class FakeWeb:
     """
 
     def __init__(self) -> None:
-        self.zarinpal = FakeZarinpal()
-        self.aban = FakeAban()
+        self.stripe = FakeStripe()
+        self.twilio = FakeTwilio()
         self.files: dict[str, tuple[int, bytes, str]] = {}
         self.llm_replies: list[dict[str, Any]] = []
         self.llm_requests: list[dict[str, Any]] = []
@@ -222,10 +205,10 @@ class FakeWeb:
         self.llm_rejects: set[str] = set()
 
     def handler(self, request: httpx.Request) -> httpx.Response:
-        if request.url.host == "sandbox.zarinpal.com":
-            return self.zarinpal.handler(request)
-        if request.url.host == "aban.test":
-            return self.aban.handler(request)
+        if request.url.host == "stripe.test":
+            return self.stripe.handler(request)
+        if request.url.host == "twilio.test":
+            return self.twilio.handler(request)
         if request.url.host == "llm.test":
             body = json.loads(request.content)
             self.llm_requests.append(body)
@@ -243,7 +226,7 @@ class FakeWeb:
                 )
             if self.llm_status != 200:
                 return httpx.Response(self.llm_status, json={"error": "busy"})
-            message = self.llm_replies.pop(0) if self.llm_replies else {"content": "باشه"}
+            message = self.llm_replies.pop(0) if self.llm_replies else {"content": "Sure"}
             return httpx.Response(
                 200,
                 json={
@@ -336,7 +319,7 @@ async def client(
 async def auth_headers(client: AsyncClient) -> dict[str, str]:
     resp = await client.post(
         "/api/v1/auth/register",
-        json={"email": "owner@shop.ir", "password": "strongpass1", "shop_name": "Mahsa Shop"},
+        json={"email": "owner@shop.com", "password": "strongpass1", "shop_name": "Layla Shop"},
     )
     return {"Authorization": f"Bearer {resp.json()['access_token']}"}
 

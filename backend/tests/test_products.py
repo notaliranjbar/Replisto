@@ -1,11 +1,13 @@
 import io
 import json
+from decimal import Decimal
 
 import pytest
 from httpx import AsyncClient
 from openpyxl import Workbook
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.text import parse_decimal
 from app.models import Product
 from app.services import products
 from app.services.products import ProductSourceError
@@ -15,13 +17,14 @@ API = "/api/v1/products"
 SHEET_URL = "https://docs.google.com/spreadsheets/d/abc123/edit#gid=42"
 SHEET_CSV = "https://docs.google.com/spreadsheets/d/abc123/export?format=csv&gid=42"
 
-# Deliberately "messy" like a real shop's sheet: a title row, Persian digits, words for stock.
-CSV = """لیست محصولات مزون,,,,,
-نام کالا,رنگ,سایز,قیمت (تومان),موجودی,جنس
-مانتو کتان,مشکی,44,"۱,۲۵۰,۰۰۰",۳,کتان ترک
-مانتو کتان,مشکی,46,"1,250,000",ناموجود,کتان ترک
-مانتو کتان,سرمه‌ای,44,1250000,موجود,کتان ترک
-شومیز حریر,سفید,آزاد,890000,2,
+# Deliberately "messy" like a real shop's sheet: a title row, Arabic-Indic digits, a currency
+# sign, words for stock.
+CSV = """Boutique product list,,,,,
+Product,Colour,Size,Price ($),Stock,Material
+Linen dress,Black,M,"$1,250.00",٣,Premium linen
+Linen dress,Black,L,1250,sold out,Premium linen
+Linen dress,Navy,M,"١٢٥٠",available,Premium linen
+Silk blouse,White,One size,89.90,2,
 ,,,,,
 """
 
@@ -46,43 +49,64 @@ def test_download_url_conversion() -> None:
 
 def test_parse_and_map_messy_sheet() -> None:
     table = products.parse_table(CSV.encode(), "csv")
-    assert table.headers == ["نام کالا", "رنگ", "سایز", "قیمت (تومان)", "موجودی", "جنس"]
+    assert table.headers == ["Product", "Colour", "Size", "Price ($)", "Stock", "Material"]
     assert len(table.rows) == 4  # title row and blank row skipped
 
     mapping = products.suggest_mapping(table.headers)
     assert mapping == {
-        "name": "نام کالا",
-        "color": "رنگ",
-        "size": "سایز",
-        "price": "قیمت (تومان)",
-        "stock": "موجودی",
-        "description": "جنس",
+        "name": "Product",
+        "color": "Colour",
+        "size": "Size",
+        "price": "Price ($)",
+        "stock": "Stock",
+        "description": "Material",
     }
     items = products.rows_to_products(table, mapping)
-    assert items[0]["price"] == 1250000
+    assert [i["price"] for i in items] == [1250, 1250, 1250, Decimal("89.90")]
     assert [i["stock"] for i in items] == [3, 0, 1, 2]
+
+
+def test_arabic_headers_are_recognised() -> None:
+    headers = ["اسم المنتج", "اللون", "المقاس", "السعر", "الكمية", "الوصف"]
+    assert products.suggest_mapping(headers) == {
+        "name": "اسم المنتج",
+        "color": "اللون",
+        "size": "المقاس",
+        "price": "السعر",
+        "stock": "الكمية",
+        "description": "الوصف",
+    }
+
+
+def test_parse_prices() -> None:
+    assert parse_decimal("$1,250.50") == Decimal("1250.50")
+    assert parse_decimal("49,99 AED") == Decimal("49.99")
+    assert parse_decimal("1,250") == 1250
+    assert parse_decimal("١٬٢٥٠٫٥") == Decimal("1250.5")
+    assert parse_decimal("call us") is None
 
 
 def test_parse_xlsx() -> None:
     workbook = Workbook()
     sheet = workbook.active
     sheet.append(["Name", "Price", "Qty", "Supplier"])
-    sheet.append(["Scarf", 350000.0, 5, "Tabriz"])
+    sheet.append(["Scarf", 35.0, 5, "Istanbul"])
     buffer = io.BytesIO()
     workbook.save(buffer)
     table = products.parse_table(buffer.getvalue(), "xlsx")
     mapping = products.suggest_mapping(table.headers)
     assert mapping == {"name": "Name", "price": "Price", "stock": "Qty"}
     [item] = products.rows_to_products(table, mapping)
-    assert item["price"] == 350000
-    assert item["extra"] == {"Supplier": "Tabriz"}  # unmapped columns are kept for the bot
+    assert item["price"] == 35
+    assert item["extra"] == {"Supplier": "Istanbul"}  # unmapped columns are kept for the bot
 
 
 def test_parse_stock_words() -> None:
-    assert products.parse_stock("ناموجود") == 0
-    assert products.parse_stock("تمام شد") == 0
-    assert products.parse_stock("موجود") == 1
-    assert products.parse_stock("۱۲ عدد") == 12
+    assert products.parse_stock("Sold out") == 0
+    assert products.parse_stock("غير متوفر") == 0
+    assert products.parse_stock("متوفر") == 1
+    assert products.parse_stock("in stock") == 1
+    assert products.parse_stock("١٢ قطعة") == 12
     assert products.parse_stock("") is None
 
 
@@ -96,8 +120,8 @@ async def test_sheet_preview_and_connect(
     assert preview.status_code == 200
     body = preview.json()
     assert body["row_count"] == 4
-    assert body["suggested_mapping"]["name"] == "نام کالا"
-    assert body["sample_rows"][0]["رنگ"] == "مشکی"
+    assert body["suggested_mapping"]["name"] == "Product"
+    assert body["sample_rows"][0]["Colour"] == "Black"
 
     connected = await client.put(
         f"{API}/sheet",
@@ -112,8 +136,8 @@ async def test_sheet_preview_and_connect(
 
     listing = (await client.get(API, headers=auth_headers)).json()
     assert listing["total"] == 4
-    found = (await client.get(API, headers=auth_headers, params={"q": "شومیز"})).json()
-    assert [p["name"] for p in found["items"]] == ["شومیز حریر"]
+    found = (await client.get(API, headers=auth_headers, params={"q": "blouse"})).json()
+    assert [p["name"] for p in found["items"]] == ["Silk blouse"]
 
 
 async def test_private_sheet_gives_sharing_instructions(
@@ -136,7 +160,7 @@ async def test_connect_rejects_bad_mapping(
     wrong_header = await client.put(
         f"{API}/sheet",
         headers=auth_headers,
-        json={"url": SHEET_URL, "column_mapping": {"name": "وجود ندارد"}},
+        json={"url": SHEET_URL, "column_mapping": {"name": "Not a column"}},
     )
     assert wrong_header.status_code == 422
 
@@ -195,7 +219,7 @@ async def test_remove_source(client: AsyncClient, auth_headers: dict) -> None:
         f"{API}/file",
         headers=auth_headers,
         files=files,
-        data={"column_mapping": json.dumps({"name": "نام کالا"}, ensure_ascii=False)},
+        data={"column_mapping": json.dumps({"name": "Product"})},
     )
     assert (await client.delete(f"{API}/source", headers=auth_headers)).status_code == 204
     assert (await client.get(f"{API}/source", headers=auth_headers)).json()["connected"] is False
@@ -213,23 +237,23 @@ async def test_template_and_fields(client: AsyncClient, auth_headers: dict) -> N
     assert [f["key"] for f in fields if f["required"]] == ["name"]
 
 
-async def test_search_normalizes_persian(db: AsyncSession) -> None:
+async def test_search_normalizes_arabic(db: AsyncSession) -> None:
     import uuid
 
     shop_id = uuid.uuid4()
     db.add_all(
         [
-            Product(shop_id=shop_id, name="مانتو كتان", color="مشکی", size="44", extra={}),
-            Product(shop_id=shop_id, name="مانتو کتان", color="سفید", size="46", extra={}),
-            Product(shop_id=shop_id, name="شال نخی", color="مشکی", extra={}),
+            Product(shop_id=shop_id, name="فستان كتان", color="أسود", size="44", extra={}),
+            Product(shop_id=shop_id, name="فستان كتان", color="أبيض", size="46", extra={}),
+            Product(shop_id=shop_id, name="وشاح قطني", color="أسود", extra={}),
         ]
     )
     await db.flush()
-    # Arabic kaf in the stored name, Persian digits in the query: still a match.
-    found = await products.search_products(db, shop_id, "مانتو کتان", size="۴۴")
-    assert [(p.color, p.size) for p in found] == [("مشکی", "44")]
-    assert await products.search_products(db, shop_id, "مانتو", color="قرمز") == []
-    assert len(await products.search_products(db, shop_id, "مشکی")) == 0  # colour isn't a name
+    # Diacritics and Arabic-Indic digits in the query, hamza in the stored colour: still a match.
+    found = await products.search_products(db, shop_id, "فُستان كتان", color="اسود", size="٤٤")
+    assert [(p.color, p.size) for p in found] == [("أسود", "44")]
+    assert await products.search_products(db, shop_id, "فستان", color="أحمر") == []
+    assert len(await products.search_products(db, shop_id, "أسود")) == 0  # colour isn't a name
 
 
 def test_catalogue_overview_cheapest_first_and_stock() -> None:
@@ -239,40 +263,41 @@ def test_catalogue_overview_cheapest_first_and_stock() -> None:
     items = [
         Product(
             shop_id=shop_id,
-            name="مانتو کتان",
-            category="مانتو",
-            color="مشکی",
-            size="44",
-            price=1250000,
+            name="Linen dress",
+            category="Dresses",
+            color="Black",
+            size="M",
+            price=Decimal("125"),
             stock=3,
             extra={},
         ),
         Product(
             shop_id=shop_id,
-            name="مانتو کتان",
-            category="مانتو",
-            color="سرمه‌ای",
-            size="44",
-            price=1250000,
+            name="Linen dress",
+            category="Dresses",
+            color="Navy",
+            size="M",
+            price=Decimal("125"),
             stock=0,
             extra={},
         ),
         Product(
             shop_id=shop_id,
-            name="شومیز حریر",
-            color="سفید",
-            size="آزاد",
-            price=890000,
+            name="Silk blouse",
+            color="White",
+            size="One size",
+            price=Decimal("89.90"),
             stock=7,
             extra={},
         ),
-        Product(shop_id=shop_id, name="شال", price=300000, stock=0, extra={}),
+        Product(shop_id=shop_id, name="Scarf", price=Decimal("30"), stock=0, extra={}),
     ]
     lines = products.catalogue_overview(items).splitlines()
     assert lines == [
-        "- شال; 300,000 toman; out of stock",
-        "- شومیز حریر; 890,000 toman; colours in stock: سفید; sizes in stock: آزاد",
-        "- مانتو کتان (مانتو); 1,250,000 toman; colours in stock: مشکی; sizes in stock: 44",
+        "- Scarf; $30; out of stock",
+        "- Silk blouse; $89.90; colours in stock: White; sizes in stock: One size",
+        "- Linen dress (Dresses); $125; colours in stock: Black; sizes in stock: M",
     ]
+    assert products.catalogue_overview(items[3:], currency="AED") == "- Scarf; 30 AED; out of stock"
     capped = products.catalogue_overview(items, max_lines=1).splitlines()
     assert capped[-1] == "- ...and 2 more products (use search_products)"

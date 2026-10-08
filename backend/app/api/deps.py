@@ -26,7 +26,7 @@ async def get_signed_in_user(
 ) -> User:
     unauthorized = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="احراز هویت نامعتبر است",
+        detail="Not authenticated",
         headers={"WWW-Authenticate": "Bearer"},
     )
     if credentials is None:
@@ -49,7 +49,7 @@ SignedInUser = Annotated[User, Depends(get_signed_in_user)]
 async def get_current_user(user: SignedInUser) -> User:
     if get_settings().require_verified_email and user.email_verified_at is None:
         raise HTTPException(
-            status.HTTP_403_FORBIDDEN, "اول ایمیلتان را با لینکی که برایتان فرستادیم تأیید کنید"
+            status.HTTP_403_FORBIDDEN, "Please confirm your email first, using the link we sent you"
         )
     return user
 

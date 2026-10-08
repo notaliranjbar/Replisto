@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 HISTORY_LIMIT = 20
 CHANNEL_NAMES = {Channel.INSTAGRAM: "Instagram"}
-EMPTY_WALLET_REASON = "موجودی کیف پول جواب تمام شده است"
+EMPTY_WALLET_REASON = "The Replisto wallet is empty"
 
 
 # ---------------------------------------------------------------------------- incoming
