@@ -8,6 +8,7 @@ from sqlalchemy import select
 from app.api.deps import LLM, CurrentShop, DbSession
 from app.api.uploads import read_upload
 from app.core.config import get_settings
+from app.core.i18n import localize
 from app.models import KnowledgeEntry, KnowledgeSection, Shop
 from app.services import knowledge
 
@@ -67,7 +68,10 @@ async def sections() -> SectionsOut:
     """Static description of the knowledge form: render the panel from this."""
     settings = get_settings()
     return SectionsOut(
-        sections=[SectionOut(**s.__dict__) for s in knowledge.SECTIONS],
+        sections=[
+            SectionOut(**{**s.__dict__, "label": localize(s.label) or s.label})
+            for s in knowledge.SECTIONS
+        ],
         supported_file_types=knowledge.SUPPORTED_EXTENSIONS,
         max_file_bytes=settings.upload_max_bytes,
         char_limit=settings.knowledge_char_limit,

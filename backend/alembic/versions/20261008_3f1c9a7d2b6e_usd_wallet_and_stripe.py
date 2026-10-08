@@ -9,7 +9,7 @@ The wallet moves from rial to US cents and top-ups move to Stripe Checkout:
 
 Revision ID: 3f1c9a7d2b6e
 Revises: 56c471d7558e
-Create Date: 2026-10-09 09:00:00.000000
+Create Date: 2026-10-08 12:00:00.000000
 
 """
 

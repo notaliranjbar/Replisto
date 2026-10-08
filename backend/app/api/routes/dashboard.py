@@ -9,6 +9,7 @@ from sqlalchemy import and_, func, select
 
 from app.api.deps import LLM, CurrentShop, DbSession
 from app.core.config import get_settings
+from app.core.i18n import localize
 from app.core.timeutil import utcnow
 from app.models import (
     Conversation,
@@ -180,7 +181,7 @@ async def dashboard(shop: CurrentShop, db: DbSession) -> DashboardOut:
             knowledge_entries=knowledge_count or 0,
             products_connected=source is not None,
             product_count=product_count or 0,
-            product_error=source.last_error if source else None,
+            product_error=localize(source.last_error) if source else None,
             ai_ready=get_settings().llm_configured,
             bot_enabled=shop.bot_enabled,
         ),
@@ -237,7 +238,7 @@ async def playground_chat(
     return PlaygroundOut(
         reply=reply.text,
         unanswered=reply.unanswered,
-        handoff_reason=reply.handoff_reason,
+        handoff_reason=localize(reply.handoff_reason),
         product_lookups=reply.tool_trace,
         posts=[
             PostCard(permalink=p.permalink, caption=p.caption[:300], preview_url=p.preview_url)

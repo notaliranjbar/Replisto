@@ -8,6 +8,7 @@ The LLM gets the shop's knowledge and a product overview in its system prompt, a
   owner and is flagged "unanswered" so the owner can fill the gap.
 """
 
+import copy
 import json
 import logging
 import re
@@ -113,8 +114,8 @@ _HANDOFF_TOOL = {
             "properties": {
                 "reason": {
                     "type": "string",
-                    "description": "Short reason in English, shown to the shop owner, "
-                    "e.g. 'The customer wants a formal invoice'.",
+                    "description": "Short reason for the shop owner, in {owner_language}, "
+                    "e.g. {reason_example}.",
                 },
                 "message": {
                     "type": "string",
@@ -134,6 +135,24 @@ _HANDOFF_TOOL = {
         },
     },
 }
+
+# The owner reads the handoff reason in their panel, in their own language.
+_OWNER_LANGUAGES = {"en": "English", "ar": "Arabic"}
+_REASON_EXAMPLES = {
+    "en": "'The customer wants a formal invoice'",
+    "ar": "'العميل يريد فاتورة رسمية'",
+}
+
+
+def _handoff_tool(language: str) -> dict[str, Any]:
+    tool = copy.deepcopy(_HANDOFF_TOOL)
+    reason = tool["function"]["parameters"]["properties"]["reason"]
+    reason["description"] = reason["description"].format(
+        owner_language=_OWNER_LANGUAGES.get(language, "English"),
+        reason_example=_REASON_EXAMPLES.get(language, _REASON_EXAMPLES["en"]),
+    )
+    return tool
+
 
 _SHARE_TOOL = {
     "type": "function",
@@ -176,7 +195,11 @@ _CHANNEL_NAMES = {Channel.INSTAGRAM: "Instagram DM"}
 
 
 def _price_example(currency: str) -> str:
-    return "$1,250.00" if currency == "USD" else f"1,250 {currency}"
+    if currency == "USD":
+        return "$45"
+    if currency == "LBP":
+        return "4,000,000 LBP"
+    return f"45 {currency}"
 
 
 def build_system_prompt(
@@ -207,7 +230,7 @@ def build_system_prompt(
     return f"""You are the {channel_name} assistant of the online shop "{shop.name}" and reply to customers on the shop's behalf.
 
 STYLE
-- Always reply in the language the customer writes in (an Arabic message gets an Arabic reply, an English one an English reply, handoffs included). If they switch language, switch with them. Tone: {_TONES.get(shop.tone, _TONES["friendly"])}.
+- Always reply in the language and script the customer writes in, handoffs included. Customers in Lebanon often write Lebanese Arabic, Arabizi (Arabic in Latin letters and digits, like "kifak, 3endkon hayda bl M?"), French or English, and mix them: answer Arabizi in Arabizi, Arabic script in Arabic script, French in French. In Arabic, sound natural and Lebanese rather than formal MSA unless the tone below is formal. If they switch language, switch with them. Tone: {_TONES.get(shop.tone, _TONES["friendly"])}.
 - {emoji}
 - Keep it short like a real chat message: usually 1-3 sentences. Plain text only: no markdown, no headings, no "*" or "#".
 - Product prices are in {shop.currency}. Write them with the currency, like "{_price_example(shop.currency)}".
@@ -297,7 +320,7 @@ class LLMResponder:
             can_share_posts=bool(refs),
             channel=channel,
         )
-        tools = [_HANDOFF_TOOL]
+        tools = [_handoff_tool(shop.language)]
         if items:
             tools.insert(0, _SEARCH_TOOL)
         if refs:

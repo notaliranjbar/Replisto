@@ -9,17 +9,17 @@ const en: Copy = {
   about: {
     label: "About the shop",
     hint: "What does your shop sell, and what should customers know about it?",
-    placeholder: "e.g. Layla Boutique, making women's dresses and blouses since 2019. Everything is sewn in-house.",
+    placeholder: "e.g. Layla Boutique in Achrafieh, making women's dresses and blouses since 2019. Everything is sewn in-house.",
   },
   shipping: {
     label: "Shipping",
     hint: "Shipping methods, cost, delivery time, other cities and abroad",
-    placeholder: "e.g. Express delivery, 3–5 business days, $8. Free on orders over $150.",
+    placeholder: "e.g. Delivery all over Lebanon in 2–3 working days for $4; same day in Beirut. Free over $100.",
   },
   payment: {
     label: "Payment",
     hint: "Payment methods and how to place an order",
-    placeholder: "e.g. Card payment on our website. Cash on delivery within the city only.",
+    placeholder: "e.g. Cash on delivery (dollars or lira), or Whish Money before delivery.",
   },
   returns: {
     label: "Returns & exchanges",
@@ -29,7 +29,7 @@ const en: Copy = {
   contact: {
     label: "Contact & opening hours",
     hint: "Website, phone, address, support hours",
-    placeholder: "e.g. layla.shop, support 10am–8pm, closed Fridays.",
+    placeholder: "e.g. layla.shop, Achrafieh, open 10am–7pm, closed Sundays.",
   },
   faq: {
     label: "Frequently asked questions",
@@ -52,17 +52,17 @@ const ar: Copy = {
   about: {
     label: "عن المتجر",
     hint: "ماذا يبيع متجرك، وما الذي يجب أن يعرفه العملاء عنه؟",
-    placeholder: "مثلًا: بوتيك نورة، نصمم العبايات والبلوزات النسائية منذ 2019. كل القطع تُخاط لدينا.",
+    placeholder: "مثلًا: بوتيك نورة في الأشرفية، نصمم الفساتين والبلوزات النسائية منذ 2019. كل القطع تُخاط لدينا.",
   },
   shipping: {
     label: "الشحن",
     hint: "طرق الشحن والتكلفة ومدة التوصيل والمدن الأخرى والخارج",
-    placeholder: "مثلًا: توصيل سريع، من 3 إلى 5 أيام عمل، 30 درهمًا. مجاني للطلبات فوق 500 درهم.",
+    placeholder: "مثلًا: توصيل لكل لبنان خلال 2 إلى 3 أيام عمل بـ 4 دولارات، وبنفس اليوم داخل بيروت. مجاني للطلبات فوق 100 دولار.",
   },
   payment: {
     label: "الدفع",
     hint: "طرق الدفع وكيفية تقديم الطلب",
-    placeholder: "مثلًا: تحويل بنكي أو الدفع عبر الموقع. الدفع عند الاستلام داخل المدينة فقط.",
+    placeholder: "مثلًا: الدفع عند الاستلام (بالدولار أو الليرة)، أو عبر Whish Money قبل التوصيل.",
   },
   returns: {
     label: "الإرجاع والاستبدال",
@@ -72,7 +72,7 @@ const ar: Copy = {
   contact: {
     label: "التواصل وساعات العمل",
     hint: "الموقع والهاتف والعنوان وساعات الدعم",
-    placeholder: "مثلًا: noura.shop، الدعم من 10 صباحًا حتى 8 مساءً، مغلق يوم الجمعة.",
+    placeholder: "مثلًا: noura.shop، الأشرفية، من 10 صباحًا حتى 7 مساءً، مغلق يوم الأحد.",
   },
   faq: {
     label: "الأسئلة الشائعة",

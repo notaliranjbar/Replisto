@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 
 from app.api.deps import LLM, CurrentShop, DbSession, HttpClient
 from app.api.uploads import read_upload
+from app.core.i18n import localize
 from app.models import ProposalStatus, Shop, TeachProposal
 from app.services import teach
 from app.services.llm import LLMError
@@ -68,7 +69,7 @@ def _out(proposal: TeachProposal) -> ProposalOut:
         summary=proposal.summary,
         preview=teach.describe(proposal),
         changes=proposal.changes or {},
-        result=proposal.result,
+        result=localize(proposal.result),
         created_at=proposal.created_at,
         applied_at=proposal.applied_at,
     )

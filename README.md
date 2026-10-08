@@ -2,7 +2,9 @@
 
 **No customer goes unanswered.** Replisto is an AI assistant for online shops: it answers customers' Instagram direct messages using each shop's own information and products, and hands the conversation to the owner whenever it should. Owners teach it their products any way they like (text, files, photos, a Google link or a live Google Sheet) and pay for what they use from a prepaid wallet.
 
-The panel is in English by default, with Arabic (right-to-left) selectable from the language switch. The bot replies to each customer in the language they write in.
+Replisto launches in **Lebanon**: prices in US dollars (or lira), wallet top-ups by Whish Money or OMT, Lebanese mobile numbers, Lebanese law in the terms and privacy policy, and a bot that answers Lebanese Arabic, Arabizi ("kifak, 3endkon...?"), French and English in the language and script the customer uses.
+
+The panel is in English by default, with Arabic (right-to-left) selectable from the language switch. Everything the owner reads follows that choice: the panel, the server's messages and emails, and what the bot writes for the owner (handoff reasons, summaries of what it learned). The panel sends its language with every request (`Accept-Language`) and keeps the shop's `language` in sync.
 
 - `backend/`: Python (FastAPI, SQLAlchemy, arq)
 - `frontend/`: the shop panel and public site (React + TypeScript + Vite + Tailwind)
@@ -51,7 +53,7 @@ Prerequisites: [uv](https://docs.astral.sh/uv/) and [Node.js 20+](https://nodejs
    npm run dev
    ```
 
-   Open http://localhost:3000 and log in with `demo@shop.com` / `demopass123`.
+   Open http://localhost:3000 and log in with `demo@shop.com` / `demopass123`. Seed with `--language ar` for an owner who uses the panel in Arabic.
 
 ### Real AI answers
 
@@ -84,7 +86,15 @@ The first command attaches a fake Instagram account to the shop and turns the bo
 ## Wallet and payments
 
 - Every AI answer is charged to the shop's wallet in US cents, by the tokens it used, rounded up to a cent with a minimum per answer (`USAGE_*` settings). `BILLING_ENABLED=false` charges nothing.
-- Top-ups go through **Stripe Checkout**. Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add a webhook endpoint at `https://<api domain>/api/v1/billing/stripe/webhook` listening to the `checkout.session.*` events. The wallet is credited once, after the session is read back from Stripe; the worker also re-checks pending payments every 10 minutes in case a webhook is lost.
+- In Lebanon owners top up with a **Whish Money** or **OMT** transfer: set `WHISH_ACCOUNT` / `OMT_ACCOUNT` (the account they send to). The owner enters the amount and the transfer reference in the panel; the payment waits until the team checks it (`OPS_EMAIL` is told about each one):
+
+  ```bash
+  uv run python -m scripts.wallet pending
+  uv run python -m scripts.wallet approve <payment-id>
+  uv run python -m scripts.wallet reject <payment-id> "Not received"
+  ```
+
+- Card top-ups through **Stripe Checkout** are optional: Stripe doesn't accept businesses registered in Lebanon, so use it only with a company in a Stripe country. Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, and add a webhook endpoint at `https://<api domain>/api/v1/billing/stripe/webhook` listening to the `checkout.session.*` events.
 - Credit a wallet by hand (support, refunds):
 
   ```bash
@@ -94,7 +104,7 @@ The first command attaches a fake Instagram account to the shop and turns the bo
 ## Verification and the welcome gift
 
 - Signing up alone earns nothing. The welcome gift (`SIGNUP_CREDIT_CENTS`, $5 by default) is given once the owner verifies a mobile number, once per number (kept as a keyed hash in `gift_claims`, even after the account is deleted).
-- Mobile numbers are international (E.164, e.g. `+971501234567`) and codes are sent with **Twilio** (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`). Without Twilio the code is only written to the API log; without `SMTP_HOST` the email links are too.
+- Mobile numbers are stored in E.164 form. Lebanese numbers can be typed as people write them (`70 123 456`, `03 123 456`); other countries need their code (`DEFAULT_PHONE_COUNTRY_CODE`, 961 by default). Codes are sent with **Twilio** (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`), in the owner's language. Without Twilio the code is only written to the API log; without `SMTP_HOST` the email links are too.
 - Logging in is blocked for a while after 5 wrong passwords for one email (or 20 from one IP) within 15 minutes.
 
 ## Tests
@@ -142,7 +152,8 @@ git pull && docker compose up -d --build
 ```
 backend/
   app/
-    core/        settings, database, security (JWT, password hashing, token encryption)
+    core/        settings, database, security (JWT, password hashing, token encryption),
+                 i18n.py (server text in English and Arabic)
     models/      database tables
     schemas/     API input/output models
     api/routes/  endpoints

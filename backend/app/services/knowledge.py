@@ -23,22 +23,22 @@ SECTIONS: list[SectionInfo] = [
         KnowledgeSection.ABOUT,
         "About the shop",
         "What does your shop sell, and what should we know about it?",
-        "e.g. Layla Boutique makes women's dresses and blouses, all sewn in our own studio "
-        "since 2019.",
+        "e.g. Layla Boutique in Achrafieh makes women's dresses and blouses, all sewn in our "
+        "own studio since 2019.",
         False,
     ),
     SectionInfo(
         KnowledgeSection.SHIPPING,
         "Shipping",
         "Shipping methods, costs, delivery times, other cities and international shipping",
-        "e.g. Express delivery in 3-5 business days for $8. Free on orders over $150.",
+        "e.g. Delivery all over Lebanon in 2-3 working days for $4. Free on orders over $100.",
         False,
     ),
     SectionInfo(
         KnowledgeSection.PAYMENT,
         "Payment",
         "Payment methods and how to order",
-        "e.g. Card on our website, or cash on delivery within the city.",
+        "e.g. Cash on delivery, or Whish Money before delivery.",
         False,
     ),
     SectionInfo(
@@ -52,7 +52,7 @@ SECTIONS: list[SectionInfo] = [
         KnowledgeSection.CONTACT,
         "Contact and opening hours",
         "Website, phone, store address, support hours",
-        "e.g. layla.shop, support 10am-8pm, closed on Fridays.",
+        "e.g. layla.shop, Achrafieh, open 10am-7pm, closed on Sundays.",
         False,
     ),
     SectionInfo(

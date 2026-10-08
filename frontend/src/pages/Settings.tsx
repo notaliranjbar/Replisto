@@ -9,7 +9,8 @@ import { Alert, Button, Card, Field, Input, LinkButton, PageHeader, PageLoading,
 import { useI18n } from "../i18n";
 import { errorMessage, fieldError } from "../lib/errors";
 
-type Form = Omit<Shop, "id" | "tone" | "slug"> & { tone: "friendly" | "formal" };
+// The language is kept in sync by the panel (Layout), not edited here.
+type Form = Omit<Shop, "id" | "tone" | "slug" | "language"> & { tone: "friendly" | "formal" };
 
 function toForm(s: Shop): Form {
   return {
@@ -24,8 +25,9 @@ function toForm(s: Shop): Form {
   };
 }
 
-// Common shop currencies; a shop already set to another code keeps it in the list.
-const CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "QAR", "KWD", "BHD", "OMR", "JOD", "EGP", "MAD", "TRY", "CAD", "AUD"];
+// Lebanese shops price in dollars or lira; a few others for shops selling abroad. A shop
+// already set to another code keeps it in the list.
+const CURRENCIES = ["USD", "LBP", "EUR", "AED", "SAR", "QAR", "KWD", "GBP", "CAD", "AUD"];
 
 export default function Settings() {
   const { t } = useI18n();

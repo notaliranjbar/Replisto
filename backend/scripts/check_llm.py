@@ -77,7 +77,9 @@ SCENARIOS = [
         "How much is this? [story_reply]", "doesn't re-send the story's post", None, posts=False
     ),
     # Shop information and handoffs
-    Scenario("How long does shipping take?", "3-5 business days", False, _has("3"), False),
+    Scenario(
+        "How long does delivery to Tripoli take?", "2-3 working days", False, _has("2"), False
+    ),
     Scenario(
         "Can I return something?",
         "size exchange within 7 days + hands off refunds",
@@ -93,7 +95,20 @@ SCENARIOS = [
         lambda t: t != FALLBACK and not _has("%", "percent")(t),
         False,
     ),
-    Scenario("مرحبا، هل الفستان الأسود متوفر بمقاس M؟", "replies in Arabic", False, _mostly_arabic),
+    Scenario("مرحبا، عندكن الفستان الأسود بمقاس M؟", "replies in Arabic", False, _mostly_arabic),
+    Scenario(
+        "kifak, 3endkon el linen dress bl aswad size M?",
+        "replies in Arabizi (Latin letters)",
+        False,
+        lambda t: not _mostly_arabic(t) and _has("49")(t),
+    ),
+    Scenario(
+        "Bonjour, vous livrez à Byblos ?",
+        "replies in French",
+        False,
+        _has("livr", "jours"),
+        False,
+    ),
     # Conversation
     Scenario("How's the weather today?", "brief friendly reply, no handoff", False, posts=False),
     Scenario(

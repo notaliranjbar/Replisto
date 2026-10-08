@@ -14,6 +14,7 @@ catalogue. The AI sees the shop's current products (with short refs like "#3") s
 of X is now Y" or "I sold two" becomes an update of the right row instead of a duplicate.
 """
 
+import copy
 import json
 import logging
 import re
@@ -27,7 +28,9 @@ import httpx
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import i18n
 from app.core.config import get_settings
+from app.core.i18n import localize, tr
 from app.core.text import normalize, parse_decimal, parse_int
 from app.core.timeutil import utcnow
 from app.models import (
@@ -88,8 +91,8 @@ _TOOL = {
             "properties": {
                 "summary": {
                     "type": "string",
-                    "description": "One or two short sentences to the owner, in the language "
-                    "they wrote in: what you "
+                    "description": "One or two short sentences to the owner, in {owner_language}: "
+                    "what you "
                     "understood and will change. If there is nothing to learn, say so.",
                 },
                 "products": {
@@ -136,7 +139,7 @@ _TOOL = {
                 "questions": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Questions to the owner, in their language, only when something "
+                    "description": "Questions to the owner, in {owner_language}, only when something "
                     "essential is unclear (e.g. which product they mean).",
                 },
             },
@@ -144,6 +147,19 @@ _TOOL = {
         },
     },
 }
+
+_OWNER_LANGUAGES = {"en": "English", "ar": "Arabic"}
+
+
+def _tool(language: str) -> dict[str, Any]:
+    """The tool, asking for the summary and questions in the owner's panel language."""
+    tool = copy.deepcopy(_TOOL)
+    props = tool["function"]["parameters"]["properties"]
+    owner_language = _OWNER_LANGUAGES.get(language, "English")
+    for key in ("summary", "questions"):
+        props[key]["description"] = props[key]["description"].format(owner_language=owner_language)
+    return tool
+
 
 _SOURCE_HINTS = {
     "text": "a message the owner typed",
@@ -157,7 +173,7 @@ def _system_prompt(shop: Shop, source: str, products_block: str, sections_block:
 
 PRODUCTS
 - One entry per sellable variant. If colours or sizes have their own stock or price, make one entry per colour/size. If several sizes or colours are listed without separate stock, still make one entry per size/colour (stock unknown).
-- price is a number in the shop's currency ({shop.currency}), without the currency sign: "$49.90" = 49.9, "1.2k" = 1200. If the input gives prices in another currency, keep the number and mention it in the summary.
+- price is a number in the shop's currency ({shop.currency}), without the currency sign: "$49.90" = 49.9, "1.2k" = 1200. Lebanese shops write lira amounts in thousands or millions ("500 alf" / "500 ألف" = 500000, "4 malyon" = 4000000). If the input gives prices in another currency than {shop.currency} (dollars vs lira), keep the number and mention it in the summary.
 - stock: a count; 0 for sold out ("sold out", "نفدت الكمية"); leave it out when unknown ("in stock" without a number: leave it out).
 - To change an existing product, give its ref and ONLY the fields that change. For "I sold two" compute the new stock from the current one. If the change applies to several rows (all sizes of a product), give one entry per row.
 - Never invent prices, stock, sizes or colours. Leave out what the input doesn't say.
@@ -210,7 +226,7 @@ async def extract(
     for chunk in _chunks(text):
         result = await llm.chat(
             [{"role": "system", "content": system}, {"role": "user", "content": chunk}],
-            [_TOOL],
+            [_tool(shop.language)],
             tool_choice="propose_changes",
             max_tokens=4000,
         )
@@ -602,38 +618,43 @@ async def undo(db: AsyncSession, shop: Shop, proposal: TeachProposal) -> int:
         delete(Product).where(Product.shop_id == shop.id, Product.id.in_(ids))
     )
     proposal.status = ProposalStatus.DISCARDED
-    proposal.result = (proposal.result or "") + "\nUndone."
+    proposal.result = (proposal.result or "") + "\n" + tr("Undone.")
     await db.commit()
     return int(result.rowcount or 0)
 
 
 def describe_result(counts: dict[str, int]) -> str:
+    """What applying did, in the current language ("2 products added; 1 updated.")."""
     parts = []
     if counts["created"]:
-        parts.append(_count(counts["created"], "product added", "products added"))
+        parts.append(_count(counts["created"], "{n} product added", "{n} products added"))
     if counts["updated"]:
-        parts.append(_count(counts["updated"], "product updated", "products updated"))
+        parts.append(_count(counts["updated"], "{n} product updated", "{n} products updated"))
     if counts["deleted"]:
-        parts.append(_count(counts["deleted"], "product removed", "products removed"))
+        parts.append(_count(counts["deleted"], "{n} product removed", "{n} products removed"))
     if counts["knowledge"]:
         parts.append(
             _count(
                 counts["knowledge"],
-                "shop information entry saved",
-                "shop information entries saved",
+                "{n} shop information entry saved",
+                "{n} shop information entries saved",
             )
         )
     if counts["locked"]:
         parts.append(
-            f"{counts['locked']} from your Google Sheet (change those in the sheet itself)"
+            tr("{n} from your Google Sheet (change those in the sheet itself)", n=counts["locked"])
         )
     if counts["skipped"]:
-        parts.append(f"{counts['skipped']} skipped (over the limit or already removed)")
-    return "; ".join(parts) + "." if parts else "Nothing was changed."
+        parts.append(tr("{n} skipped (over the limit or already removed)", n=counts["skipped"]))
+    return _join(parts) + "." if parts else tr("Nothing was changed.")
+
+
+def _join(parts: list[str]) -> str:
+    return ("؛ " if i18n.current() == "ar" else "; ").join(parts)
 
 
 def _count(n: int, one: str, many: str) -> str:
-    return f"{n} {one if n == 1 else many}"
+    return tr(one if n == 1 else many, n=n)
 
 
 def _fmt_number(value: Any) -> str:
@@ -642,7 +663,7 @@ def _fmt_number(value: Any) -> str:
 
 
 def _fmt_price(value: Any) -> str:
-    return _fmt_number(value) if value is not None else "no price"
+    return _fmt_number(value) if value is not None else tr("no price")
 
 
 def _product_line(fields: dict[str, Any]) -> str:
@@ -652,37 +673,45 @@ def _product_line(fields: dict[str, Any]) -> str:
     if "price" in fields:
         parts.append(_fmt_price(fields["price"]))
     if "stock" in fields:
-        parts.append(f"stock {fields['stock']}")
-    return ", ".join(p for p in parts if p)
+        parts.append(tr("stock {n}", n=fields["stock"]))
+    return _comma().join(p for p in parts if p)
+
+
+def _comma() -> str:
+    return "، " if i18n.current() == "ar" else ", "
+
+
+_FIELD_LABELS = {
+    "price": "Price",
+    "stock": "Stock",
+    "name": "Name",
+    "color": "Colour",
+    "size": "Size",
+    "description": "Description",
+    "category": "Category",
+    "sku": "SKU",
+}
 
 
 def describe(proposal: TeachProposal, max_lines: int = 30) -> str:
-    """The proposal as a short message (the panel's preview)."""
+    """The proposal as a short message (the panel's preview), in the current language."""
     changes = proposal.changes or {}
     lines: list[str] = []
     if proposal.summary:
         lines.append(proposal.summary)
     product_lines: list[str] = []
     for change in changes.get("products") or []:
-        lock = " 🔒 (change it in the Google Sheet)" if change.get("locked") else ""
+        lock = tr(" 🔒 (change it in the Google Sheet)") if change.get("locked") else ""
         if change["action"] == "create":
             product_lines.append(f"➕ {_product_line(change['fields'])}")
         elif change["action"] == "delete":
-            product_lines.append(f"🗑 Remove: {_product_line(change['before'] or {})}{lock}")
+            removed = tr("🗑 Remove: {product}", product=_product_line(change["before"] or {}))
+            product_lines.append(f"{removed}{lock}")
         else:
             before = change.get("before") or {}
             diffs = []
             for key, value in change["fields"].items():
-                label = {
-                    "price": "Price",
-                    "stock": "Stock",
-                    "name": "Name",
-                    "color": "Colour",
-                    "size": "Size",
-                    "description": "Description",
-                    "category": "Category",
-                    "sku": "SKU",
-                }.get(key, key)
+                label = tr(_FIELD_LABELS[key]) if key in _FIELD_LABELS else key
                 old = before.get(key)
                 if key == "price":
                     diffs.append(f"{label}: {_fmt_price(old)} → {_fmt_price(value)}")
@@ -693,18 +722,18 @@ def describe(proposal: TeachProposal, max_lines: int = 30) -> str:
             name = " ".join(
                 v for v in (before.get("name"), before.get("color"), before.get("size")) if v
             )
-            product_lines.append(f"✏️ {name}: {', '.join(diffs)}{lock}")
+            product_lines.append(f"✏️ {name}: {_comma().join(diffs)}{lock}")
     if product_lines:
         lines.append("")
         lines.extend(product_lines[:max_lines])
         if len(product_lines) > max_lines:
-            lines.append(f"… and {len(product_lines) - max_lines} more")
+            lines.append(tr("… and {n} more", n=len(product_lines) - max_lines))
     labels = {s.key.value: s.label for s in knowledge.SECTIONS}
     knowledge_lines = []
     for change in changes.get("knowledge") or []:
-        label = labels.get(change["section"], change["section"])
+        label = tr(labels.get(change["section"], change["section"]))
         title = f" “{change['title']}”" if change.get("title") else ""
-        verb = "updated" if change.get("mode") == "replace" else "added"
+        verb = tr("updated") if change.get("mode") == "replace" else tr("added")
         knowledge_lines.append(f"📝 {label}{title}: {verb}")
     if knowledge_lines:
         lines.append("")
@@ -713,14 +742,16 @@ def describe(proposal: TeachProposal, max_lines: int = 30) -> str:
     if sheet:
         lines.append("")
         lines.append(
-            f"🔄 Live Google Sheet connection ({sheet.get('rows', 0)} rows); "
-            "it's re-read every few minutes."
+            tr(
+                "🔄 Live Google Sheet connection ({rows} rows); it's re-read every few minutes.",
+                rows=sheet.get("rows", 0),
+            )
         )
     if changes.get("questions"):
         lines.append("")
         lines.extend(f"❓ {q}" for q in changes["questions"])
     if is_empty(proposal) and not changes.get("questions"):
-        lines.append("I didn't find anything new to learn.")
+        lines.append(tr("I didn't find anything new to learn."))
     return "\n".join(lines).strip()
 
 
@@ -753,19 +784,19 @@ async def text_from_url(http: httpx.AsyncClient, llm: LLMClient, url: str) -> tu
     if doc:
         export = f"https://docs.google.com/document/d/{doc.group(1)}/export?format=txt"
         data = await _download(http, export)
-        return knowledge._decode(data), "Google Doc"
+        return knowledge._decode(data), tr("Google Doc")
     if _SHEET_PATH.search(parsed.path):
         try:
             table = await products.fetch_table(http, url)
         except products.ProductSourceError as exc:
             raise TeachError(str(exc)) from None
-        return table_to_text(table), "Google Sheet"
+        return table_to_text(table), tr("Google Sheet")
     drive = _DRIVE_FILE.search(parsed.path)
     if drive:
         data = await _download(
             http, f"https://drive.google.com/uc?export=download&id={drive.group(1)}"
         )
-        return await text_from_file(_guess_name(data), data, llm), "Google Drive file"
+        return await text_from_file(_guess_name(data), data, llm), tr("Google Drive file")
     raise TeachError("This Google link can't be read.")
 
 
@@ -827,12 +858,15 @@ async def sheet_proposal(
     mapping = products.suggest_mapping(table.headers)
     if "name" not in mapping or not ({"price", "stock"} & mapping.keys()):
         return None
-    labels = ", ".join(f"{products.FIELD_LABELS[f]} ← “{h}”" for f, h in mapping.items())
+    labels = _comma().join(f"{tr(products.FIELD_LABELS[f])} ← “{h}”" for f, h in mapping.items())
     proposal = TeachProposal(
         shop_id=shop.id,
         source="url",
         source_label=url[:500],
-        summary=f"This Google Sheet is a product list. I matched the columns like this: {labels}",
+        summary=tr(
+            "This Google Sheet is a product list. I matched the columns like this: {labels}",
+            labels=labels,
+        ),
         changes={
             "products": [],
             "knowledge": [],
@@ -849,7 +883,7 @@ async def _connect_sheet(
     db: AsyncSession, shop: Shop, sheet: dict[str, Any], http: httpx.AsyncClient | None
 ) -> str:
     if http is None:
-        return "\nThe Google Sheet wasn't connected."
+        return "\n" + tr("The Google Sheet wasn't connected.")
     source = await db.scalar(select(ProductSource).where(ProductSource.shop_id == shop.id))
     if source is None:
         source = ProductSource(shop_id=shop.id, kind=ProductSourceKind.GOOGLE_SHEET)
@@ -861,8 +895,10 @@ async def _connect_sheet(
     try:
         count = await products.sync_source(db, source, http)
     except products.ProductSourceError as exc:
-        return f"\nReading the Google Sheet failed: {exc}"
-    return f"\nThe Google Sheet is connected and {count} product rows were read."
+        return "\n" + tr("Reading the Google Sheet failed: {error}", error=localize(str(exc)))
+    return "\n" + tr(
+        "The Google Sheet is connected and {count} product rows were read.", count=count
+    )
 
 
 async def propose_from_url(

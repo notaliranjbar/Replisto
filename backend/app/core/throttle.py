@@ -7,6 +7,8 @@ deploy. Counters are lost on restart, which only ever makes them more lenient.
 import time
 from collections import deque
 
+from app.core import i18n
+
 
 class Throttle:
     """At most `limit` events per key within `window_seconds`."""
@@ -49,6 +51,5 @@ class Throttle:
 
 
 def minutes_text(seconds: int) -> str:
-    """'3 minutes' style wait time for messages (at least one minute)."""
-    minutes = max(1, (seconds + 59) // 60)
-    return "1 minute" if minutes == 1 else f"{minutes} minutes"
+    """'3 minutes' style wait time for messages (at least one minute), in the current language."""
+    return i18n.minutes(max(1, (seconds + 59) // 60))

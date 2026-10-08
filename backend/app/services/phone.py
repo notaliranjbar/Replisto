@@ -3,7 +3,8 @@
 An SMS code from the panel (sent through Twilio; without a Twilio account the code is only
 logged, for development) ends in `user.phone` + `user.phone_verified_at`.
 
-Numbers are international, kept in E.164 form (+14155550123).
+Numbers are kept in E.164 form (+96170123456). A number typed without a country code
+("70 123 456", "03 123 456") is taken to be in DEFAULT_PHONE_COUNTRY_CODE (Lebanon, 961).
 A number can be verified on one account only (it also limits the sign-up gift, see gifts.py).
 """
 
@@ -17,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.core.i18n import tr
 from app.core.security import secret_digest
 from app.core.text import to_ascii_digits
 from app.core.timeutil import as_utc, utcnow
@@ -27,6 +29,9 @@ logger = logging.getLogger(__name__)
 MAX_CODE_ATTEMPTS = 5
 # E.164: a country code and number, 8 to 15 digits in all, never starting with 0.
 _E164 = re.compile(r"^[1-9]\d{7,14}$")
+# Lebanese mobiles: 3 + 6 digits (03 ...), or 70/71/76/78/79/81 + 6 digits.
+_LEBANESE_MOBILE = re.compile(r"^961(3\d{6}|(70|71|76|78|79|81)\d{6})$")
+_INVALID = "Enter a valid mobile number, like 70 123 456 or +961 70 123 456."
 
 
 class PhoneError(Exception):
@@ -34,17 +39,22 @@ class PhoneError(Exception):
 
 
 def normalize(raw: str) -> str:
-    """'+1 (415) 555-0123' or '0014155550123' -> '+14155550123'; Arabic-Indic digits work too."""
+    """'70 123 456', '03 123 456', '+961 70 123 456' or '00961...' -> '+96170123456'.
+
+    Other countries need their code ('+1 415 555 0123'). Arabic-Indic digits work too.
+    """
     text = to_ascii_digits(raw).strip()
     digits = re.sub(r"\D", "", text)
     if text.startswith("+"):
         pass
     elif digits.startswith("00"):
         digits = digits[2:]
-    else:
-        digits = ""  # no country code
-    if not _E164.match(digits):
-        raise PhoneError("Enter your mobile number with its country code, like +1 415 555 0123.")
+    elif digits:
+        # A local number: the country code of the market we serve, without the trunk 0.
+        digits = get_settings().default_phone_country_code + digits.lstrip("0")
+    lebanese = digits.startswith("961")
+    if not _E164.match(digits) or (lebanese and not _LEBANESE_MOBILE.match(digits)):
+        raise PhoneError(_INVALID)
     return "+" + digits
 
 
@@ -110,7 +120,7 @@ async def send_code(http: httpx.AsyncClient, phone: str, code: str) -> None:
     sender = settings.twilio_from.strip()
     form = {
         "To": phone,
-        "Body": f"Your {settings.app_name} verification code is {code}",
+        "Body": tr("Your {app} verification code is {code}", app=settings.app_name, code=code),
         # A Messaging Service picks the best sender per country.
         ("MessagingServiceSid" if sender.startswith("MG") else "From"): sender,
     }

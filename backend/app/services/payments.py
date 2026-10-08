@@ -1,4 +1,6 @@
-"""Wallet top-ups through Stripe Checkout.
+"""Wallet top-ups: Stripe Checkout (cards), or a Whish Money / OMT transfer checked by hand.
+
+Stripe:
 
     panel ──POST /billing/topup──► Checkout Session ──► owner pays on Stripe's page
                                                             │
@@ -8,6 +10,10 @@
 
 The webhook is the main path; the return page and the periodic check are safety nets. Each
 path reads the session back from Stripe before crediting, so only Stripe's own word counts.
+
+Transfers (Lebanon): the owner sends the amount with Whish Money or OMT to our account and
+enters the transfer reference in the panel; the payment waits (PENDING) until the team checks
+it and approves or rejects it (scripts/wallet.py).
 
 A payment is credited exactly once: it is claimed (status PAID) before crediting.
 """
@@ -172,7 +178,9 @@ def _check_amount(amount_cents: int) -> None:
 async def start_topup(db: AsyncSession, shop: Shop, amount_cents: int, gateway: Stripe) -> str:
     """Create a pending payment; returns the Checkout URL to send the owner to."""
     if not gateway.configured:
-        raise PaymentError("Online payments aren't set up yet. Please contact support.")
+        raise PaymentError(
+            "Online card payments aren't set up yet. Please use another payment method."
+        )
     _check_amount(amount_cents)
     payment = Payment(shop_id=shop.id, gateway=gateway.name, amount_cents=amount_cents)
     db.add(payment)
@@ -299,3 +307,60 @@ async def reconcile(db: AsyncSession, gateway: Stripe) -> list[Payment]:
         )
     ).all()
     return [payment for payment in pending if await settle(db, payment, gateway)]
+
+
+# ---------------------------------------------------------------------------- transfers
+
+MANUAL_METHODS = ("whish", "omt")
+
+
+def manual_accounts() -> dict[str, str]:
+    """The transfer methods this server offers: method -> the account to send to."""
+    settings = get_settings()
+    accounts = {"whish": settings.whish_account.strip(), "omt": settings.omt_account.strip()}
+    return {method: account for method, account in accounts.items() if account}
+
+
+async def submit_transfer(
+    db: AsyncSession, shop: Shop, amount_cents: int, method: str, reference: str
+) -> Payment:
+    """Record a transfer the owner says they made; it waits for the team to check it."""
+    if method not in manual_accounts():
+        raise PaymentError("This payment method isn't available.")
+    _check_amount(amount_cents)
+    reference = reference.strip()[:255]
+    taken = await db.scalar(
+        select(Payment.id).where(
+            Payment.gateway == method,
+            Payment.ref_id == reference,
+            Payment.status != PaymentStatus.FAILED,
+        )
+    )
+    if taken is not None:
+        raise PaymentError("This transfer reference was already submitted.")
+    payment = Payment(shop_id=shop.id, gateway=method, amount_cents=amount_cents, ref_id=reference)
+    db.add(payment)
+    await db.commit()
+    logger.warning(
+        "transfer to check: %s %s ref %s for shop %s (payment %s)",
+        method,
+        billing.usd(amount_cents),
+        reference,
+        shop.id,
+        payment.id,
+    )
+    return payment
+
+
+async def approve_transfer(db: AsyncSession, payment: Payment) -> bool:
+    """The team found the transfer: credit the wallet. False if it wasn't pending."""
+    if payment.gateway not in MANUAL_METHODS or payment.status != PaymentStatus.PENDING:
+        return False
+    return await _credit(db, payment, payment.ref_id)
+
+
+async def reject_transfer(db: AsyncSession, payment: Payment, reason: str) -> bool:
+    if payment.gateway not in MANUAL_METHODS or payment.status != PaymentStatus.PENDING:
+        return False
+    await _fail(db, payment, reason or "The transfer couldn't be found.")
+    return True

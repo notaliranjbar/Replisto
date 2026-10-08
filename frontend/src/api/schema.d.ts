@@ -1065,6 +1065,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/billing/transfer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit Transfer
+         * @description The owner sent money with Whish Money or OMT; the team checks it, then it's credited.
+         */
+        post: operations["submit_transfer_api_v1_billing_transfer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1104,6 +1124,10 @@ export interface components {
             topup_min_cents: number;
             /** Topup Max Cents */
             topup_max_cents: number;
+            /** Transfer Accounts */
+            transfer_accounts: components["schemas"]["TransferAccountOut"][];
+            /** Pending Transfers */
+            pending_transfers: components["schemas"]["TransferOut"][];
         };
         /** Body_import_file_api_v1_products_file_post */
         Body_import_file_api_v1_products_file_post: {
@@ -1865,6 +1889,11 @@ export interface components {
             handoff_pause_minutes: number;
             /** Currency */
             currency: string;
+            /**
+             * Language
+             * @enum {string}
+             */
+            language: "en" | "ar";
         };
         /** ShopUpdate */
         ShopUpdate: {
@@ -1884,6 +1913,8 @@ export interface components {
             handoff_pause_minutes?: number | null;
             /** Currency */
             currency?: string | null;
+            /** Language */
+            language?: ("en" | "ar") | null;
         };
         /** SingleSectionUpdate */
         SingleSectionUpdate: {
@@ -1952,6 +1983,47 @@ export interface components {
         TopupOut: {
             /** Payment Url */
             payment_url: string;
+        };
+        /** TransferAccountOut */
+        TransferAccountOut: {
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "whish" | "omt";
+            /** Account */
+            account: string;
+        };
+        /** TransferIn */
+        TransferIn: {
+            /** Amount Cents */
+            amount_cents: number;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "whish" | "omt";
+            /** Reference */
+            reference: string;
+        };
+        /** TransferOut */
+        TransferOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Method */
+            method: string;
+            /** Amount Cents */
+            amount_cents: number;
+            /** Reference */
+            reference: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** UnansweredOut */
         UnansweredOut: {
@@ -3922,6 +3994,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TopupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_transfer_api_v1_billing_transfer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferOut"];
                 };
             };
             /** @description Validation Error */

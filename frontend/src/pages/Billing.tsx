@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, History, Wallet } from "lucide-react";
 import { api } from "../api/client";
 import { keys } from "../api/queries";
@@ -80,15 +80,25 @@ function Balance({ b }: { b: BillingData }) {
   );
 }
 
+type Method = "whish" | "omt" | "card";
+
+/** Top up: a Whish Money / OMT transfer the team confirms, or a card payment (Stripe). */
 function Topup({ b }: { b: BillingData }) {
   const { t, f } = useI18n();
   const B = t.launch.billing;
   const toast = useToast();
+  const qc = useQueryClient();
+  const methods: Method[] = [...b.transfer_accounts.map((a) => a.method), ...(b.topup_available ? (["card"] as const) : [])];
+  const [chosen, setChosen] = useState<Method | null>(null);
+  const method = chosen && methods.includes(chosen) ? chosen : methods[0];
+  const account = b.transfer_accounts.find((a) => a.method === method)?.account;
   const [amount, setAmount] = useState("");
+  const [reference, setReference] = useState("");
   // typed in dollars, sent in cents
   const dollars = Number(amount.replace(/[^\d.]/g, ""));
   const value = Number.isFinite(dollars) ? Math.round(dollars * 100) : 0;
   const presets = [1_000, 2_500, 5_000, 10_000].filter((v) => v >= b.topup_min_cents && v <= b.topup_max_cents);
+  const amountOk = value > 0 && value >= b.topup_min_cents && value <= b.topup_max_cents;
 
   const pay = useMutation({
     mutationFn: () => api<{ payment_url: string }>("/billing/topup", { method: "POST", json: { amount_cents: value } }),
@@ -97,24 +107,44 @@ function Topup({ b }: { b: BillingData }) {
     },
     onError: (err) => toast.error(errorMessage(err, t)),
   });
+  const transfer = useMutation({
+    mutationFn: () => api("/billing/transfer", { method: "POST", json: { amount_cents: value, method, reference: reference.trim() } }),
+    onSuccess: () => {
+      toast.success(B.transferSent);
+      setAmount("");
+      setReference("");
+      qc.invalidateQueries({ queryKey: keys.billing });
+    },
+    onError: (err) => toast.error(errorMessage(err, t)),
+  });
 
   return (
     <Card className="lg:col-span-3">
       <CardHeader icon={<CreditCard />} title={B.topupTitle} />
       <div className="space-y-4 p-5 sm:px-6">
-        {!b.topup_available ? (
+        {!method ? (
           <Alert kind="info">{B.topupUnavailable}</Alert>
         ) : (
           <form
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
-              pay.mutate();
+              if (method === "card") pay.mutate();
+              else transfer.mutate();
             }}
           >
+            {methods.length > 1 && (
+              <div role="radiogroup" aria-label={B.method} className="flex flex-wrap gap-2">
+                {methods.map((m) => (
+                  <Button key={m} size="sm" role="radio" aria-checked={m === method} variant={m === method ? "primary" : "secondary"} onClick={() => setChosen(m)}>
+                    {B.methods[m]}
+                  </Button>
+                ))}
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               {presets.map((p) => (
-                <Button key={p} size="sm" variant={value === p ? "primary" : "secondary"} onClick={() => setAmount(String(p / 100))}>
+                <Button key={p} size="sm" variant={value === p ? "soft" : "ghost"} onClick={() => setAmount(String(p / 100))}>
                   <span className="num">{f.usd(p)}</span>
                 </Button>
               ))}
@@ -122,9 +152,27 @@ function Topup({ b }: { b: BillingData }) {
             <Field label={B.amount} hint={B.amountHint(f.usd(b.topup_min_cents), f.usd(b.topup_max_cents))}>
               {(id) => <Input id={id} inputMode="decimal" dir="ltr" placeholder="25" value={amount} onChange={(e) => setAmount(e.target.value)} />}
             </Field>
-            <Button type="submit" loading={pay.isPending} disabled={!value || value < b.topup_min_cents || value > b.topup_max_cents}>
-              {pay.isPending ? B.redirecting : B.pay}
-            </Button>
+            {method === "card" ? (
+              <Button type="submit" loading={pay.isPending} disabled={!amountOk}>
+                {pay.isPending ? B.redirecting : B.pay}
+              </Button>
+            ) : (
+              <>
+                <ol className="list-decimal space-y-1.5 ps-5 text-sm leading-6 text-slate-600">
+                  <li>
+                    {B.transferStep1(amountOk ? f.usd(value) : B.theAmount, B.methods[method])}{" "}
+                    <b className="num ltr inline-block text-ink-950">{account}</b>
+                  </li>
+                  <li>{B.transferStep2}</li>
+                </ol>
+                <Field label={B.reference} hint={B.referenceHint}>
+                  {(id) => <Input id={id} dir="ltr" maxLength={64} value={reference} onChange={(e) => setReference(e.target.value)} />}
+                </Field>
+                <Button type="submit" loading={transfer.isPending} disabled={!amountOk || reference.trim().length < 3}>
+                  {B.transferSubmit}
+                </Button>
+              </>
+            )}
             <p className="text-xs text-slate-500">
               {B.nonRefundable}{" "}
               <Link to="/terms#wallet" className="font-medium text-brand-700 hover:underline">
@@ -132,6 +180,21 @@ function Topup({ b }: { b: BillingData }) {
               </Link>
             </p>
           </form>
+        )}
+        {b.pending_transfers.length > 0 && (
+          <div className="rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200">
+            <div className="text-sm font-bold text-amber-900">{B.pendingTitle}</div>
+            <ul className="mt-2 space-y-1 text-sm text-amber-900">
+              {b.pending_transfers.map((p) => (
+                <li key={p.id} className="flex flex-wrap gap-x-3">
+                  <span className="num font-semibold">{f.usd(p.amount_cents)}</span>
+                  <span>{B.methods[p.method as Method] ?? p.method}</span>
+                  <span className="num ltr text-amber-800">#{p.reference}</span>
+                  <span className="text-amber-700">{f.smart(p.created_at)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </Card>

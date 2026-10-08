@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import and_, exists, func, or_, select
 
 from app.api.deps import CurrentShop, DbSession, HttpClient
+from app.core.i18n import localize
 from app.core.timeutil import as_utc, utcnow
 from app.models import Channel, Conversation, HandoffResolution, Message, MessageSender, Shop
 from app.services.instagram import InstagramClient
@@ -365,7 +366,7 @@ def _handoff_out(conversation: Conversation) -> HandoffOut | None:
     return HandoffOut(
         status="open" if conversation.handoff_open else "resolved",
         handed_off_at=conversation.handoff_at,
-        reason=conversation.handoff_reason,
+        reason=localize(conversation.handoff_reason),
         question=conversation.handoff_question or "",
         resolved_at=conversation.handoff_resolved_at,
         resolved_by=conversation.handoff_resolved_by,

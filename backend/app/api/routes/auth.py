@@ -7,7 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import DbSession, SignedInUser
+from app.core import i18n
 from app.core.config import get_settings
+from app.core.i18n import tr
 from app.core.security import (
     TokenError,
     create_email_verify_token,
@@ -24,6 +26,7 @@ from app.core.security import (
 from app.core.throttle import Throttle, minutes_text
 from app.core.timeutil import utcnow
 from app.models import Shop, User
+from app.models.user import default_fallback
 from app.schemas.auth import LoginRequest, RefreshRequest, RegisterRequest, TokenPair
 from app.services.email import send_email
 
@@ -97,7 +100,11 @@ async def register(body: RegisterRequest, db: DbSession) -> TokenPair:
         password_hash=hash_password(body.password),
         full_name=body.full_name.strip(),
     )
-    user.shop = Shop(name=body.shop_name.strip())
+    # The shop starts in the language the owner signed up in.
+    language = i18n.current()
+    user.shop = Shop(
+        name=body.shop_name.strip(), language=language, fallback_message=default_fallback(language)
+    )
     db.add(user)
     try:
         await db.commit()
@@ -155,7 +162,9 @@ async def forgot_password(body: ForgotPasswordRequest, db: DbSession) -> ForgotP
     """Email a password reset link. Same answer whether or not the email is registered,
     so the endpoint doesn't reveal who has an account."""
     answer = ForgotPasswordOut(
-        message="If this email is registered with Replisto, a password reset link is on its way."
+        message=tr(
+            "If this email is registered with Replisto, a password reset link is on its way."
+        )
     )
     now = time.monotonic()
     if now - _last_reset_request.get(body.email, -_RESET_INTERVAL_SECONDS) < (
@@ -173,11 +182,14 @@ async def forgot_password(body: ForgotPasswordRequest, db: DbSession) -> ForgotP
     try:
         await send_email(
             user.email,
-            "Reset your Replisto password",
-            "Hi,\n\nOpen this link to choose a new password:\n"
-            f"{link}\n\n"
-            f"The link works once, for {settings.password_reset_minutes} minutes. "
-            "If you didn't ask for this, you can ignore this email.\n\nReplisto",
+            tr("Reset your Replisto password"),
+            tr(
+                "Hi,\n\nOpen this link to choose a new password:\n{link}\n\nThe link works once, "
+                "for {minutes} minutes. If you didn't ask for this, you can ignore this email."
+                "\n\nReplisto",
+                link=link,
+                minutes=settings.password_reset_minutes,
+            ),
         )
     except Exception:
         logger.exception("could not send password reset email")
@@ -210,11 +222,14 @@ async def _send_verification(user: User) -> None:
     try:
         await send_email(
             user.email,
-            "Confirm your Replisto email",
-            "Hi,\n\nWelcome to Replisto! Open this link to confirm your email:\n"
-            f"{link}\n\n"
-            f"The link works for {settings.email_verify_days} days. If you didn't sign up "
-            "for Replisto, you can ignore this email.\n\nReplisto",
+            tr("Confirm your Replisto email"),
+            tr(
+                "Hi,\n\nWelcome to Replisto! Open this link to confirm your email:\n{link}\n\n"
+                "The link works for {days} days. If you didn't sign up for Replisto, you can "
+                "ignore this email.\n\nReplisto",
+                link=link,
+                days=settings.email_verify_days,
+            ),
         )
     except Exception:
         logger.exception("could not send the verification email")
@@ -242,7 +257,7 @@ async def verify_email(body: VerifyEmailRequest, db: DbSession) -> None:
 @router.post("/email/resend", status_code=status.HTTP_202_ACCEPTED)
 async def resend_verification(user: SignedInUser) -> ForgotPasswordOut:
     if user.email_verified_at is not None:
-        return ForgotPasswordOut(message="Your email is already confirmed.")
+        return ForgotPasswordOut(message=tr("Your email is already confirmed."))
     key = str(user.id)
     for throttle in (_verify_email_minute, _verify_email_day):
         if throttle.blocked(key):
@@ -251,4 +266,6 @@ async def resend_verification(user: SignedInUser) -> ForgotPasswordOut:
     _verify_email_minute.hit(key)
     _verify_email_day.hit(key)
     await _send_verification(user)
-    return ForgotPasswordOut(message=f"A confirmation link was sent to {user.email}.")
+    return ForgotPasswordOut(
+        message=tr("A confirmation link was sent to {email}.", email=user.email)
+    )

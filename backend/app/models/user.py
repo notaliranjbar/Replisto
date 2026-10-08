@@ -11,6 +11,17 @@ if TYPE_CHECKING:
     from app.models.instagram import InstagramAccount
 
 
+FALLBACK_MESSAGES = {
+    "en": "Thanks for your message! A teammate will get back to you shortly 🙏",
+    "ar": "شكرًا لرسالتك! سيتواصل معك أحد زملائنا قريبًا 🙏",
+}
+
+
+def default_fallback(language: str) -> str:
+    """The shop's first handoff message, in the owner's language."""
+    return FALLBACK_MESSAGES.get(language, FALLBACK_MESSAGES["en"])
+
+
 class User(UUIDPk, Timestamps, Base):
     __tablename__ = "users"
 
@@ -47,15 +58,16 @@ class Shop(UUIDPk, Timestamps, Base):
     bot_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     tone: Mapped[str] = mapped_column(String(16), default="friendly")  # friendly | formal
     use_emoji: Mapped[bool] = mapped_column(Boolean, default=True)
-    fallback_message: Mapped[str] = mapped_column(
-        Text, default="Thanks for your message! A teammate will get back to you shortly 🙏"
-    )
+    fallback_message: Mapped[str] = mapped_column(Text, default=FALLBACK_MESSAGES["en"])
     forbidden_rules: Mapped[str] = mapped_column(Text, default="")
     # How long the bot stays silent in a thread after the owner replies manually.
     handoff_pause_minutes: Mapped[int] = mapped_column(default=120)
 
-    # The currency the shop's product prices are in (ISO 4217, e.g. USD, AED, SAR).
+    # The currency the shop's product prices are in (ISO 4217: USD, LBP, ...).
     currency: Mapped[str] = mapped_column(String(3), default="USD", server_default="USD")
+    # The owner's panel language ("en" or "ar"); what the bot writes for the owner (handoff
+    # reasons, summaries of what it learned) is in this language.
+    language: Mapped[str] = mapped_column(String(2), default="en", server_default="en")
 
     # Billing: a prepaid wallet in US cents. Every AI answer is deducted from it.
     balance_cents: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")

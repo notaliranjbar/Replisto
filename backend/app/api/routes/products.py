@@ -15,6 +15,7 @@ from sqlalchemy import delete, func, select
 from app.api.deps import CurrentShop, DbSession, HttpClient
 from app.api.uploads import read_upload
 from app.core.config import get_settings
+from app.core.i18n import localize
 from app.core.timeutil import utcnow
 from app.models import (
     Product,
@@ -148,7 +149,7 @@ SHEET_LOCKED = (
 async def fields() -> list[FieldOut]:
     """Our product fields, for the column-mapping step."""
     return [
-        FieldOut(key=f, label=products.FIELD_LABELS[f], required=f == "name")
+        FieldOut(key=f, label=localize(products.FIELD_LABELS[f]) or "", required=f == "name")
         for f in products.FIELDS
     ]
 
@@ -466,5 +467,5 @@ async def _source_out(db: DbSession, shop: Shop) -> SourceOut:
         column_mapping=source.column_mapping,
         product_count=count or 0,
         last_synced_at=source.last_synced_at,
-        last_error=source.last_error,
+        last_error=localize(source.last_error),
     )

@@ -1,10 +1,10 @@
-"""The shop's wallet (pay as you go) and top-ups through the payment gateway."""
+"""The shop's wallet (pay as you go) and top-ups: Stripe (cards) or Whish Money / OMT transfers."""
 
 import json
 import logging
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import RedirectResponse
@@ -13,8 +13,10 @@ from sqlalchemy import func, select
 
 from app.api.deps import CurrentShop, DbSession, HttpClient
 from app.core.config import get_settings
+from app.core.i18n import localize
 from app.models import Payment, PaymentStatus, WalletEntry, WalletEntryKind
 from app.services import billing, payments
+from app.services.email import send_email
 from app.services.payments import PaymentError, Stripe
 
 logger = logging.getLogger(__name__)
@@ -38,12 +40,36 @@ class BillingOut(BaseModel):
     balance_cents: int
     low_balance: bool
     pricing: PricingOut
-    # Whether online top-up (payment gateway) is available.
+    # Whether card top-up (Stripe) is available.
     topup_available: bool
     # "stripe"
     gateway: str
     topup_min_cents: int
     topup_max_cents: int
+    # Transfer methods the owner can top up with, and the account to send to.
+    transfer_accounts: list["TransferAccountOut"]
+    # Transfers the owner submitted that the team hasn't checked yet.
+    pending_transfers: list["TransferOut"]
+
+
+class TransferAccountOut(BaseModel):
+    method: Literal["whish", "omt"]
+    account: str
+
+
+class TransferIn(BaseModel):
+    amount_cents: int = Field(gt=0, le=10**9)
+    method: Literal["whish", "omt"]
+    # The transfer's reference number from the Whish or OMT receipt.
+    reference: str = Field(min_length=3, max_length=64)
+
+
+class TransferOut(BaseModel):
+    id: uuid.UUID
+    method: str
+    amount_cents: int
+    reference: str | None
+    created_at: datetime
 
 
 class WalletEntryOut(BaseModel):
@@ -77,10 +103,29 @@ def get_gateway(http: HttpClient) -> Stripe:
     return payments.gateway_for(http)
 
 
+def _transfer_out(payment: Payment) -> TransferOut:
+    return TransferOut(
+        id=payment.id,
+        method=payment.gateway,
+        amount_cents=payment.amount_cents,
+        reference=payment.ref_id,
+        created_at=payment.created_at,
+    )
+
+
 @router.get("", response_model=BillingOut)
-async def get_billing(shop: CurrentShop, http: HttpClient) -> BillingOut:
+async def get_billing(shop: CurrentShop, db: DbSession, http: HttpClient) -> BillingOut:
     settings = get_settings()
     gateway = payments.gateway_for(http)
+    pending = await db.scalars(
+        select(Payment)
+        .where(
+            Payment.shop_id == shop.id,
+            Payment.gateway.in_(payments.MANUAL_METHODS),
+            Payment.status == PaymentStatus.PENDING,
+        )
+        .order_by(Payment.created_at.desc())
+    )
     return BillingOut(
         enabled=billing.enabled(),
         balance_cents=shop.balance_cents,
@@ -95,6 +140,11 @@ async def get_billing(shop: CurrentShop, http: HttpClient) -> BillingOut:
         gateway=gateway.name,
         topup_min_cents=settings.topup_min_cents,
         topup_max_cents=settings.topup_max_cents,
+        transfer_accounts=[
+            TransferAccountOut(method=method, account=account)  # type: ignore[arg-type]
+            for method, account in payments.manual_accounts().items()
+        ],
+        pending_transfers=[_transfer_out(p) for p in pending],
     )
 
 
@@ -115,7 +165,12 @@ async def list_entries(
         query.order_by(WalletEntry.created_at.desc()).offset(offset).limit(limit)
     )
     return WalletEntryPage(
-        items=[WalletEntryOut.model_validate(e) for e in rows],
+        items=[
+            WalletEntryOut.model_validate(e).model_copy(
+                update={"description": localize(e.description) or ""}
+            )
+            for e in rows
+        ],
         total=total or 0,
     )
 
@@ -132,6 +187,31 @@ async def topup(
     except PaymentError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from None
     return TopupOut(payment_url=url)
+
+
+@router.post("/transfer", response_model=TransferOut, status_code=status.HTTP_201_CREATED)
+async def submit_transfer(body: TransferIn, shop: CurrentShop, db: DbSession) -> TransferOut:
+    """The owner sent money with Whish Money or OMT; the team checks it, then it's credited."""
+    try:
+        payment = await payments.submit_transfer(
+            db, shop, body.amount_cents, body.method, body.reference
+        )
+    except PaymentError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from None
+    ops = get_settings().ops_email
+    if ops:
+        try:
+            await send_email(
+                ops,
+                f"Transfer to check: {billing.usd(payment.amount_cents)} by {body.method}",
+                f"Shop: {shop.name} ({shop.id})\nMethod: {body.method}\n"
+                f"Amount: {billing.usd(payment.amount_cents)}\nReference: {payment.ref_id}\n\n"
+                f"Approve: python -m scripts.wallet approve {payment.id}\n"
+                f'Reject:  python -m scripts.wallet reject {payment.id} "<reason>"',
+            )
+        except Exception:
+            logger.exception("could not email the transfer to check")
+    return _transfer_out(payment)
 
 
 def _after_topup(payment: Payment) -> None:

@@ -89,6 +89,10 @@ const privacy: Page = {
           <b> إنستغرام</b>، باستخدام المعلومات والمنتجات التي يقدّمها المتجر نفسه. توضّح هذه الوثيقة البيانات التي نعالجها ولماذا وكيف؛ سواء لأصحاب المتاجر الذين
           يستخدمون Replisto أو للعملاء الذين يراسلون تلك المتاجر.
         </p>
+        <p>
+          يُشغَّل Replisto من لبنان، ونعالج البيانات الشخصية وفقًا للقانون اللبناني، ولا سيما <b>القانون رقم 81 تاريخ 10 تشرين الأول 2018</b> المتعلق بالمعاملات
+          الإلكترونية والبيانات ذات الطابع الشخصي.
+        </p>
 
         <h2>1. بيانات صاحب المتجر</h2>
         <ul>
@@ -103,8 +107,8 @@ const privacy: Page = {
             التي تكتبها لتعليم البوت.
           </li>
           <li>
-            <b>المحفظة والمدفوعات:</b> الرصيد وسجل الشحن والاستخدام، ولكل دفعة مبلغها وحالتها ومعرّف جلسة الدفع. يتم الشحن عبر <b>Stripe</b>: تُدخل بيانات بطاقتك في صفحة
-            Stripe الآمنة مباشرة، ولا نستلم بيانات بطاقتك أبدًا.
+            <b>المحفظة والمدفوعات:</b> الرصيد وسجل الشحن والاستخدام، ولكل دفعة مبلغها وحالتها وطريقتها. يتم الشحن بتحويل عبر <b>Whish Money</b> أو <b>OMT</b>
+            (نحفظ المبلغ ورقم التحويل الذي تُدخله)، أو بالبطاقة عبر <b>Stripe</b> حيث يتوفر ذلك (تُدخل بيانات بطاقتك في صفحة Stripe الآمنة مباشرة، ولا نستلمها أبدًا).
           </li>
           <li>
             <b>الاستخدام:</b> عدد ردود الذكاء الاصطناعي وحجمها (لحساب التكلفة).
@@ -143,14 +147,17 @@ const privacy: Page = {
             <b>Meta (إنستغرام):</b> تمرّ الرسائل بطبيعتها عبر إنستغرام، وتخضع أيضًا لشروط Meta وسياسة الخصوصية الخاصة بها.
           </li>
           <li>
-            <b>Stripe</b> (لشحن المحفظة)، و<b>Twilio</b> (لرموز التحقق عبر SMS)، و<b>مزوّد البريد الإلكتروني</b> (لرسائل الخدمة)، و<b>مزوّد الاستضافة</b>.
+            <b>Whish Money</b> و<b>OMT</b> و<b>Stripe</b> (لشحن المحفظة)، و<b>Twilio</b> (لرموز التحقق عبر SMS)، و<b>مزوّد البريد الإلكتروني</b> (لرسائل الخدمة)،
+            و<b>مزوّد الاستضافة</b>.
           </li>
           <li>
             <b>مراقبة الأخطاء:</b> التفاصيل التقنية للأخطاء (مع تجنّب محتوى المحادثات قدر الإمكان).
           </li>
           <li>جهة مختصة، عندما يقتضي القانون ذلك.</li>
         </ul>
-        <p>قد تقع خوادم Replisto وبعض هذه الخدمات في دول غير دولتك.</p>
+        <p>
+          قد تقع خوادم Replisto وبعض هذه الخدمات خارج لبنان؛ وفي هذه الحالة لا تُنقل البيانات إلا بالقدر اللازم لتشغيل الخدمة ومع مزوّدين يلتزمون بحمايتها.
+        </p>
 
         <h2>5. التخزين والأمان</h2>
         <ul>
@@ -174,6 +181,7 @@ const privacy: Page = {
         </p>
 
         <h2>7. حقوقك</h2>
+        <p>وفقًا للقانون رقم 81/2018، يحق لك الاطلاع على بياناتك الشخصية وتصحيحها والاعتراض على معالجتها وطلب حذفها:</p>
         <ul>
           <li>يمكنك عرض معلومات حسابك ومتجرك وتعديلها في اللوحة في أي وقت.</li>
           <li>يمكنك فصل حسابك على إنستغرام من اللوحة في أي وقت.</li>
@@ -198,6 +206,10 @@ const privacy: Page = {
           and products the shop provides. This policy explains what data we process, why and how — both for shop owners who use Replisto and for the customers who message
           those shops.
         </p>
+        <p>
+          Replisto is operated from Lebanon. We process personal data in line with Lebanese law, in particular <b>Law No. 81 of 10 October 2018</b> on Electronic
+          Transactions and Personal Data.
+        </p>
 
         <h2>1. Shop owners' data</h2>
         <ul>
@@ -212,8 +224,9 @@ const privacy: Page = {
             you write to teach the bot.
           </li>
           <li>
-            <b>Wallet and payments:</b> balance, top-up and usage history, and for each payment its amount, status and the checkout session ID. Top-ups go through{" "}
-            <b>Stripe</b>: you enter your card details on Stripe's secure page directly, and we never receive them.
+            <b>Wallet and payments:</b> balance, top-up and usage history, and for each payment its amount, status and method. Top-ups are made by{" "}
+            <b>Whish Money</b> or <b>OMT</b> transfer (we keep the amount and the transfer reference you enter) or, where available, by card through <b>Stripe</b> (you
+            enter your card details on Stripe's secure page directly, and we never receive them).
           </li>
           <li>
             <b>Usage:</b> the number and size of AI answers (to calculate costs).
@@ -252,14 +265,18 @@ const privacy: Page = {
             <b>Meta (Instagram):</b> messages travel through Instagram by nature and are also subject to Meta's own terms and privacy policy.
           </li>
           <li>
-            <b>Stripe</b> (wallet top-ups), <b>Twilio</b> (SMS verification codes), an <b>email provider</b> (service emails) and our <b>hosting provider</b>.
+            <b>Whish Money</b>, <b>OMT</b> and <b>Stripe</b> (wallet top-ups), <b>Twilio</b> (SMS verification codes), an <b>email provider</b> (service emails) and
+            our <b>hosting provider</b>.
           </li>
           <li>
             <b>Error monitoring:</b> technical details of errors (avoiding conversation content where possible).
           </li>
           <li>A competent authority, when the law requires it.</li>
         </ul>
-        <p>Replisto's servers and some of these services may be located outside your country.</p>
+        <p>
+          Replisto's servers and some of these services may be located outside Lebanon. Data is then transferred only as far as running the service requires, and only to
+          providers committed to protecting it.
+        </p>
 
         <h2>5. Storage and security</h2>
         <ul>
@@ -283,6 +300,7 @@ const privacy: Page = {
         </p>
 
         <h2>7. Your rights</h2>
+        <p>Under Law No. 81/2018 you have the right to access your personal data, correct it, object to its processing and ask for it to be deleted:</p>
         <ul>
           <li>You can see and edit your account and shop information in the panel at any time.</li>
           <li>You can disconnect your Instagram account from the panel at any time.</li>
@@ -345,7 +363,10 @@ const terms: Page = {
         <h2 id="wallet">5. المحفظة والرسوم</h2>
         <ul>
           <li>Replisto مدفوع مسبقًا: تشحن محفظة متجرك بالدولار الأمريكي ويُخصم منها كل رد للبوت حسب الاستخدام، مع حد أدنى لكل رد. الأسعار الحالية في صفحة «المحفظة» في اللوحة.</li>
-          <li>تتم المدفوعات عبر Stripe، وتخضع أيضًا لشروط Stripe.</li>
+          <li>
+            يتم الشحن بتحويل عبر Whish Money أو OMT إلى الحساب المعروض في اللوحة، أو بالبطاقة عبر Stripe حيث يتوفر ذلك. يُضاف التحويل إلى المحفظة بعد أن نتأكد من
+            وصوله؛ أرسل المبلغ نفسه المعروض وأدخل رقم التحويل الصحيح. وتتحمّل أنت أي رسوم يفرضها مزوّد التحويل.
+          </li>
           <li>عند نفاد الرصيد، يتوقف البوت عن الرد على العملاء وتُحوَّل الرسائل إليك حتى تشحن المحفظة.</li>
           <li>
             <b>رصيد المحفظة غير قابل للاسترداد:</b> لا يُحوَّل الشحن إلى نقد ولا يُعاد إلى البطاقة؛ ولا يُستخدم إلا لخدمات Replisto في الحساب نفسه، ولا يمكن نقله إلى
@@ -360,8 +381,8 @@ const terms: Page = {
 
         <h2>6. التوفر</h2>
         <p>
-          نعمل على إبقاء الخدمة متاحة لكننا لا نضمن عملها دون انقطاع. يعتمد Replisto على توفر إنستغرام ومزوّد الذكاء الاصطناعي وخدمة الدفع والإنترنت، وهي خارجة عن
-          إرادتنا.
+          نعمل على إبقاء الخدمة متاحة لكننا لا نضمن عملها دون انقطاع. يعتمد Replisto على توفر إنستغرام ومزوّد الذكاء الاصطناعي وخدمات الدفع والإنترنت والكهرباء،
+          وهي خارجة عن إرادتنا.
         </p>
 
         <h2>7. حدود المسؤولية</h2>
@@ -380,7 +401,9 @@ const terms: Page = {
         <p>قد نحدّث هذه الشروط. تُنشر النسخة الجديدة هنا مع تاريخها، ونعلن التغييرات المهمة في اللوحة أو عبر البريد الإلكتروني. ويعني استمرارك في الاستخدام قبولك للنسخة الجديدة.</p>
 
         <h2>10. القانون الحاكم</h2>
-        <p>تخضع هذه الشروط لقوانين الدولة المسجّلة فيها الجهة المشغّلة لـ Replisto. ونسعى لحل أي خلاف أولًا عبر فريق الدعم.</p>
+        <p>
+          تخضع هذه الشروط للقانون اللبناني. ونسعى لحل أي خلاف وديًا أولًا عبر فريق الدعم؛ وإذا تعذّر ذلك، تختص محاكم بيروت دون سواها بالنظر فيه.
+        </p>
 
         <h2>11. التواصل</h2>
         <p>{mail}</p>
@@ -425,7 +448,10 @@ const terms: Page = {
         <h2 id="wallet">5. Wallet and fees</h2>
         <ul>
           <li>Replisto is prepaid: you top up your shop's wallet in US dollars and each bot answer is deducted from it by usage, with a minimum per answer. Current rates are on the panel's “Wallet” page.</li>
-          <li>Payments are processed by Stripe and are also subject to Stripe's terms.</li>
+          <li>
+            You top up by Whish Money or OMT transfer to the account shown in the panel, or by card through Stripe where available. A transfer is credited once we have
+            confirmed we received it; send exactly the amount shown and enter the correct transfer reference. Any fee the transfer provider charges is yours.
+          </li>
           <li>When the balance runs out, the bot stops answering customers and messages are handed to you until you top up.</li>
           <li>
             <b>Wallet credit is non-refundable:</b> top-ups are not converted to cash or returned to your card; they can only be used for Replisto's services in the same
@@ -441,8 +467,8 @@ const terms: Page = {
 
         <h2>6. Availability</h2>
         <p>
-          We work to keep the service available but don't guarantee uninterrupted operation. Replisto depends on Instagram, the AI provider, the payment provider and the
-          internet being available, which are beyond our control.
+          We work to keep the service available but don't guarantee uninterrupted operation. Replisto depends on Instagram, the AI provider, the payment providers, the
+          internet and electricity being available, which are beyond our control.
         </p>
 
         <h2>7. Limitation of liability</h2>
@@ -461,7 +487,10 @@ const terms: Page = {
         <p>We may update these terms. The new version is published here with its date and important changes are announced in the panel or by email. Continuing to use the service means accepting the new version.</p>
 
         <h2>10. Governing law</h2>
-        <p>These terms are governed by the laws of the country where Replisto's operating company is registered. We aim to resolve any dispute first through our support.</p>
+        <p>
+          These terms are governed by the laws of Lebanon. We aim to resolve any dispute amicably through our support first; failing that, the courts of Beirut have
+          exclusive jurisdiction.
+        </p>
 
         <h2>11. Contact</h2>
         <p>{mail}</p>

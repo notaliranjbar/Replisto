@@ -97,6 +97,14 @@ class Settings(BaseSettings):
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
     stripe_api_base: str = "https://api.stripe.com"
+    # Stripe only takes businesses registered in its supported countries (Lebanon isn't one),
+    # so in Lebanon owners top up by transfer: they send the amount with Whish Money or OMT
+    # to the account below and enter the transfer reference; the team checks it and credits
+    # the wallet (scripts/wallet.py approve). Empty = that method isn't offered.
+    whish_account: str = ""
+    omt_account: str = ""
+    # Told about every transfer waiting to be checked (needs SMTP).
+    ops_email: str = ""
 
     # Outgoing email (password reset). Without SMTP_HOST the link is only logged.
     smtp_host: str = ""
@@ -119,6 +127,8 @@ class Settings(BaseSettings):
     twilio_from: str = ""
     twilio_api_base: str = "https://api.twilio.com"
     phone_code_minutes: int = 10
+    # Numbers typed without a country code are in this country (Lebanon).
+    default_phone_country_code: str = "961"
 
     # Wrong passwords: after this many failures for one email (or 4x for one IP) within the
     # window, logging in is refused until the window passes.

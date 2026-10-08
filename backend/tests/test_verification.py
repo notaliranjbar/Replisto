@@ -44,7 +44,7 @@ async def test_gift_after_verifying_the_phone(db: AsyncSession, billing_on: None
     assert await gifts.check(db, user.shop) == 0  # no verified number yet
     assert await _gifts(db, user.shop) == []
 
-    user.phone, user.phone_verified_at = "+971501234567", utcnow()
+    user.phone, user.phone_verified_at = "+96170123456", utcnow()
     await db.commit()
     credit = get_settings().signup_credit_cents
     assert await gifts.check(db, user.shop) == credit
@@ -58,16 +58,16 @@ async def test_gift_after_verifying_the_phone(db: AsyncSession, billing_on: None
 
 async def test_one_gift_per_number(db: AsyncSession, billing_on: None) -> None:
     """Deleting the account and signing up again with the same number pays nothing."""
-    first = await _owner(db, "a@shop.com", "+971501234567")
+    first = await _owner(db, "a@shop.com", "+96170123456")
     assert await gifts.check(db, first.shop) > 0
     await delete_user(db, first.id)
 
-    second = await _owner(db, "b@shop.com", "+971501234567")
+    second = await _owner(db, "b@shop.com", "+96170123456")
     assert await gifts.check(db, second.shop) == 0
     assert await _gifts(db, second.shop) == []
     # Stored as hashes only: no number in the table.
     keys = (await db.scalars(select(GiftClaim.key))).all()
-    assert keys and all("501234567" not in k for k in keys)
+    assert keys and all("70123456" not in k for k in keys)
 
 
 # ---------------------------------------------------------------------------- phone by SMS
@@ -93,12 +93,10 @@ async def test_phone_verification_by_sms(
     client: AsyncClient, sms: list[tuple[str, str]], billing_on: None
 ) -> None:
     headers = await _register(client)
-    resp = await client.post(
-        "/api/v1/me/phone", json={"phone": "+٩٧١ ٥٠ ١٢٣ ٤٥٦٧"}, headers=headers
-    )
+    resp = await client.post("/api/v1/me/phone", json={"phone": "٧٠ ١٢٣ ٤٥٦"}, headers=headers)
     assert resp.status_code == 200, resp.text
-    assert resp.json()["phone"] == "+971501234567"
-    assert sms[0][0] == "+971501234567"
+    assert resp.json()["phone"] == "+96170123456"
+    assert sms[0][0] == "+96170123456"
     code = sms[0][1]
 
     wrong = "000000" if code != "000000" else "111111"
@@ -108,12 +106,12 @@ async def test_phone_verification_by_sms(
     assert resp.status_code == 200, resp.text
     # A verified number earns the sign-up gift.
     gift = get_settings().signup_credit_cents
-    assert resp.json() == {"phone": "+971501234567", "gift_cents": gift}
+    assert resp.json() == {"phone": "+96170123456", "gift_cents": gift}
     me = (await client.get("/api/v1/me", headers=headers)).json()
-    assert me["phone"] == "+971501234567" and me["phone_verified_at"]
+    assert me["phone"] == "+96170123456" and me["phone_verified_at"]
 
     # A second code within the minute is refused.
-    resp = await client.post("/api/v1/me/phone", json={"phone": "+971501234568"}, headers=headers)
+    resp = await client.post("/api/v1/me/phone", json={"phone": "70 123 457"}, headers=headers)
     assert resp.status_code == 429
 
 
@@ -123,10 +121,10 @@ async def test_phone_codes_are_checked(
     headers = await _register(client)
     resp = await client.post("/api/v1/me/phone", json={"phone": "12345"}, headers=headers)
     assert resp.status_code == 400  # not a phone number
-    resp = await client.post("/api/v1/me/phone", json={"phone": "0501234567"}, headers=headers)
-    assert resp.status_code == 400 and "country code" in resp.json()["detail"]
+    resp = await client.post("/api/v1/me/phone", json={"phone": "01 234 567"}, headers=headers)
+    assert resp.status_code == 400 and "70 123 456" in resp.json()["detail"]  # a landline
 
-    await client.post("/api/v1/me/phone", json={"phone": "+971501234567"}, headers=headers)
+    await client.post("/api/v1/me/phone", json={"phone": "+96170123456"}, headers=headers)
     for _ in range(phone.MAX_CODE_ATTEMPTS):
         await client.post("/api/v1/me/phone/verify", json={"code": "999999x"}, headers=headers)
     resp = await client.post("/api/v1/me/phone/verify", json={"code": sms[0][1]}, headers=headers)
@@ -135,17 +133,24 @@ async def test_phone_codes_are_checked(
     other = await _register(client, email="other@shop.com")
     user = await db.scalar(select(User).where(User.email == "new@shop.com"))
     assert user is not None
-    user.phone, user.phone_verified_at = "+971501234567", utcnow()
+    user.phone, user.phone_verified_at = "+96170123456", utcnow()
     await db.commit()
-    resp = await client.post("/api/v1/me/phone", json={"phone": "+971501234567"}, headers=other)
+    resp = await client.post("/api/v1/me/phone", json={"phone": "+96170123456"}, headers=other)
     assert resp.status_code == 400 and "another" in resp.json()["detail"]
 
 
 def test_normalizing_numbers() -> None:
+    # Lebanese numbers as people type them, without +961.
+    assert phone.normalize("70 123 456") == "+96170123456"
+    assert phone.normalize("03 123 456") == "+9613123456"
+    assert phone.normalize("+961 81 123 456") == "+96181123456"
+    assert phone.normalize("00961 76 123 456") == "+96176123456"
+    assert phone.normalize("٧١-١٢٣-٤٥٦") == "+96171123456"
+    # Other countries with their code.
     assert phone.normalize("+1 (415) 555-0123") == "+14155550123"
-    assert phone.normalize("00971501234567") == "+971501234567"
-    assert phone.normalize("+٩٦٦ ٥٠ ١٢٣ ٤٥٦٧") == "+966501234567"
-    for bad in ("4155550123", "+0123456789", "+1234", "+1234567890123456"):
+    assert phone.normalize("+971 50 123 4567") == "+971501234567"
+    bad_numbers = ("12345", "01 234 567", "+961 1 234 567", "70 123", "+0123456789", "+1234")
+    for bad in bad_numbers:
         with pytest.raises(phone.PhoneError):
             phone.normalize(bad)
 
@@ -156,9 +161,9 @@ async def test_codes_go_out_through_twilio(
     monkeypatch.setattr(get_settings(), "twilio_account_sid", "AC123")
     monkeypatch.setattr(get_settings(), "twilio_auth_token", "secret")
     monkeypatch.setattr(get_settings(), "twilio_from", "MG456")
-    await phone.send_code(fake_web.client(), "+14155550123", "123456")
+    await phone.send_code(fake_web.client(), "+96170123456", "123456")
     [sent] = fake_web.twilio.sent
-    assert sent["To"] == "+14155550123" and sent["MessagingServiceSid"] == "MG456"
+    assert sent["To"] == "+96170123456" and sent["MessagingServiceSid"] == "MG456"
     assert "123456" in sent["Body"]
 
 

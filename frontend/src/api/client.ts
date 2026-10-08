@@ -113,6 +113,8 @@ async function send(path: string, opts: RequestOptions, token: string | null): P
     body = JSON.stringify(opts.json);
   }
   if (token) headers.Authorization = `Bearer ${token}`;
+  // The server words its messages (errors, summaries) in the panel's language.
+  headers["Accept-Language"] = document.documentElement.lang === "ar" ? "ar" : "en";
   try {
     return await fetch(apiUrl(path, opts.query), {
       method: opts.method ?? (body ? "POST" : "GET"),

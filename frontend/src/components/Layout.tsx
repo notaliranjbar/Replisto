@@ -18,7 +18,9 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { useDashboard, useMe } from "../api/queries";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "../api/client";
+import { keys, useDashboard, useMe } from "../api/queries";
 import { useAuth } from "../auth/AuthContext";
 import { otherLang, useI18n } from "../i18n";
 import { useHandoffWatcher } from "../lib/notifications";
@@ -35,7 +37,7 @@ type Group = { label?: string; items: Item[] };
  * with everything else. Full-height pages size themselves with --chrome-top/--chrome-bottom.
  */
 export default function Layout() {
-  const { t, f } = useI18n();
+  const { t, f, lang } = useI18n();
   const { data: me } = useMe();
   const { data: dash } = useDashboard();
   const gift = dash?.wallet.gift;
@@ -44,6 +46,24 @@ export default function Layout() {
   const location = useLocation();
 
   useHandoffWatcher(dash);
+
+  // The shop remembers the panel's language: the bot writes handoff reasons and summaries
+  // for the owner in it. On a switch, reload server text so it comes back in the new language.
+  const qc = useQueryClient();
+  const firstLang = useRef(lang);
+  useEffect(() => {
+    if (firstLang.current !== lang) {
+      firstLang.current = lang;
+      qc.invalidateQueries();
+    }
+    if (me && me.shop.language !== lang) {
+      api("/shop", { method: "PATCH", json: { language: lang } })
+        .then(() => qc.invalidateQueries({ queryKey: keys.me }))
+        .catch(() => {
+          // not important enough to bother the owner; retried on the next visit
+        });
+    }
+  }, [lang, me, qc]);
 
   // Close the mobile drawer on navigation
   useEffect(() => setDrawer(false), [location.pathname]);

@@ -1,10 +1,12 @@
 """Fill a local database with a realistic demo shop, so the panel can be built against real data.
 
   uv run python -m scripts.seed_demo
+  uv run python -m scripts.seed_demo --language ar     # an owner using the panel in Arabic
 
 Log in with  demo@shop.com / demopass123 . Safe to re-run: it recreates the demo account.
 """
 
+import argparse
 import asyncio
 from datetime import timedelta
 from decimal import Decimal
@@ -39,13 +41,23 @@ PASSWORD = "demopass123"
 DEMO_CREDIT_CENTS = get_settings().signup_credit_cents
 
 KNOWLEDGE = [
-    (KnowledgeSection.ABOUT, "", "Layla Boutique makes women's dresses and blouses since 2019."),
+    (
+        KnowledgeSection.ABOUT,
+        "",
+        "Layla Boutique in Achrafieh, Beirut, makes women's dresses and blouses since 2019.",
+    ),
     (
         KnowledgeSection.SHIPPING,
         "",
-        "Express delivery in 3-5 business days for $8. Free on orders over $150.",
+        "Delivery all over Lebanon in 2-3 working days for $4; same day inside Beirut. "
+        "Free on orders over $100.",
     ),
-    (KnowledgeSection.PAYMENT, "", "Card on our website. Cash on delivery within the city only."),
+    (
+        KnowledgeSection.PAYMENT,
+        "",
+        "Cash on delivery (dollars or lira at the daily rate), or Whish Money before delivery.",
+    ),
+    (KnowledgeSection.CONTACT, "", "Open Monday to Saturday, 10am-7pm. Closed on Sundays."),
     (KnowledgeSection.RETURNS, "", "Size exchanges within 7 days of delivery."),
     (KnowledgeSection.FAQ, "What's the fabric?", "Premium linen, pre-washed so it won't shrink."),
     (KnowledgeSection.FAQ, "Size guide?", "S to XL; S fits US 4-6, M fits 8-10, L fits 12-14."),
@@ -65,24 +77,24 @@ CONVERSATIONS = [
         [
             ("customer", "Hi! Do you have the black linen dress in size M?", False, 42),
             ("bot", "Hi there 🌸 Yes, it's in stock in M, and it's $49.90.", False, 41),
-            ("customer", "How long does shipping take?", False, 40),
-            ("bot", "Express delivery takes 3-5 business days and costs $8.", False, 39),
+            ("customer", "How long does delivery to Jounieh take?", False, 40),
+            ("bot", "Delivery takes 2-3 working days and costs $4.", False, 39),
         ],
         False,
     ),
     (
-        "noor.k",
+        "rita.khoury",
         [
             ("customer", "مرحبا", False, 15),
-            ("customer", "هل تصدرون فاتورة رسمية للشركات؟", False, 15),
-            ("bot", "شكرًا لرسالتك! سيتواصل معك أحد زملائي قريبًا 🙏", True, 14),
+            ("customer", "فيكن تعملولي فاتورة رسمية للشركة؟", False, 15),
+            ("bot", "أهلا فيكي! رح خلّي حدا من الفريق يجاوبك عن الفاتورة بأسرع وقت 🙏", True, 14),
         ],
         False,
     ),
     (
-        "maya.r",
+        "maya.haddad",
         [
-            ("customer", "When will the navy dress in M be back in stock?", False, 8),
+            ("customer", "hi, aymta byerja3 el navy bl M?", False, 8),
             ("bot", FALLBACK, True, 7),
             ("owner", "Hi Maya, it's back next week 🌷", False, 3),
         ],
@@ -102,24 +114,28 @@ POSTS = [
     ("17900000000000003", "DEMOlinen03", "Linen shirt in cream ☀️ made for summer", 15),
     ("17900000000000004", "DEMOstudio4", "Behind the scenes of our new collection shoot 📸", 20),
 ]
-# username -> (question, reason, handed off minutes ago, resolved minutes ago or None)
+# username -> (question, reason by panel language, handed off minutes ago, resolved minutes
+# ago or None). The bot writes reasons in the owner's panel language.
 HANDOFFS = {
-    "noor.k": (
-        "مرحبا\nهل تصدرون فاتورة رسمية للشركات؟",
-        "The customer wants a formal invoice for a company",
+    "rita.khoury": (
+        "مرحبا\nفيكن تعملولي فاتورة رسمية للشركة؟",
+        {
+            "en": "The customer wants a formal invoice for a company",
+            "ar": "العميلة تريد فاتورة رسمية للشركة",
+        },
         14,
         None,
     ),
-    "maya.r": (
-        "When will the navy dress in M be back in stock?",
-        "Restock date unknown",
+    "maya.haddad": (
+        "hi, aymta byerja3 el navy bl M?",
+        {"en": "Restock date unknown", "ar": "موعد عودة المقاس إلى المخزون غير معروف"},
         7,
         3,
     ),
 }
 
 
-async def main() -> None:
+async def main(language: str) -> None:
     async with SessionLocal() as db:
         old = await db.scalar(select(User.id).where(User.email == EMAIL))
         if old is not None:
@@ -136,6 +152,7 @@ async def main() -> None:
             name="Layla Boutique",
             bot_enabled=True,
             fallback_message=FALLBACK,
+            language=language,
             balance_cents=DEMO_CREDIT_CENTS,
             signup_gift_at=now,
         )
@@ -203,10 +220,10 @@ async def main() -> None:
             )
             handoff = HANDOFFS.get(username)
             if handoff:
-                question, reason, minutes_ago, resolved_minutes_ago = handoff
+                question, reasons, minutes_ago, resolved_minutes_ago = handoff
                 conversation.handoff_at = now - timedelta(minutes=minutes_ago)
                 conversation.handoff_question = question
-                conversation.handoff_reason = reason
+                conversation.handoff_reason = reasons[language]
                 if resolved_minutes_ago is not None:
                     conversation.handoff_resolved_at = now - timedelta(minutes=resolved_minutes_ago)
                     conversation.handoff_resolved_by = HandoffResolution.OWNER_REPLY
@@ -230,4 +247,6 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description="Create the demo shop.")
+    parser.add_argument("--language", choices=["en", "ar"], default="en")
+    asyncio.run(main(parser.parse_args().language))

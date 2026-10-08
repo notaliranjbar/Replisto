@@ -47,8 +47,8 @@ const landing: Dict["landing"] = {
     lookup: "Stock checked in your product list",
     postTitle: "Product card",
     postCaption: "Summer linen coat, in 4 colours",
-    m3: "How long does shipping to Dubai take?",
-    m4: "Express delivery takes 3 to 5 working days, and shipping is $8.",
+    m3: "How long does delivery to Jounieh take?",
+    m4: "Delivery to Jounieh takes 2 to 3 working days, and it costs $4.",
     m5: "Can you issue an official invoice for a company?",
     m6: "Let me check that with my colleague — we'll reply right here.",
     handedOff: "Handed to you",
@@ -90,7 +90,7 @@ const landing: Dict["landing"] = {
     questions: [
       { q: "How much is this one?", time: "01:12" },
       { q: "Do you have it in size 46?", time: "01:40" },
-      { q: "How many days to Riyadh?", time: "02:05" },
+      { q: "How many days to Tripoli?", time: "02:05" },
       { q: "Can I pay by card transfer?", time: "02:31" },
       { q: "Can I exchange it if it doesn't fit?", time: "03:18" },
     ],
@@ -142,8 +142,8 @@ const landing: Dict["landing"] = {
     knowledge: {
       title: "Business info",
       sections: [
-        { label: "Shipping", text: "Express delivery, 3–5 working days; same-day courier in the city" },
-        { label: "Payment", text: "Card transfer or online payment gateway" },
+        { label: "Shipping", text: "All over Lebanon in 2–3 working days; same day in Beirut" },
+        { label: "Payment", text: "Cash on delivery or Whish Money" },
         { label: "Returns", text: "Within 7 days, with the tag intact" },
       ],
       file: "shipping-terms.pdf",
