@@ -1,3 +1,12 @@
+# HTTP/1.1 and HTTP/2 only. HTTP/3 runs over UDP (QUIC), which some networks (often in Iran)
+# block or throttle without a clean failure: browsers that try it are left with a blank page.
+# Caddy would otherwise advertise it to every visitor (Alt-Svc: h3) for 30 days.
+{
+	servers {
+		protocols h1 h2
+	}
+}
+
 # Caddy obtains and renews the HTTPS certificates automatically for both domains.
 # Meta requires valid HTTPS URLs for OAuth redirects, webhooks and the privacy policy.
 
