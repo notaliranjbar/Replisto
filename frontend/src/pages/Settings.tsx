@@ -9,8 +9,12 @@ import { Alert, Button, Card, Field, Input, LinkButton, PageHeader, PageLoading,
 import { useI18n } from "../i18n";
 import { errorMessage, fieldError } from "../lib/errors";
 
-// The language is kept in sync by the panel (Layout), not edited here.
-type Form = Omit<Shop, "id" | "tone" | "slug" | "language"> & { tone: "friendly" | "formal" };
+// The language and time zone are kept in sync by the panel (Layout), and the comment settings
+// live on the Comments page, so they aren't edited here.
+type Form = Omit<
+  Shop,
+  "id" | "tone" | "slug" | "language" | "timezone" | "comment_mode" | "comment_thank_praise" | "comment_hide_spam"
+> & { tone: "friendly" | "formal" };
 
 function toForm(s: Shop): Form {
   return {
@@ -106,7 +110,7 @@ export default function Settings() {
         <Row title={S.status.title} desc={S.status.desc}>
           <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
             <div>
-              <div className="font-bold text-ink-950">{t.settings.botEnabled}</div>
+              <div className="font-semibold text-ink-950">{t.settings.botEnabled}</div>
               <div className="text-sm leading-6 text-slate-500">{t.settings.botEnabledHint}</div>
             </div>
             <Toggle checked={form.bot_enabled} onChange={(v) => set("bot_enabled", v)} label={t.settings.botEnabled} />
@@ -223,7 +227,7 @@ function Row({ title, desc, children }: { title: string; desc: string; children:
   return (
     <section className="grid grid-cols-1 gap-x-10 gap-y-4 p-5 sm:p-6 md:grid-cols-[14rem_minmax(0,1fr)]">
       <div>
-        <h2 className="font-bold text-ink-950">{title}</h2>
+        <h2 className="font-semibold text-ink-950">{title}</h2>
         <p className="mt-1 text-sm leading-6 text-slate-500">{desc}</p>
       </div>
       <div className="min-w-0">{children}</div>
@@ -245,7 +249,7 @@ function ToneOption({ tone, selected, emoji, onSelect }: { tone: "friendly" | "f
     >
       <input type="radio" name="tone" checked={selected} onChange={onSelect} className="sr-only" />
       <span className="flex items-center justify-between gap-3">
-        <span className="font-bold text-ink-950">{tone === "friendly" ? t.settings.toneFriendly : t.settings.toneFormal}</span>
+        <span className="font-semibold text-ink-950">{tone === "friendly" ? t.settings.toneFriendly : t.settings.toneFormal}</span>
         <span
           aria-hidden
           className={cx("flex size-5 items-center justify-center rounded-full transition-colors", selected ? "bg-brand-600 text-white" : "ring-2 ring-slate-200")}

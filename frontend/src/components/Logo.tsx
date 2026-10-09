@@ -1,7 +1,7 @@
 import { useI18n } from "../i18n";
 import { cx } from "./ui";
 
-/** The Replisto mark: a reply arrow in a speech bubble, on a teal tile (vector, sharp at any size). */
+/** The Replisto mark: an answered message (a check in a speech bubble) on a cobalt tile. */
 export function LogoMark({ px = 36, className, alt = "" }: { px?: number; className?: string; alt?: string }) {
   return (
     <img
@@ -10,7 +10,7 @@ export function LogoMark({ px = 36, className, alt = "" }: { px?: number; classN
       height={px}
       alt={alt}
       decoding="async"
-      className={cx("aspect-square shrink-0 rounded-[24%]", className)}
+      className={cx("aspect-square shrink-0 rounded-[22%]", className)}
       style={{ width: px, height: px }}
     />
   );
@@ -20,9 +20,11 @@ export function LogoMark({ px = 36, className, alt = "" }: { px?: number; classN
 export function Logo({ tone = "light", className, markClassName }: { tone?: "light" | "dark"; className?: string; markClassName?: string }) {
   const { t } = useI18n();
   return (
-    <span className={cx("inline-flex items-center gap-2.5", className)}>
-      <LogoMark className={markClassName} />
-      <span className={cx("text-xl font-black", tone === "dark" ? "text-white" : "text-ink-900")}>{t.appName}</span>
+    <span className={cx("inline-flex items-center gap-2", className)}>
+      <LogoMark px={30} className={markClassName} />
+      <span lang="en" className={cx("text-[1.1875rem] font-semibold tracking-[-0.02em]", tone === "dark" ? "text-white" : "text-ink-950")}>
+        {t.appName}
+      </span>
     </span>
   );
 }

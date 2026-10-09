@@ -75,9 +75,29 @@ class FakeMeta:
     media: list[dict[str, Any]] = field(default_factory=list)
     # When set, sharing a post (MEDIA_SHARE) fails with this; plain text still works.
     post_error: tuple[int, dict[str, Any]] | None = None
+    # Comments: public replies posted, hide/show calls, and posts read one by one.
+    public_replies: list[dict[str, str]] = field(default_factory=list)
+    hidden: dict[str, bool] = field(default_factory=dict)
+    media_info: dict[str, dict[str, Any]] = field(default_factory=dict)
+    reply_error: tuple[int, dict[str, Any]] | None = None
+    # Stories: containers created, their processing state, and what was published.
+    containers: list[dict[str, str]] = field(default_factory=list)
+    container_status: str = "FINISHED"
+    published: list[str] = field(default_factory=list)
+    # Insights: the profile's counts, account totals, daily series and per-post numbers.
+    followers: int = 1520
+    account_totals: dict[str, int] = field(default_factory=dict)
+    series: dict[str, list[int]] = field(default_factory=dict)
+    media_numbers: dict[str, dict[str, int]] = field(default_factory=dict)
 
     def handler(self, request: httpx.Request) -> httpx.Response:
         path = request.url.path
+        form = (
+            {k: v[0] for k, v in parse_qs(request.content.decode()).items()}
+            if request.method == "POST"
+            and "x-www-form-urlencoded" in request.headers.get("content-type", "")
+            else {}
+        )
         if request.url.host == "api.instagram.com" and path == "/oauth/access_token":
             form = parse_qs(request.content.decode())
             if form["code"][0] == "bad-code":
@@ -113,15 +133,73 @@ class FakeMeta:
                 return httpx.Response(self.post_error[0], json=self.post_error[1])
             body["token"] = request.headers["Authorization"].removeprefix("Bearer ")
             self.sent.append(body)
+            recipient = body["recipient"]
             return httpx.Response(
                 200,
                 json={
-                    "recipient_id": body["recipient"]["id"],
+                    "recipient_id": recipient.get("id") or "commenter-igsid",
                     "message_id": f"bot-mid-{len(self.sent)}",
                 },
             )
         if path.endswith("/me"):
-            return httpx.Response(200, json={"user_id": self.ig_user_id, "username": self.username})
+            return httpx.Response(
+                200,
+                json={
+                    "user_id": self.ig_user_id,
+                    "username": self.username,
+                    "name": "Layla Boutique",
+                    "followers_count": self.followers,
+                    "follows_count": 210,
+                    "media_count": len(self.media),
+                },
+            )
+        if path.endswith("/replies") and request.method == "POST":
+            if self.reply_error:
+                return httpx.Response(self.reply_error[0], json=self.reply_error[1])
+            self.public_replies.append(
+                {"comment_id": path.split("/")[-2], "message": form.get("message", "")}
+            )
+            return httpx.Response(200, json={"id": f"reply-{len(self.public_replies)}"})
+        if path.endswith("/media_publish"):
+            self.published.append(form["creation_id"])
+            return httpx.Response(200, json={"id": f"story-media-{len(self.published)}"})
+        if path.endswith(f"/{self.ig_user_id}/media") and request.method == "POST":
+            self.containers.append(form)
+            return httpx.Response(200, json={"id": f"container-{len(self.containers)}"})
+        if path.endswith(f"/{self.ig_user_id}/insights"):
+            params = request.url.params
+            metrics = params["metric"].split(",")
+            if params.get("metric_type") == "total_value":
+                data = [
+                    {"name": m, "total_value": {"value": self.account_totals.get(m, 0)}}
+                    for m in metrics
+                ]
+            else:
+                data = [
+                    {
+                        "name": m,
+                        "values": [
+                            {"value": v, "end_time": f"2026-10-{i + 1:02d}T07:00:00+0000"}
+                            for i, v in enumerate(self.series.get(m, []))
+                        ],
+                    }
+                    for m in metrics
+                ]
+            return httpx.Response(200, json={"data": data})
+        if path.endswith("/insights"):
+            numbers = self.media_numbers.get(path.split("/")[-2], {})
+            return httpx.Response(
+                200,
+                json={"data": [{"name": k, "values": [{"value": v}]} for k, v in numbers.items()]},
+            )
+        object_id = path.rsplit("/", 1)[-1]
+        if request.method == "POST" and "hide" in form:
+            self.hidden[object_id] = form["hide"] == "true"
+            return httpx.Response(200, json={"success": True})
+        if request.method == "GET" and object_id.startswith("container-"):
+            return httpx.Response(200, json={"status_code": self.container_status})
+        if request.method == "GET" and object_id in self.media_info:
+            return httpx.Response(200, json=self.media_info[object_id])
         return httpx.Response(404, json={"error": {"message": f"unexpected {path}", "code": 100}})
 
     def client(self) -> InstagramClient:

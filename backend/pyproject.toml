@@ -23,6 +23,8 @@ dependencies = [
     "openpyxl>=3.1.5",
     "python-multipart>=0.0.32",
     "sentry-sdk[fastapi]>=2.0",
+    "pillow>=11",
+    "tzdata>=2024.1",
 ]
 
 [dependency-groups]
@@ -58,5 +60,8 @@ ignore = ["B008"]
 "app/services/teach.py" = ["E501"]
 "app/services/billing.py" = ["E501"]
 "app/services/notify.py" = ["E501"]
+"app/services/comments.py" = ["E501"]
+"app/services/insights.py" = ["E501"]
+"app/services/stories.py" = ["E501"]
 # The email template is HTML with inline styles (what mail apps need).
 "app/services/email.py" = ["E501"]

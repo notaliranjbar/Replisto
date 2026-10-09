@@ -6,7 +6,7 @@ type Tone = "white" | "tint" | "ink";
 
 const tones: Record<Tone, string> = {
   white: "bg-surface",
-  tint: "bg-brand-50/60",
+  tint: "bg-canvas border-y border-slate-200/70",
   ink: "bg-night-950 text-white",
 };
 
@@ -54,7 +54,7 @@ export function SectionHeader({
 }) {
   return (
     <Reveal className={cx("max-w-2xl", align === "center" && "mx-auto text-center", className)}>
-      {eyebrow && <p className={cx("mb-3 text-sm font-bold", dark ? "text-accent-300" : "text-brand-700")}>{eyebrow}</p>}
+      {eyebrow && <p className={cx("mb-3 text-[13px] font-semibold uppercase tracking-wider", dark ? "text-[#93b1fb]" : "text-brand-600")}>{eyebrow}</p>}
       <h2 id={id ? `${id}-title` : undefined} className={cx("t-h2 text-balance", dark ? "text-white" : "text-ink-950")}>
         {title}
       </h2>
@@ -69,7 +69,7 @@ export function Bullets({ items, className }: { items: readonly string[]; classN
     <ul className={cx("space-y-3", className)}>
       {items.map((item) => (
         <li key={item} className="flex gap-3 text-[15px] leading-7 text-slate-700">
-          <span aria-hidden className="mt-[0.7rem] size-1.5 shrink-0 rounded-full bg-brand-500" />
+          <span aria-hidden className="mt-[0.65rem] size-1.5 shrink-0 rounded-[2px] bg-brand-600" />
           {item}
         </li>
       ))}

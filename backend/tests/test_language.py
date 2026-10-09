@@ -29,6 +29,8 @@ _USER_ERRORS = {
     "TeachError",
     "ExtractionError",
     "ProductSourceError",
+    "StoryError",
+    "InsightsError",
 }
 # Messages only machines read (Meta's webhook calls, the health check).
 _INTERNAL_FILES = {"webhooks.py", "health.py"}

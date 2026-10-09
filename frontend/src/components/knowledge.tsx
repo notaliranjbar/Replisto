@@ -77,7 +77,7 @@ export function EntryCard({
             </div>
           )}
           {entry.title && (
-            <div className="user-text mb-1 font-bold text-ink-950">
+            <div className="user-text mb-1 font-semibold text-ink-950">
               {isFaq && <span className="me-1.5 text-brand-700">{t.knowledge.faqQuestion}:</span>}
               {entry.title}
             </div>

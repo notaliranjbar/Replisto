@@ -17,16 +17,30 @@ from app.models.knowledge import (
     ProductSourceKind,
 )
 from app.models.site import SiteChatUsage
+from app.models.social import (
+    CommentCategory,
+    CommentStatus,
+    ContentReport,
+    InstagramComment,
+    InstagramInsights,
+    ScheduledStory,
+    StoryStatus,
+)
 from app.models.teach import ProposalStatus, TeachProposal
 from app.models.user import Shop, User
 
 __all__ = [
     "Base",
     "Channel",
+    "CommentCategory",
+    "CommentStatus",
+    "ContentReport",
     "Conversation",
     "GiftClaim",
     "HandoffResolution",
     "InstagramAccount",
+    "InstagramComment",
+    "InstagramInsights",
     "InstagramPost",
     "KnowledgeEntry",
     "KnowledgeSection",
@@ -39,8 +53,10 @@ __all__ = [
     "ProductSource",
     "ProductSourceKind",
     "ProposalStatus",
+    "ScheduledStory",
     "Shop",
     "SiteChatUsage",
+    "StoryStatus",
     "TeachProposal",
     "User",
     "WalletEntry",

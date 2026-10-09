@@ -60,7 +60,7 @@ export function QuotaRing({ quota, size = 34 }: { quota: Quota; size?: number })
           className={cx(tone, "transition-[stroke-dashoffset] duration-700 ease-out")}
         />
       </svg>
-      <span className="num absolute inset-0 flex items-center justify-center text-[10px] font-bold text-ink-900">{f.num(left)}</span>
+      <span className="num absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-ink-900">{f.num(left)}</span>
     </div>
   );
 }
@@ -112,11 +112,11 @@ export function AskReplisto({ compact, onClose }: { compact?: boolean; onClose?:
   const unavailable = chat.data && !chat.data.available;
 
   return (
-    <div className={cx("flex flex-col overflow-hidden rounded-3xl bg-surface shadow-lift ring-1 ring-line", compact ? "h-full" : "h-[34rem]")}>
+    <div className={cx("flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-lift", compact ? "h-full" : "h-[34rem]")}>
       <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
         <LogoMark px={36} />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-bold text-ink-950">{A.botName}</div>
+          <div className="truncate text-sm font-semibold text-ink-950">{A.botName}</div>
           <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <span aria-hidden className="size-1.5 rounded-full bg-emerald-500" />
             <span className="truncate">{A.status}</span>
@@ -164,7 +164,7 @@ export function AskReplisto({ compact, onClose }: { compact?: boolean; onClose?:
                   )}
                 >
                   {m.sender === "owner" && (
-                    <div className="mb-1 flex items-center gap-1 text-[11px] font-bold text-brand-700">
+                    <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-brand-700">
                       <UsersRound className="size-3.5" aria-hidden />
                       {A.team}
                     </div>

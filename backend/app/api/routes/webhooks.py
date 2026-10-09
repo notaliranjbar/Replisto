@@ -6,7 +6,7 @@ from fastapi.responses import PlainTextResponse
 
 from app.api.deps import JobQueue
 from app.core.config import get_settings
-from app.services.webhook import parse_messaging_events, verify_signature
+from app.services.webhook import parse_comment_events, parse_messaging_events, verify_signature
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["webhooks"], include_in_schema=False)
@@ -38,6 +38,8 @@ async def receive(request: Request, queue: JobQueue) -> dict[str, str]:
     # Only enqueue here: Meta disables webhooks that answer slowly.
     for event in parse_messaging_events(payload):
         await queue.enqueue("process_event", event, job_id=f"event:{event.mid}")
+    for comment in parse_comment_events(payload):
+        await queue.enqueue("process_comment", comment, job_id=f"comment:{comment.comment_id}")
     return {"status": "ok"}
 
 

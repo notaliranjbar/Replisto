@@ -65,6 +65,11 @@ class Settings(BaseSettings):
     knowledge_char_limit: int = 40_000
     product_row_limit: int = 2_000
     upload_max_bytes: int = 5 * 1024 * 1024
+    # Story photos and videos the owner schedules are kept here until they're published (and
+    # served to Instagram from PUBLIC_BASE_URL). In Docker this is a volume.
+    media_dir: str = "media"
+    story_image_max_bytes: int = 8 * 1024 * 1024
+    story_video_max_bytes: int = 100 * 1024 * 1024
     # How often Google Sheets product sources are re-read.
     product_sync_interval_minutes: int = 5
     # Longest text (a Google Doc, a pasted price list) read in one "teach the bot" request.

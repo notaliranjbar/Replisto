@@ -32,7 +32,26 @@ KNOWLEDGE: list[tuple[KnowledgeSection, str, str]] = [
         "never makes things up: when the answer isn't in the shop's information, it tells the "
         "customer a colleague will reply and hands the conversation to the owner. It replies in "
         "the customer's language and script, including Lebanese Arabic, Arabizi, French and "
-        "English. Today it works in Instagram direct messages, plus a chat widget like this one.",
+        "English. Today it works on Instagram (direct messages, story replies and comments), "
+        "plus a chat widget like this one.",
+    ),
+    (
+        KnowledgeSection.FREE_TEXT,
+        "Comments, stories and insights",
+        "Comments: it answers comments under your posts and reels, using the post's caption to "
+        "know which product 'how much?' is about. You choose how: a public reply under the "
+        "comment, a private message to the commenter, or both (the answer by DM and a short "
+        "public note). What it doesn't know, it doesn't reply to: the comment waits for you in "
+        "the panel, sorted by topic (price, stock, ordering, complaint...). It can thank people "
+        "for compliments and hide spam. You can try any comment in the panel first.\n"
+        "Stories: upload story photos or videos and choose when each goes live; Replisto "
+        "publishes them on time. You add a line about what each story shows, so when someone "
+        "replies to the story the assistant knows what they mean.\n"
+        "Insights: it reads your page's reach, engagement, followers and each post's numbers and "
+        "shows what works (format, best days and hours, hashtags). An AI content assistant turns "
+        "them into ideas, captions and a weekly plan, and answers questions like 'what should I "
+        "post this week?'. Comment replies and the content assistant are paid from the wallet "
+        "like any answer; skipped comments cost nothing.",
     ),
     (
         KnowledgeSection.FREE_TEXT,

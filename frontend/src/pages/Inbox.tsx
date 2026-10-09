@@ -81,7 +81,7 @@ function ConversationList({ selected }: { selected?: string }) {
           <span aria-hidden className="flex size-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-md shadow-brand-600/25">
             <InboxIcon className="size-[18px]" />
           </span>
-          <h1 className="text-lg font-extrabold text-ink-950">{t.inbox.title}</h1>
+          <h1 className="text-lg font-semibold tracking-tight text-ink-950">{t.inbox.title}</h1>
         </div>
         <div className="relative">
           <Search className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden />
@@ -157,7 +157,7 @@ function ConversationRow({ c, active }: { c: Conversation; active: boolean }) {
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span dir="auto" className={cx("truncate text-sm font-bold", active ? "text-brand-800" : "text-ink-950")}>
+            <span dir="auto" className={cx("truncate text-sm font-semibold", active ? "text-brand-800" : "text-ink-950")}>
               {name}
             </span>
             {time && <span className="ms-auto shrink-0 text-[11px] text-slate-400">{f.smart(time)}</span>}
@@ -261,7 +261,7 @@ function ConversationView({ id }: { id: string }) {
         </button>
         <Avatar name={display} />
         <div className="min-w-0 flex-1">
-          <div className="truncate font-bold text-ink-950">
+          <div className="truncate font-semibold text-ink-950">
             <span dir="auto">{display}</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-slate-500">

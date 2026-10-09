@@ -1,7 +1,26 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, BellRing, Bot, BookOpen, Check, FlaskConical, HelpCircle, Inbox, MessagesSquare, SlidersHorizontal, Sparkles, UserRound, Wallet } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BarChart3,
+  BellRing,
+  Bot,
+  BookOpen,
+  CalendarClock,
+  Check,
+  FlaskConical,
+  HelpCircle,
+  Inbox,
+  MessageCircleMore,
+  MessagesSquare,
+  SlidersHorizontal,
+  Sparkles,
+  UserRound,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { api } from "../api/client";
 import { keys, useDashboard, useMe } from "../api/queries";
 import type { Shop } from "../api/types";
@@ -72,17 +91,17 @@ export default function Dashboard() {
       {data.open_handoffs > 0 && (
         <Link
           to="/handoffs"
-          className="animate-pop-in group flex flex-wrap items-center gap-4 rounded-2xl bg-red-600 p-5 text-white shadow-lift transition-colors hover:bg-red-500 sm:p-6"
+          className="group flex flex-wrap items-center gap-4 rounded-xl border border-red-200 border-s-4 border-s-red-500 bg-surface p-4 shadow-soft transition-colors hover:bg-red-50 sm:p-5"
         >
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-white/15">
-            <BellRing className="size-6 origin-top group-hover:animate-[bell_0.6s_ease-in-out]" aria-hidden />
+          <span className="flex size-10 items-center justify-center rounded-lg bg-red-50 text-red-600">
+            <BellRing className="size-5 origin-top group-hover:animate-[bell_0.6s_ease-in-out]" aria-hidden />
           </span>
           {/* a real minimum width so the button wraps below on phones instead of squeezing the text */}
           <div className="min-w-52 flex-1">
-            <div className="text-lg font-extrabold">{t.dashboard.waitingCard(f.num(data.open_handoffs))}</div>
-            <div className="mt-0.5 text-sm text-white/80">{t.dashboard.waitingCardHint}</div>
+            <div className="font-semibold tracking-tight text-ink-950">{t.dashboard.waitingCard(f.num(data.open_handoffs))}</div>
+            <div className="mt-0.5 text-sm text-slate-500">{t.dashboard.waitingCardHint}</div>
           </div>
-          <span className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-surface px-4 text-sm font-bold text-red-700 shadow-sm">
+          <span className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-red-600 px-3.5 text-sm font-medium text-white">
             {t.dashboard.waitingCardAction}
             <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5 ltr:rotate-180 ltr:group-hover:translate-x-0.5" aria-hidden />
           </span>
@@ -115,7 +134,7 @@ export default function Dashboard() {
           {/* A brand-new shop sees only the checklist, not a wall of zeros. */}
           {(allDone || hasActivity) && (
             <section aria-labelledby="stats-title">
-              <h2 id="stats-title" className="mb-3 text-sm font-bold text-slate-500">
+              <h2 id="stats-title" className="mb-3 text-xs font-medium uppercase tracking-wider text-slate-500">
                 {t.dashboard.last7Days}
               </h2>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
@@ -126,17 +145,47 @@ export default function Dashboard() {
               </div>
             </section>
           )}
+
+          {s.instagram_connected && (
+            <section aria-labelledby="social-title">
+              <h2 id="social-title" className="mb-3 text-xs font-medium uppercase tracking-wider text-slate-500">
+                {t.social.dashboard.title}
+              </h2>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                <Stat
+                  icon={<MessageCircleMore />}
+                  label={t.social.comments.statWaiting}
+                  value={f.num(data.social.comments_waiting)}
+                  to="/comments"
+                  warn={data.social.comments_waiting > 0}
+                />
+                <Stat icon={<Check />} label={t.social.comments.statAnswered} value={f.num(data.social.comments_answered_7_days)} to="/comments" />
+                <Stat
+                  icon={<CalendarClock />}
+                  label={data.social.next_story_at ? t.social.stories.nextAt(f.smart(data.social.next_story_at)) : t.social.stories.statScheduled}
+                  value={f.num(data.social.stories_scheduled)}
+                  to="/stories"
+                />
+                <Stat
+                  icon={data.social.followers !== null && data.social.followers !== undefined ? <Users /> : <BarChart3 />}
+                  label={data.social.followers !== null && data.social.followers !== undefined ? t.social.dashboard.followers : t.social.insights.title}
+                  value={data.social.followers !== null && data.social.followers !== undefined ? f.num(data.social.followers) : "—"}
+                  to="/insights"
+                />
+              </div>
+            </section>
+          )}
         </div>
 
         <aside className="min-w-0 space-y-6">
           <Shortcuts />
-          <Link to="/billing" className={cx("flex items-center gap-4 rounded-2xl bg-surface p-5 shadow-soft ring-1 transition-shadow hover:shadow-lift", data.wallet.low_balance ? "ring-amber-300" : "ring-line")}>
+          <Link to="/billing" className={cx("flex items-center gap-4 rounded-xl border bg-surface p-5 shadow-soft transition-colors hover:border-slate-300", data.wallet.low_balance ? "border-amber-300" : "border-slate-200")}>
             <IconChip tone={data.wallet.low_balance ? "amber" : "brand"}>
               <Wallet />
             </IconChip>
             <div className="min-w-0 flex-1">
               <div className="text-sm text-slate-500">{L.walletTitle}</div>
-              <div className="mt-0.5 font-bold text-ink-950">
+              <div className="mt-0.5 font-semibold text-ink-950">
                 <span className="num text-xl">{f.usd(data.wallet.balance_cents)}</span>
               </div>
             </div>
@@ -148,7 +197,7 @@ export default function Dashboard() {
             </IconChip>
             <div className="min-w-0">
               <div className="text-sm text-slate-500">{t.panel.dashboard.usageTitle}</div>
-              <div className="mt-0.5 font-bold text-ink-950">
+              <div className="mt-0.5 font-semibold text-ink-950">
                 <span className="num text-xl">{f.num(data.tokens_this_month)}</span> <span className="text-sm font-medium text-slate-500">{t.dashboard.tokensUnit}</span>
               </div>
             </div>
@@ -175,38 +224,39 @@ export default function Dashboard() {
   );
 }
 
-/** Greeting and the bot's master switch, on the brand colour. */
+/** Greeting and the bot's master switch: a plain white card with a status row. */
 function StatusHero({ name, on, username, toggle }: { name: string; on: boolean; username: string | null; toggle: ReactNode }) {
   const { t } = useI18n();
   return (
-    <section aria-labelledby="dash-title" className="animate-pop-in relative overflow-hidden rounded-3xl bg-brand-600 p-6 text-white shadow-lift sm:p-8">
-      <div aria-hidden className="dot-grid absolute inset-0 [mask-image:radial-gradient(ellipse_80%_90%_at_0%_0%,black,transparent)] rtl:[mask-image:radial-gradient(ellipse_80%_90%_at_100%_0%,black,transparent)]" />
-      <div className="relative flex flex-wrap items-center justify-between gap-6">
+    <section aria-labelledby="dash-title" className="overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-soft">
+      <div className="flex flex-wrap items-end justify-between gap-4 p-5 sm:p-6">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-white/70">{t.dashboard.title}</p>
-          <h1 id="dash-title" className="mt-1 text-2xl font-extrabold sm:text-3xl">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{t.dashboard.title}</p>
+          <h1 id="dash-title" className="mt-1 text-[1.375rem] font-semibold tracking-tight text-ink-950 sm:text-2xl">
             {t.panel.dashboard.greeting(name)}
           </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold ring-1 ring-white/20">
-              <span className="relative flex size-2" aria-hidden>
-                {on && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-300 opacity-70 [animation-duration:2s]" />}
-                <span className={cx("relative size-2 rounded-full", on ? "bg-emerald-300" : "bg-white/40")} />
-              </span>
-              {on ? t.dashboard.botOn : t.dashboard.botOff}
+        </div>
+        {username && (
+          <a href={`https://instagram.com/${username}`} target="_blank" rel="noopener noreferrer" className="ltr text-sm font-medium text-slate-500 hover:text-brand-700 hover:underline">
+            @{username}
+          </a>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-slate-200 bg-slate-50 px-5 py-3.5 sm:px-6">
+        <div className="min-w-0">
+          <span className="inline-flex items-center gap-2 text-sm font-medium text-ink-900">
+            <span className="relative flex size-2" aria-hidden>
+              {on && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-70 [animation-duration:2s]" />}
+              <span className={cx("relative size-2 rounded-full", on ? "bg-emerald-500" : "bg-slate-400")} />
             </span>
-            {username && (
-              <a href={`https://instagram.com/${username}`} target="_blank" rel="noopener noreferrer" className="ltr text-sm font-medium text-white/75 hover:text-white hover:underline">
-                @{username}
-              </a>
-            )}
-          </div>
-          {!on && <p className="mt-3 text-sm text-white/75">{t.panel.dashboard.offHint}</p>}
+            {on ? t.dashboard.botOn : t.dashboard.botOff}
+          </span>
+          {!on && <p className="mt-1 text-sm text-slate-500">{t.panel.dashboard.offHint}</p>}
         </div>
-        <div className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15">
-          <span className="text-sm font-semibold">{t.dashboard.botStatus}</span>
+        <label className="flex items-center gap-3">
+          <span className="text-sm font-medium text-slate-600">{t.dashboard.botStatus}</span>
           {toggle}
-        </div>
+        </label>
       </div>
     </section>
   );
@@ -223,7 +273,7 @@ function Checklist({ steps, botOn, setBot, busy }: { steps: Step[]; botOn: boole
     <Card>
       <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-bold text-ink-950">{t.dashboard.checklistTitle}</h2>
+          <h2 className="font-semibold text-ink-950">{t.dashboard.checklistTitle}</h2>
           <span className="text-sm font-medium text-slate-500">{t.dashboard.checklistProgress(f.num(doneCount), f.num(steps.length))}</span>
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-fill">
@@ -237,7 +287,7 @@ function Checklist({ steps, botOn, setBot, busy }: { steps: Step[]; botOn: boole
             {i < steps.length - 1 && <span aria-hidden className="absolute start-[0.9375rem] top-[calc(50%+1.25rem)] h-[calc(100%-2.5rem)] w-0.5 bg-slate-100" />}
             <span
               className={cx(
-                "num relative flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                "num relative flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
                 step.done ? "bg-emerald-500 text-white" : i === current ? "bg-brand-600 text-white ring-4 ring-brand-100" : "bg-surface text-slate-400 ring-2 ring-slate-200",
               )}
             >
@@ -269,11 +319,11 @@ function Stat({ icon, label, value, to, warn }: { icon: ReactNode; label: string
   const body = (
     <>
       <IconChip tone={warn ? "amber" : "brand"}>{icon}</IconChip>
-      <div className={cx("num mt-4 text-3xl font-extrabold", warn ? "text-amber-600" : "text-ink-950")}>{value}</div>
+      <div className={cx("num mt-4 text-3xl font-semibold tracking-tight", warn ? "text-amber-600" : "text-ink-950")}>{value}</div>
       <div className="mt-0.5 text-sm text-slate-500">{label}</div>
     </>
   );
-  const cls = "block rounded-2xl bg-surface p-5 shadow-soft ring-1 ring-line";
+  const cls = "block rounded-xl border border-slate-200 bg-surface p-5 shadow-soft";
   return to ? (
     <Link to={to} className={cx(cls, "transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lift")}>
       {body}
@@ -301,7 +351,7 @@ function Shortcuts() {
             <Link to={l.to} className="group flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-brand-50/70">
               <IconChip>{l.icon}</IconChip>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold text-ink-950">{l.title}</span>
+                <span className="block text-sm font-semibold text-ink-950">{l.title}</span>
                 <span className="block text-xs leading-5 text-slate-500">{l.body}</span>
               </span>
               <ArrowRight className="size-4 text-slate-300 transition-[transform,color] duration-200 group-hover:translate-x-0.5 group-hover:text-brand-700 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" aria-hidden />

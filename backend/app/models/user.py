@@ -68,6 +68,19 @@ class Shop(UUIDPk, Timestamps, Base):
     # The owner's panel language ("en" or "ar"); what the bot writes for the owner (handoff
     # reasons, summaries of what it learned) is in this language.
     language: Mapped[str] = mapped_column(String(2), default="en", server_default="en")
+    # The owner's time zone (IANA name); the panel keeps it in sync. Used to read the page's
+    # insights in local time (best hours to post).
+    timezone: Mapped[str] = mapped_column(
+        String(40), default="Asia/Beirut", server_default="Asia/Beirut"
+    )
+
+    # Comments on the shop's posts and reels: "off", "public" (reply under the comment),
+    # "private" (answer in a DM) or "both" (the answer in a DM and a short public note).
+    comment_mode: Mapped[str] = mapped_column(String(8), default="both", server_default="both")
+    # Thank people for compliments ("love it 😍") with a short public reply.
+    comment_thank_praise: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    # Hide comments the bot recognises as spam (they stay visible to their author).
+    comment_hide_spam: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
 
     # Billing: a prepaid wallet in US cents. Every AI answer is deducted from it.
     balance_cents: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")

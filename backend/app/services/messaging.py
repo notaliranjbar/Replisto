@@ -37,6 +37,7 @@ from app.models import (
     InstagramAccount,
     Message,
     MessageSender,
+    ScheduledStory,
     Shop,
 )
 from app.services import billing
@@ -93,11 +94,14 @@ async def handle_event(
     if conversation.customer_username is None and instagram is not None:
         await _lookup_username(db, conversation, account, instagram)
 
+    text = event.display_text
+    if event.story_id:
+        text = await _with_story_note(db, shop.id, event.story_id, text)
     await record_customer_message(
         db,
         conversation,
         external_id=event.mid,
-        text=event.display_text,
+        text=text,
         at=event.timestamp,
         queue=queue,
         debounce_seconds=debounce_seconds,
@@ -496,6 +500,22 @@ async def _send_posts(
 
 
 # ---------------------------------------------------------------------------- helpers
+
+
+STORY_REPLY_MARKER = "[story_reply]"
+
+
+async def _with_story_note(db: AsyncSession, shop_id: uuid.UUID, story_id: str, text: str) -> str:
+    """A reply to a story the bot published: tell the bot what that story was about."""
+    note = await db.scalar(
+        select(ScheduledStory.note).where(
+            ScheduledStory.shop_id == shop_id, ScheduledStory.ig_media_id == story_id
+        )
+    )
+    if not note or not note.strip():
+        return text
+    about = " ".join(note.split())[:300]
+    return text.replace(STORY_REPLY_MARKER, f"[story_reply: {about}]", 1)
 
 
 async def _lookup_username(

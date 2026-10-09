@@ -1106,6 +1106,264 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Comments */
+        get: operations["list_comments_api_v1_comments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comments/{comment_id}/reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reply
+         * @description The owner's own answer, under the comment or as a private DM.
+         */
+        post: operations["reply_api_v1_comments__comment_id__reply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comments/{comment_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dismiss
+         * @description Take it off the waiting list without replying.
+         */
+        post: operations["dismiss_api_v1_comments__comment_id__dismiss_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comments/{comment_id}/hide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hide
+         * @description Hide (or show again) a comment; hidden comments stay visible to their author.
+         */
+        post: operations["hide_api_v1_comments__comment_id__hide_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comments/{comment_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry
+         * @description Let the bot try again (after the owner added the missing information).
+         */
+        post: operations["retry_api_v1_comments__comment_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comments/try": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Try Comment
+         * @description What the bot would do with this comment, in the shop's current comment mode (nothing
+         *     is posted or charged).
+         */
+        post: operations["try_comment_api_v1_comments_try_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Stories */
+        get: operations["list_stories_api_v1_stories_get"];
+        put?: never;
+        /**
+         * Schedule Story
+         * @description Upload a photo or video and the time to publish it.
+         */
+        post: operations["schedule_story_api_v1_stories_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stories/{story_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Story
+         * @description Cancel a scheduled story, or remove a finished one from the list.
+         */
+        delete: operations["delete_story_api_v1_stories__story_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Story
+         * @description Move a story to another time, or change its note (the note works even after publishing:
+         *     the bot reads it when people reply to the story).
+         */
+        patch: operations["update_story_api_v1_stories__story_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/stories/{story_id}/publish-now": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish Now */
+        post: operations["publish_now_api_v1_stories__story_id__publish_now_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Insights */
+        get: operations["get_insights_api_v1_insights_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh Insights
+         * @description Read the page's numbers from Instagram now (they're also refreshed every day).
+         */
+        post: operations["refresh_insights_api_v1_insights_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make Report
+         * @description The content assistant analyses the page and writes ideas and a weekly plan.
+         */
+        post: operations["make_report_api_v1_insights_report_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/assistant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask Assistant
+         * @description A question to the content assistant (captions, ideas, what the numbers mean).
+         */
+        post: operations["ask_assistant_api_v1_insights_assistant_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1114,6 +1372,41 @@ export interface components {
         AccountDelete: {
             /** Password */
             password: string;
+        };
+        /** AnalysisOut */
+        AnalysisOut: {
+            /** Posts Analyzed */
+            posts_analyzed: number;
+            /** Posts Last 30 Days */
+            posts_last_30_days: number;
+            /** Posts Per Week */
+            posts_per_week: number;
+            /** Avg Engagement */
+            avg_engagement: number | null;
+            /** Avg Engagement Rate */
+            avg_engagement_rate: number | null;
+            /** Formats */
+            formats: components["schemas"]["FormatStat"][];
+            /** Weekdays */
+            weekdays: components["schemas"]["DayStat"][];
+            /** Best Days */
+            best_days: number[];
+            /** Hours */
+            hours: components["schemas"]["HourStat"][];
+            /** Best Hours */
+            best_hours: number[];
+            /** Hashtags */
+            hashtags: components["schemas"]["HashtagStat"][];
+            /** Top Posts */
+            top_posts: string[];
+            /** Weakest Posts */
+            weakest_posts: string[];
+            /** Week Change */
+            week_change: {
+                [key: string]: number | null;
+            };
+            /** New Followers 30 Days */
+            new_followers_30_days: number;
         };
         /** ApplyIn */
         ApplyIn: {
@@ -1127,6 +1420,26 @@ export interface components {
              * @default []
              */
             skip_knowledge: number[];
+        };
+        /** AssistantIn */
+        AssistantIn: {
+            /** Messages */
+            messages: components["schemas"]["AssistantTurn"][];
+        };
+        /** AssistantOut */
+        AssistantOut: {
+            /** Reply */
+            reply: string;
+        };
+        /** AssistantTurn */
+        AssistantTurn: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "owner" | "assistant";
+            /** Text */
+            text: string;
         };
         /** BillingOut */
         BillingOut: {
@@ -1165,6 +1478,21 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_schedule_story_api_v1_stories_post */
+        Body_schedule_story_api_v1_stories_post: {
+            /** File */
+            file: string;
+            /**
+             * Scheduled At
+             * Format: date-time
+             */
+            scheduled_at: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
         /** Body_teach_file_api_v1_teach_file_post */
         Body_teach_file_api_v1_teach_file_post: {
             /** File */
@@ -1181,6 +1509,85 @@ export interface components {
          * @enum {string}
          */
         Channel: "instagram" | "web";
+        /**
+         * CommentCategory
+         * @enum {string}
+         */
+        CommentCategory: "price" | "availability" | "product" | "order" | "complaint" | "praise" | "spam" | "other";
+        /** CommentCounts */
+        CommentCounts: {
+            /** Waiting */
+            waiting: number;
+            /** Answered */
+            answered: number;
+            /** Skipped */
+            skipped: number;
+            /** Waiting By Category */
+            waiting_by_category: {
+                [key: string]: number;
+            };
+        };
+        /** CommentOut */
+        CommentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Author Username */
+            author_username: string;
+            /** Text */
+            text: string;
+            /**
+             * Commented At
+             * Format: date-time
+             */
+            commented_at: string;
+            status: components["schemas"]["CommentStatus"];
+            category: components["schemas"]["CommentCategory"] | null;
+            /** Reason */
+            reason: string | null;
+            /** Public Reply */
+            public_reply: string | null;
+            /** Private Reply */
+            private_reply: string | null;
+            /** Private Reply Sent */
+            private_reply_sent: boolean;
+            /** Hidden */
+            hidden: boolean;
+            /** Is Reply */
+            is_reply: boolean;
+            /** Post Permalink */
+            post_permalink: string | null;
+            /** Post Caption */
+            post_caption: string;
+            /** Post Preview Url */
+            post_preview_url: string | null;
+            /**
+             * Post Kind
+             * @enum {string}
+             */
+            post_kind: "post" | "reel" | "ad";
+            /** Error */
+            error: string | null;
+            /** Handled At */
+            handled_at: string | null;
+        };
+        /**
+         * CommentStatus
+         * @enum {string}
+         */
+        CommentStatus: "pending" | "answered" | "unanswered" | "owner_replied" | "skipped" | "dismissed";
+        /** CommentsOut */
+        CommentsOut: {
+            /** Available */
+            available: boolean;
+            /** Needs Reconnect */
+            needs_reconnect: boolean;
+            counts: components["schemas"]["CommentCounts"];
+            /** Items */
+            items: components["schemas"]["CommentOut"][];
+        };
         /** ConnectUrlOut */
         ConnectUrlOut: {
             /** Url */
@@ -1266,8 +1673,18 @@ export interface components {
             /** Open Handoffs */
             open_handoffs: number;
             last_7_days: components["schemas"]["Stats"];
+            social: components["schemas"]["SocialStats"];
             /** Tokens This Month */
             tokens_this_month: number;
+        };
+        /** DayStat */
+        DayStat: {
+            /** Day */
+            day: number;
+            /** Posts */
+            posts: number;
+            /** Avg Engagement */
+            avg_engagement: number;
         };
         /** EntryCreate */
         EntryCreate: {
@@ -1333,6 +1750,19 @@ export interface components {
              * Format: email
              */
             email: string;
+        };
+        /** FormatStat */
+        FormatStat: {
+            /** Format */
+            format: string;
+            /** Posts */
+            posts: number;
+            /** Avg Engagement */
+            avg_engagement: number;
+            /** Avg Reach */
+            avg_reach: number | null;
+            /** Avg Rate */
+            avg_rate: number | null;
         };
         /**
          * GiftStatus
@@ -1408,6 +1838,87 @@ export interface components {
          * @enum {string}
          */
         HandoffResolution: "owner_reply" | "manual";
+        /** HashtagStat */
+        HashtagStat: {
+            /** Tag */
+            tag: string;
+            /** Posts */
+            posts: number;
+            /** Avg Engagement */
+            avg_engagement: number;
+        };
+        /** HideIn */
+        HideIn: {
+            /** Hidden */
+            hidden: boolean;
+        };
+        /** HourStat */
+        HourStat: {
+            /** From Hour */
+            from_hour: number;
+            /** Posts */
+            posts: number;
+            /** Avg Engagement */
+            avg_engagement: number;
+        };
+        /** Idea */
+        Idea: {
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "reel" | "post" | "carousel" | "story";
+            /** Title */
+            title: string;
+            /** Hook */
+            hook: string;
+            /** Caption */
+            caption: string;
+            /**
+             * When
+             * @default
+             */
+            when: string;
+        };
+        /** InsightsOut */
+        InsightsOut: {
+            /** Available */
+            available: boolean;
+            /** Needs Reconnect */
+            needs_reconnect: boolean;
+            /** Fetched At */
+            fetched_at: string | null;
+            /** Error */
+            error: string | null;
+            profile: components["schemas"]["ProfileOut"] | null;
+            /** Week */
+            week: {
+                [key: string]: number;
+            };
+            /** Previous Week */
+            previous_week: {
+                [key: string]: number;
+            };
+            /** Reach Series */
+            reach_series: components["schemas"]["SeriesPoint"][];
+            /** Follower Series */
+            follower_series: components["schemas"]["SeriesPoint"][];
+            /** Media */
+            media: components["schemas"]["MediaOut"][];
+            analysis: components["schemas"]["AnalysisOut"] | null;
+            report: components["schemas"]["ReportOut"] | null;
+        };
+        /** InstagramFeatures */
+        InstagramFeatures: {
+            /** Messages */
+            messages: boolean;
+            /** Comments */
+            comments: boolean;
+            /** Stories */
+            stories: boolean;
+            /** Insights */
+            insights: boolean;
+        };
         /** InstagramStatusOut */
         InstagramStatusOut: {
             /**
@@ -1428,6 +1939,7 @@ export interface components {
             ig_user_id?: string | null;
             /** Token Expires At */
             token_expires_at?: string | null;
+            features?: components["schemas"]["InstagramFeatures"] | null;
         };
         /** KnowledgeOut */
         KnowledgeOut: {
@@ -1453,6 +1965,40 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** MediaOut */
+        MediaOut: {
+            /** Id */
+            id: string;
+            /** Caption */
+            caption: string;
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "reel" | "carousel" | "video" | "photo";
+            /** Permalink */
+            permalink: string | null;
+            /** Preview Url */
+            preview_url: string | null;
+            /** Timestamp */
+            timestamp: string | null;
+            /** Likes */
+            likes: number;
+            /** Comments */
+            comments: number;
+            /** Reach */
+            reach?: number | null;
+            /** Views */
+            views?: number | null;
+            /** Saves */
+            saves?: number | null;
+            /** Shares */
+            shares?: number | null;
+            /** Engagement */
+            engagement: number;
+            /** Rate */
+            rate?: number | null;
+        };
         /** MessageOut */
         MessageOut: {
             /**
@@ -1476,6 +2022,16 @@ export interface components {
          * @enum {string}
          */
         MessageSender: "customer" | "bot" | "owner";
+        /** OwnerReplyIn */
+        OwnerReplyIn: {
+            /** Text */
+            text: string;
+            /**
+             * Private
+             * @default false
+             */
+            private: boolean;
+        };
         /** PasswordChange */
         PasswordChange: {
             /** Current Password */
@@ -1511,6 +2067,18 @@ export interface components {
             phone: string;
             /** Gift Cents */
             gift_cents: number;
+        };
+        /** PlanDay */
+        PlanDay: {
+            /** Day */
+            day: string;
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "reel" | "post" | "carousel" | "story";
+            /** Idea */
+            idea: string;
         };
         /** PlaygroundIn */
         PlaygroundIn: {
@@ -1751,6 +2319,33 @@ export interface components {
             /** Limit */
             limit: number;
         };
+        /** ProfileOut */
+        ProfileOut: {
+            /** Username */
+            username: string;
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /** Picture Url */
+            picture_url?: string | null;
+            /**
+             * Followers
+             * @default 0
+             */
+            followers: number;
+            /**
+             * Follows
+             * @default 0
+             */
+            follows: number;
+            /**
+             * Posts
+             * @default 0
+             */
+            posts: number;
+        };
         /** ProposalOut */
         ProposalOut: {
             /**
@@ -1819,6 +2414,13 @@ export interface components {
              */
             resets_at: string;
         };
+        /** Recommendation */
+        Recommendation: {
+            /** Title */
+            title: string;
+            /** Detail */
+            detail: string;
+        };
         /** RefreshRequest */
         RefreshRequest: {
             /** Refresh Token */
@@ -1845,6 +2447,41 @@ export interface components {
         ReplyIn: {
             /** Text */
             text: string;
+        };
+        /** ReportOut */
+        ReportOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Summary */
+            summary: string;
+            /**
+             * Strengths
+             * @default []
+             */
+            strengths: string[];
+            /**
+             * Improvements
+             * @default []
+             */
+            improvements: string[];
+            /**
+             * Recommendations
+             * @default []
+             */
+            recommendations: components["schemas"]["Recommendation"][];
+            /**
+             * Ideas
+             * @default []
+             */
+            ideas: components["schemas"]["Idea"][];
+            /**
+             * Weekly Plan
+             * @default []
+             */
+            weekly_plan: components["schemas"]["PlanDay"][];
         };
         /** ResetPasswordRequest */
         ResetPasswordRequest: {
@@ -1875,6 +2512,13 @@ export interface components {
             max_file_bytes: number;
             /** Char Limit */
             char_limit: number;
+        };
+        /** SeriesPoint */
+        SeriesPoint: {
+            /** Date */
+            date: string;
+            /** Value */
+            value: number;
         };
         /** SetupStatus */
         SetupStatus: {
@@ -1941,6 +2585,17 @@ export interface components {
              * @enum {string}
              */
             language: "en" | "ar";
+            /** Timezone */
+            timezone: string;
+            /**
+             * Comment Mode
+             * @enum {string}
+             */
+            comment_mode: "off" | "public" | "private" | "both";
+            /** Comment Thank Praise */
+            comment_thank_praise: boolean;
+            /** Comment Hide Spam */
+            comment_hide_spam: boolean;
         };
         /** ShopUpdate */
         ShopUpdate: {
@@ -1962,6 +2617,14 @@ export interface components {
             currency?: string | null;
             /** Language */
             language?: ("en" | "ar") | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Comment Mode */
+            comment_mode?: ("off" | "public" | "private" | "both") | null;
+            /** Comment Thank Praise */
+            comment_thank_praise?: boolean | null;
+            /** Comment Hide Spam */
+            comment_hide_spam?: boolean | null;
         };
         /** SingleSectionUpdate */
         SingleSectionUpdate: {
@@ -2005,6 +2668,24 @@ export interface components {
              */
             created_at: string;
         };
+        /**
+         * SocialStats
+         * @description Beyond DMs: comments, stories and the page's reach.
+         */
+        SocialStats: {
+            /** Comments Waiting */
+            comments_waiting: number;
+            /** Comments Answered 7 Days */
+            comments_answered_7_days: number;
+            /** Stories Scheduled */
+            stories_scheduled: number;
+            /** Next Story At */
+            next_story_at: string | null;
+            /** Followers */
+            followers: number | null;
+            /** Reach 7 Days */
+            reach_7_days: number | null;
+        };
         /** SourceOut */
         SourceOut: {
             /** Connected */
@@ -2040,6 +2721,55 @@ export interface components {
             bot_replies: number;
             /** Open Unanswered */
             open_unanswered: number;
+        };
+        /** StoriesOut */
+        StoriesOut: {
+            /** Available */
+            available: boolean;
+            /** Needs Reconnect */
+            needs_reconnect: boolean;
+            /** Upcoming */
+            upcoming: components["schemas"]["StoryOut"][];
+            /** Past */
+            past: components["schemas"]["StoryOut"][];
+        };
+        /** StoryOut */
+        StoryOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Media Kind */
+            media_kind: string;
+            /** Media Url */
+            media_url: string;
+            /** Note */
+            note: string;
+            /**
+             * Scheduled At
+             * Format: date-time
+             */
+            scheduled_at: string;
+            status: components["schemas"]["StoryStatus"];
+            /** Published At */
+            published_at: string | null;
+            /** Error */
+            error: string | null;
+            /** Size Bytes */
+            size_bytes: number;
+        };
+        /**
+         * StoryStatus
+         * @enum {string}
+         */
+        StoryStatus: "scheduled" | "processing" | "published" | "failed";
+        /** StoryUpdate */
+        StoryUpdate: {
+            /** Scheduled At */
+            scheduled_at?: string | null;
+            /** Note */
+            note?: string | null;
         };
         /** TextIn */
         TextIn: {
@@ -2108,6 +2838,43 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** TryIn */
+        TryIn: {
+            /** Text */
+            text: string;
+            /**
+             * Post Caption
+             * @default
+             */
+            post_caption: string;
+            /**
+             * Post Kind
+             * @default post
+             * @enum {string}
+             */
+            post_kind: "post" | "reel";
+        };
+        /** TryOut */
+        TryOut: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "answer" | "unknown" | "ignore";
+            category: components["schemas"]["CommentCategory"];
+            /** Public Reply */
+            public_reply: string;
+            /** Private Reply */
+            private_reply: string;
+            /** Reason */
+            reason: string | null;
+            /** Product Lookups */
+            product_lookups: {
+                [key: string]: unknown;
+            }[];
+            /** Ai Ready */
+            ai_ready: boolean;
         };
         /** UnansweredOut */
         UnansweredOut: {
@@ -4175,6 +4942,445 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiteChatOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_comments_api_v1_comments_get: {
+        parameters: {
+            query?: {
+                view?: "waiting" | "answered" | "skipped" | "all";
+                category?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommentsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reply_api_v1_comments__comment_id__reply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerReplyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_api_v1_comments__comment_id__dismiss_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    hide_api_v1_comments__comment_id__hide_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_api_v1_comments__comment_id__retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    try_comment_api_v1_comments_try_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_stories_api_v1_stories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoriesOut"];
+                };
+            };
+        };
+    };
+    schedule_story_api_v1_stories_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_schedule_story_api_v1_stories_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_story_api_v1_stories__story_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                story_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_story_api_v1_stories__story_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                story_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_now_api_v1_stories__story_id__publish_now_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                story_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_insights_api_v1_insights_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightsOut"];
+                };
+            };
+        };
+    };
+    refresh_insights_api_v1_insights_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightsOut"];
+                };
+            };
+        };
+    };
+    make_report_api_v1_insights_report_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportOut"];
+                };
+            };
+        };
+    };
+    ask_assistant_api_v1_insights_assistant_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistantIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistantOut"];
                 };
             };
             /** @description Validation Error */

@@ -111,13 +111,13 @@ export default function ProductWizard({ start, onCancel, onDone }: { start: Wiza
                 {i > 0 && <span aria-hidden className={cx("h-0.5 w-5 rounded-full sm:w-8", n <= step ? "bg-brand-300" : "bg-slate-200")} />}
                 <span
                   className={cx(
-                    "num flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors duration-300",
+                    "num flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-300",
                     n < step ? "bg-emerald-500 text-white" : n === step ? "bg-brand-600 text-white ring-4 ring-brand-100" : "bg-surface text-slate-400 ring-2 ring-slate-200",
                   )}
                 >
                   {n < step ? <Check className="size-4" strokeWidth={3} aria-hidden /> : f.num(n)}
                 </span>
-                <span className={cx("text-sm", n === step ? "font-bold text-ink-950" : "text-slate-500 max-sm:hidden")}>{label}</span>
+                <span className={cx("text-sm", n === step ? "font-semibold text-ink-950" : "text-slate-500 max-sm:hidden")}>{label}</span>
               </li>
             );
           })}
@@ -322,7 +322,7 @@ function SourceOption({
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-center gap-2 font-bold text-ink-950">
+        <span className="flex flex-wrap items-center gap-2 font-semibold text-ink-950">
           {title}
           {badge && <Badge tone="green">{badge}</Badge>}
         </span>

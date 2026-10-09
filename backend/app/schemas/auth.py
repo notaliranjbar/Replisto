@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
@@ -52,6 +53,12 @@ class ShopOut(BaseModel):
     currency: str
     # The owner's panel language; the panel keeps it in sync.
     language: Literal["en", "ar"]
+    # The owner's time zone (IANA name, from the browser).
+    timezone: str
+    # Comments: "off", "public", "private" (a DM to the commenter) or "both".
+    comment_mode: Literal["off", "public", "private", "both"]
+    comment_thank_praise: bool
+    comment_hide_spam: bool
 
 
 class ShopUpdate(BaseModel):
@@ -64,6 +71,21 @@ class ShopUpdate(BaseModel):
     handoff_pause_minutes: int | None = Field(default=None, ge=0, le=7 * 24 * 60)
     currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
     language: Literal["en", "ar"] | None = None
+    timezone: str | None = Field(default=None, min_length=1, max_length=40)
+    comment_mode: Literal["off", "public", "private", "both"] | None = None
+    comment_thank_praise: bool | None = None
+    comment_hide_spam: bool | None = None
+
+    @field_validator("timezone")
+    @classmethod
+    def _known_zone(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError):
+            raise ValueError("unknown time zone") from None
+        return value
 
 
 class UserOut(BaseModel):

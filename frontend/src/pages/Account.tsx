@@ -51,13 +51,13 @@ export default function Account() {
       <div className="space-y-6">
         <Card className="animate-pop-in overflow-hidden">
           <div className="flex flex-wrap items-center gap-5 p-5 sm:p-6">
-            <span aria-hidden className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-2xl font-extrabold text-white shadow-md shadow-brand-600/25">
+            <span aria-hidden className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-2xl font-semibold tracking-tight text-white shadow-md shadow-brand-600/25">
               {initial}
             </span>
             <div className="min-w-0 flex-1">
-              {me.full_name && <div className="truncate text-lg font-extrabold text-ink-950">{me.full_name}</div>}
+              {me.full_name && <div className="truncate text-lg font-semibold tracking-tight text-ink-950">{me.full_name}</div>}
               <div className="ltr truncate text-sm font-medium text-slate-500">{me.email}</div>
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 ring-1 ring-brand-100">
                 <Store className="size-3.5" aria-hidden />
                 <span className="sr-only">{t.account.shop}: </span>
                 {me.shop.name}
@@ -190,7 +190,7 @@ function DeleteAccount() {
           <TriangleAlert />
         </IconChip>
         <div className="min-w-0 flex-1">
-          <h2 className="font-bold text-red-700">{t.account.deleteTitle}</h2>
+          <h2 className="font-semibold text-red-700">{t.account.deleteTitle}</h2>
           <p className="mt-1 text-sm leading-7 text-slate-600">{t.account.deleteDesc}</p>
         </div>
         <Button variant="danger" icon={<Trash className="size-4" />} onClick={() => setStep(1)}>

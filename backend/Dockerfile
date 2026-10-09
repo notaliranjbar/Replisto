@@ -15,7 +15,8 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 COPY . .
 
-RUN useradd --create-home appuser && chown -R appuser /app
+# media/ holds scheduled story files (a volume in docker-compose.yml).
+RUN useradd --create-home appuser && mkdir -p /app/media && chown -R appuser /app
 USER appuser
 
 EXPOSE 8000

@@ -15,13 +15,16 @@ from app.api.routes import (
     account,
     auth,
     billing,
+    comments,
     conversations,
     dashboard,
     health,
+    insights,
     instagram,
     knowledge,
     products,
     site,
+    stories,
     teach,
     webhooks,
 )
@@ -95,8 +98,12 @@ def create_app() -> FastAPI:
         dashboard,
         billing,
         site,
+        comments,
+        stories,
+        insights,
     ):
         app.include_router(module.router, prefix=api_prefix)
+    app.include_router(stories.media_router, prefix=api_prefix)
     return app
 
 

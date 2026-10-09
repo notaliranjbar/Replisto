@@ -1,18 +1,29 @@
 @import "tailwindcss";
-@import "@fontsource-variable/plus-jakarta-sans";
-@import "@fontsource-variable/rubik";
+@import "@fontsource-variable/inter";
+@import "@fontsource/ibm-plex-sans-arabic/400.css";
+@import "@fontsource/ibm-plex-sans-arabic/500.css";
+@import "@fontsource/ibm-plex-sans-arabic/600.css";
+@import "@fontsource/ibm-plex-sans-arabic/700.css";
 
 /*
- * Replisto design tokens.
+ * Replisto design tokens: a calm, professional look.
  *
- * brand   deep teal; 600 is the primary (white text on it: 4.9:1). Lighter steps are tints for
- *         surfaces, darker for hover and text.
- * ink     a green-tinted near-black for headings and dark surfaces.
- * accent  warm coral, the teal's complement: a highlighter on teal/ink, used sparingly.
+ * brand   cobalt blue; 600 is the primary (white text on it: 6.4:1). Lighter steps are tints
+ *         for selected states and backgrounds, darker for hover and links.
+ * ink     navy-tinted near-black for headings, the sidebar and dark bands.
+ * accent  amber, used sparingly (small highlights on navy).
  * status  success = emerald, warning = amber, error = red (Tailwind defaults).
  * neutral slate: text 800/600/500, borders 200, page 50.
  *
- * Type: Plus Jakarta Sans for Latin, Rubik for Arabic (the browser picks per character).
+ * Shape: small radii and hairline borders with faint shadows (crisp, not bubbly).
+ * Type: Inter for Latin, IBM Plex Sans Arabic for Arabic (the browser picks per character);
+ * headings are semibold with tight tracking.
+ *
+ * Colour follows 60-30-10: neutrals (white, canvas) cover most of a screen, navy (`night`, `ink`)
+ * is the secondary for text and dark bands, and cobalt (`brand`) is the single accent for
+ * actions and highlights. Gradients only join neighbouring hues (cobalt to indigo), are mixed
+ * in OKLCH so the middle stays clean, run in the reading direction, and mark one thing per
+ * screen.
  *
  * Light/dark: components use these tokens as-is; `.dark` on <html> (see theme.tsx) swaps the
  * values of the neutrals, the text inks, the tints and the status shades further down. Colours
@@ -21,48 +32,53 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "Plus Jakarta Sans Variable", "Rubik Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
 
-  --color-brand-50: #effaf8;
-  --color-brand-100: #d2f2ec;
-  --color-brand-200: #a5e5d9;
-  --color-brand-300: #6dd0c0;
-  --color-brand-400: #34b3a1;
-  --color-brand-500: #149887;
-  --color-brand-600: #0d7d70;
-  --color-brand-700: #0f655c;
-  --color-brand-800: #11514b;
-  --color-brand-900: #12433f;
-  --color-brand-950: #042825;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 1rem;
 
-  --color-ink-700: #33413f;
-  --color-ink-800: #1f2b2a;
-  --color-ink-900: #121c1b;
-  --color-ink-950: #0a1211;
+  --color-brand-50: #eff4ff;
+  --color-brand-100: #dce6fe;
+  --color-brand-200: #bfd1fd;
+  --color-brand-300: #93b1fb;
+  --color-brand-400: #6087f7;
+  --color-brand-500: #3b63f1;
+  --color-brand-600: #2548e0;
+  --color-brand-700: #1e39c2;
+  --color-brand-800: #1f339b;
+  --color-brand-900: #1f307a;
+  --color-brand-950: #172049;
+
+  --color-ink-700: #344054;
+  --color-ink-800: #1d2939;
+  --color-ink-900: #101828;
+  --color-ink-950: #0b1220;
 
   /* fixed darks for surfaces that stay dark in both themes */
-  --color-night-800: #1a2726;
-  --color-night-900: #0f1918;
-  --color-night-950: #081110;
+  --color-night-800: #1c2638;
+  --color-night-900: #111a2b;
+  --color-night-950: #0a1120;
   /* primary button hover, fixed in both themes */
-  --color-brand-deep: #0f655c;
+  --color-brand-deep: #1e39c2;
 
-  /* the panel's page background: white with a breath of teal */
-  --color-canvas: #f4f8f7;
+  /* the panel's page background: a quiet cool grey */
+  --color-canvas: #f6f7f9;
   /* cards, inputs, menus */
   --color-surface: #ffffff;
   /* hairline rings around cards, and the faint fill behind tabs/tracks */
-  --color-line: rgb(10 18 17 / 0.07);
-  --color-fill: rgb(10 18 17 / 0.05);
+  --color-line: rgb(16 24 40 / 0.09);
+  --color-fill: rgb(16 24 40 / 0.05);
 
-  --color-accent-200: #ffe2d6;
-  --color-accent-300: #ffc4ad;
-  --color-accent-400: #ff9b78;
-  --color-accent-500: #f2734b;
+  --color-accent-200: #fdecc0;
+  --color-accent-300: #fbd87f;
+  --color-accent-400: #f5bd45;
+  --color-accent-500: #d99a17;
 
-  --shadow-soft: 0 1px 2px rgb(4 40 37 / 0.05), 0 4px 16px -4px rgb(4 40 37 / 0.08);
-  --shadow-lift: 0 2px 4px rgb(4 40 37 / 0.06), 0 16px 40px -12px rgb(4 40 37 / 0.22);
-  --shadow-float: 0 1px 1px rgb(10 18 17 / 0.08), 0 24px 64px -20px rgb(10 18 17 / 0.45);
+  --shadow-soft: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow-lift: 0 1px 3px rgb(16 24 40 / 0.08), 0 12px 32px -12px rgb(16 24 40 / 0.18);
+  --shadow-float: 0 1px 2px rgb(16 24 40 / 0.08), 0 32px 64px -24px rgb(16 24 40 / 0.35);
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -104,39 +120,39 @@
 
 /*
  * Dark theme: the same token names with night values. Neutrals and inks invert, tints become
- * deep teal/red/amber/green washes, and the text shades of those hues lighten to stay legible.
+ * deep blue/red/amber/green washes, and the text shades of those hues lighten to stay legible.
  */
 .dark {
   color-scheme: dark;
 
-  --color-canvas: #0a1110;
-  --color-surface: #121b1a;
-  --color-line: rgb(255 255 255 / 0.08);
+  --color-canvas: #0b111c;
+  --color-surface: #111827;
+  --color-line: rgb(255 255 255 / 0.09);
   --color-fill: rgb(255 255 255 / 0.06);
 
-  --color-slate-50: #172221;
-  --color-slate-100: #1d2a29;
-  --color-slate-200: #273634;
-  --color-slate-300: #344543;
-  --color-slate-400: #64787a;
-  --color-slate-500: #8a9c9d;
-  --color-slate-600: #a8b7b7;
-  --color-slate-700: #c5d1d0;
-  --color-slate-800: #dce5e4;
-  --color-slate-900: #eef3f2;
+  --color-slate-50: #151e2e;
+  --color-slate-100: #1a2435;
+  --color-slate-200: #253046;
+  --color-slate-300: #334059;
+  --color-slate-400: #66728a;
+  --color-slate-500: #8b96ab;
+  --color-slate-600: #a9b2c4;
+  --color-slate-700: #c6cdda;
+  --color-slate-800: #dde2ea;
+  --color-slate-900: #eef1f5;
 
-  --color-ink-700: #a5b6b4;
-  --color-ink-800: #cfdbda;
-  --color-ink-900: #e6eeed;
-  --color-ink-950: #f4f8f7;
+  --color-ink-700: #a9b2c4;
+  --color-ink-800: #d0d6e1;
+  --color-ink-900: #e7ebf1;
+  --color-ink-950: #f5f7fa;
 
-  --color-brand-50: #0f2a27;
-  --color-brand-100: #123632;
-  --color-brand-200: #17483f;
-  --color-brand-300: #1f6a5f;
-  --color-brand-700: #6fd9c7;
-  --color-brand-800: #a2e8db;
-  --color-brand-900: #cdf3ec;
+  --color-brand-50: #141f3d;
+  --color-brand-100: #19274d;
+  --color-brand-200: #22356a;
+  --color-brand-300: #3350a3;
+  --color-brand-700: #9db6ff;
+  --color-brand-800: #c2d2ff;
+  --color-brand-900: #dde6ff;
 
   --color-red-50: #2a1418;
   --color-red-100: #3a1a20;
@@ -159,9 +175,9 @@
   --color-emerald-800: #a7f3d0;
   --color-emerald-900: #d1fae5;
 
-  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 16px -4px rgb(0 0 0 / 0.45);
-  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.35), 0 16px 40px -12px rgb(0 0 0 / 0.7);
-  --shadow-float: 0 1px 1px rgb(0 0 0 / 0.4), 0 24px 64px -20px rgb(0 0 0 / 0.85);
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-lift: 0 1px 3px rgb(0 0 0 / 0.35), 0 12px 32px -12px rgb(0 0 0 / 0.6);
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 32px 64px -24px rgb(0 0 0 / 0.8);
 }
 
 /* Switching themes cross-fades colours instead of flashing (skipped for reduced motion). */
@@ -180,16 +196,16 @@
 }
 
 /*
- * Scrollbars: a slim teal-tinted thumb on a clear track, rounded, brighter on hover.
+ * Scrollbars: a slim grey thumb on a clear track, rounded, brighter on hover.
  * `scrollbar-color` covers Firefox and current Chrome/Edge; the ::-webkit rules cover Safari.
  */
 :root {
-  --scroll-thumb: #b9ddd6;
-  --scroll-thumb-hover: #34b3a1;
+  --scroll-thumb: #cdd3dd;
+  --scroll-thumb-hover: #98a2b3;
 }
 .dark {
-  --scroll-thumb: #22403c;
-  --scroll-thumb-hover: #1f6a5f;
+  --scroll-thumb: #2a3448;
+  --scroll-thumb-hover: #45526b;
 }
 /* on the always-dark sidebar and footer */
 .scroll-dark {
@@ -301,27 +317,49 @@ body {
    * negative letter-spacing (it breaks letter joining), so tracking is tightened for English only.
    */
   .t-display {
-    font-size: clamp(2.25rem, 1.35rem + 3.9vw, 4.25rem);
-    line-height: 1.28;
-    font-weight: 850;
+    font-size: clamp(2.125rem, 1.4rem + 3.2vw, 3.75rem);
+    line-height: 1.3;
+    font-weight: 650;
   }
   .t-h2 {
-    font-size: clamp(1.75rem, 1.3rem + 1.9vw, 2.75rem);
+    font-size: clamp(1.625rem, 1.3rem + 1.4vw, 2.375rem);
     line-height: 1.35;
-    font-weight: 800;
+    font-weight: 650;
   }
   .t-h3 {
-    font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
-    line-height: 1.5;
-    font-weight: 750;
+    font-size: clamp(1.1875rem, 1.1rem + 0.4vw, 1.375rem);
+    line-height: 1.45;
+    font-weight: 600;
   }
   .t-lead {
     font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
     line-height: 1.95;
   }
-  :lang(en) .t-display { letter-spacing: -0.018em; line-height: 1.1; }
-  :lang(en) .t-h2 { letter-spacing: -0.012em; line-height: 1.18; }
-  :lang(en) .t-h3 { letter-spacing: -0.01em; line-height: 1.35; }
+  :lang(en) .t-display { letter-spacing: -0.035em; line-height: 1.06; }
+  :lang(en) .t-h2 { letter-spacing: -0.025em; line-height: 1.15; }
+
+  /* The highlighted phrase: filled with the site's one gradient, cobalt to indigo. */
+  .t-accent {
+    --accent-from: #2548e0;
+    --accent-to: #6d3ff0;
+    color: var(--accent-from);
+    background-image: linear-gradient(90deg, var(--accent-from), var(--accent-to));
+    background-image: linear-gradient(90deg in oklch, var(--accent-from), var(--accent-to));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* room for the last letter's overhang, so it isn't clipped */
+    padding-inline-end: 0.04em;
+  }
+  [dir="rtl"] .t-accent {
+    background-image: linear-gradient(270deg, var(--accent-from), var(--accent-to));
+    background-image: linear-gradient(270deg in oklch, var(--accent-from), var(--accent-to));
+  }
+  .dark .t-accent {
+    --accent-from: #7f9cff;
+    --accent-to: #b49bff;
+  }
+  :lang(en) .t-h3 { letter-spacing: -0.015em; line-height: 1.35; }
   :lang(en) .t-lead { line-height: 1.65; }
 
   /* Site container: fluid gutters, 16px minimum on phones */
@@ -333,23 +371,13 @@ body {
   }
 }
 
-/* Hand-drawn underline under the hero's key word (an SVG path with pathLength="1") */
-.draw-in {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: draw 0.9s var(--ease-out-soft) 0.6s forwards;
-}
-@keyframes draw {
-  to { stroke-dashoffset: 0; }
-}
-
 /* Scroll reveal (see components/site/motion.tsx). Only transform/opacity: GPU-cheap. */
 .reveal {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(8px);
   transition:
-    opacity 0.7s var(--ease-out-soft),
-    transform 0.7s var(--ease-out-soft);
+    opacity 0.5s var(--ease-out-soft),
+    transform 0.5s var(--ease-out-soft);
   transition-delay: var(--reveal-delay, 0ms);
 }
 .reveal.is-in {
@@ -379,12 +407,6 @@ body {
   dialog[open]::backdrop {
     animation: var(--animate-fade-in);
   }
-}
-
-/* Subtle dot texture for brand-coloured surfaces */
-.dot-grid {
-  background-image: radial-gradient(rgb(255 255 255 / 0.13) 1px, transparent 1.2px);
-  background-size: 22px 22px;
 }
 
 /* a short ring of the bell on the "customers waiting" card */
@@ -418,9 +440,6 @@ body {
     opacity: 1;
     transform: none;
   }
-  .draw-in {
-    stroke-dashoffset: 0;
-  }
 }
 
 /*
@@ -433,4 +452,12 @@ body {
   select {
     font-size: 16px;
   }
+}
+
+/* Fine line grid behind the site hero */
+.line-grid {
+  background-image:
+    linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+  background-size: 48px 48px;
 }

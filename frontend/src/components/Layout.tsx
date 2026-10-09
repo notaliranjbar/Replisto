@@ -1,8 +1,10 @@
 import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import {
+  BarChart3,
   BellRing,
   BookOpen,
+  CalendarClock,
   Camera,
   FlaskConical,
   Gift,
@@ -12,6 +14,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MessageCircleMore,
   MessageCircleQuestion,
   Package,
   Settings,
@@ -34,8 +37,7 @@ type Item = { to: string; label: string; icon: ReactNode; badge?: number; badgeT
 type Group = { label?: string; items: Item[] };
 
 /**
- * The logged-in shell. Desktop: a dark ink sidebar (the site footer's colour) beside a softly
- * tinted canvas. Phones: a slim top bar, a bottom tab bar for the everyday screens and a drawer
+ * The logged-in shell. Desktop: a dark navy sidebar beside a light grey canvas. Phones: a slim top bar, a bottom tab bar for the everyday screens and a drawer
  * with everything else. Full-height pages size themselves with --chrome-top/--chrome-bottom.
  */
 export default function Layout() {
@@ -58,8 +60,16 @@ export default function Layout() {
       firstLang.current = lang;
       qc.invalidateQueries();
     }
-    if (me && me.shop.language !== lang) {
-      api("/shop", { method: "PATCH", json: { language: lang } })
+    // The browser's time zone: insights read "best hours to post" in the owner's local time.
+    let timezone: string | undefined;
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      timezone = undefined;
+    }
+    const zoneChanged = !!me && !!timezone && me.shop.timezone !== timezone;
+    if (me && (me.shop.language !== lang || zoneChanged)) {
+      api("/shop", { method: "PATCH", json: { language: lang, ...(zoneChanged ? { timezone } : {}) } })
         .then(() => qc.invalidateQueries({ queryKey: keys.me }))
         .catch(() => {
           // not important enough to bother the owner; retried on the next visit
@@ -84,7 +94,15 @@ export default function Layout() {
       items: [
         { to: "/handoffs", label: t.nav.handoffs, icon: <BellRing />, badge: dash?.open_handoffs },
         { to: "/inbox", label: t.nav.inbox, icon: <Inbox /> },
+        { to: "/comments", label: t.social.nav.comments, icon: <MessageCircleMore />, badge: dash?.social.comments_waiting },
         { to: "/unanswered", label: t.nav.unanswered, icon: <HelpCircle />, badge: dash?.last_7_days.open_unanswered, badgeTone: "neutral" },
+      ],
+    },
+    {
+      label: t.social.nav.groupGrow,
+      items: [
+        { to: "/stories", label: t.social.nav.stories, icon: <CalendarClock /> },
+        { to: "/insights", label: t.social.nav.insights, icon: <BarChart3 /> },
       ],
     },
     {
@@ -109,7 +127,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-dvh bg-canvas [--chrome-bottom:4.25rem] [--chrome-top:4rem] lg:flex lg:[--chrome-bottom:0rem] lg:[--chrome-top:0rem]">
-      <aside className="sticky top-0 hidden h-dvh w-[17.5rem] shrink-0 border-e border-slate-200 bg-surface lg:block">
+      <aside className="sticky top-0 hidden h-dvh w-[16.5rem] shrink-0 border-e border-white/[0.06] bg-night-950 lg:block">
         <Sidebar groups={groups} />
       </aside>
 
@@ -121,24 +139,24 @@ export default function Layout() {
           {giftWaiting && location.pathname !== "/" && (
             <Link
               to="/"
-              className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-ink-900 ring-1 ring-brand-100 transition-colors hover:bg-brand-100"
+              className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-ink-900 transition-colors hover:bg-brand-100"
             >
               <Gift className="size-5 shrink-0 text-brand-600" aria-hidden />
               <span className="min-w-0 flex-1">{t.launch.gift.banner(f.usd(gift.amount_cents))}</span>
-              <span className="font-bold text-brand-700">{t.launch.gift.bannerAction}</span>
+              <span className="font-semibold text-brand-700">{t.launch.gift.bannerAction}</span>
             </Link>
           )}
           {/* a brand-new shop has no credit yet: the gift banner/card says how to get it instead */}
           {dash?.wallet.enabled && dash.wallet.low_balance && !giftWaiting && location.pathname !== "/billing" && (
             <Link
               to="/billing"
-              className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200 transition-colors hover:bg-amber-100"
+              className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 transition-colors hover:bg-amber-100"
             >
               <Wallet className="size-5 shrink-0 text-amber-500" aria-hidden />
               <span className="min-w-0 flex-1">
                 {dash.wallet.balance_cents <= 0 ? t.launch.emptyBalance : t.launch.lowBalance(f.usd(dash.wallet.balance_cents))}
               </span>
-              <span className="font-bold">{t.launch.topUpNow}</span>
+              <span className="font-semibold">{t.launch.topUpNow}</span>
             </Link>
           )}
           <Suspense fallback={<PageLoading />}>
@@ -167,10 +185,10 @@ function Sidebar({ groups, onClose }: { groups: Group[]; onClose?: () => void })
   const botOn = dash?.setup.bot_enabled;
 
   return (
-    <div className="flex h-full flex-col text-ink-950">
-      <div className="flex h-[4.5rem] shrink-0 items-center justify-between px-5">
+    <div className="flex h-full flex-col text-white">
+      <div className="flex h-16 shrink-0 items-center justify-between px-5">
         <Link to="/" className="rounded-lg">
-          <Logo />
+          <Logo tone="dark" />
         </Link>
         {onClose && (
           <button
@@ -178,7 +196,7 @@ function Sidebar({ groups, onClose }: { groups: Group[]; onClose?: () => void })
             onClick={onClose}
             aria-label={t.panel.nav.closeMenu}
             data-autofocus
-            className="-me-2 inline-flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-fill hover:text-ink-950"
+            className="-me-2 inline-flex size-10 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/10 hover:text-white"
           >
             <X className="size-5" aria-hidden />
           </button>
@@ -186,21 +204,21 @@ function Sidebar({ groups, onClose }: { groups: Group[]; onClose?: () => void })
       </div>
 
       {/* which shop, and whether the bot is answering right now */}
-      <div className="mx-4 rounded-2xl bg-brand-50/60 p-3.5 ring-1 ring-brand-100">
-        <div className="truncate text-[15px] font-bold">{me?.shop.name ?? t.appName}</div>
-        <Link to="/settings" className="mt-1.5 inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition-colors hover:text-ink-950">
+      <div className="mx-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5">
+        <div className="truncate text-sm font-semibold">{me?.shop.name ?? t.appName}</div>
+        <Link to="/settings" className="mt-1 inline-flex items-center gap-2 text-xs font-medium text-white/55 transition-colors hover:text-white">
           <span className="relative flex size-2" aria-hidden>
             {botOn && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-60 [animation-duration:2s]" />}
-            <span className={cx("relative size-2 rounded-full", botOn ? "bg-emerald-400" : "bg-slate-300")} />
+            <span className={cx("relative size-2 rounded-full", botOn ? "bg-emerald-400" : "bg-white/30")} />
           </span>
           {dash ? (botOn ? t.nav.botOnShort : t.nav.botOffShort) : " "}
         </Link>
       </div>
 
-      <nav aria-label={t.panel.nav.main} className="mt-2 flex-1 overflow-y-auto px-3 pb-4">
+      <nav aria-label={t.panel.nav.main} className="scroll-dark mt-1 flex-1 overflow-y-auto px-3 pb-4">
         {groups.map((g, i) => (
           <div key={i} className="mt-4">
-            {g.label && <div className="mb-1.5 px-3 text-[11px] font-bold text-slate-400">{g.label}</div>}
+            {g.label && <div className="mb-1 px-3 text-[11px] font-medium uppercase tracking-wider text-white/40">{g.label}</div>}
             <ul className="space-y-0.5">
               {g.items.map((it) => (
                 <li key={it.to}>
@@ -209,17 +227,17 @@ function Sidebar({ groups, onClose }: { groups: Group[]; onClose?: () => void })
                     end={it.end}
                     className={({ isActive }) =>
                       cx(
-                        "flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-[background-color,color,box-shadow] duration-200",
-                        "[&>svg]:size-[18px] [&>svg]:shrink-0 [&>svg]:transition-transform [&>svg]:duration-200",
+                        "relative flex h-9 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-150",
+                        "[&>svg]:size-[18px] [&>svg]:shrink-0",
                         isActive
-                          ? "bg-brand-600 text-white shadow-md shadow-brand-600/25"
-                          : "text-slate-600 hover:bg-fill hover:text-ink-950 hover:[&>svg]:scale-110",
+                          ? "bg-white/10 text-white before:absolute before:inset-y-2 before:start-0 before:w-[3px] before:rounded-e before:bg-brand-400 rtl:before:rounded-e-none rtl:before:rounded-s [&>svg]:text-brand-300"
+                          : "text-white/65 hover:bg-white/[0.06] hover:text-white",
                       )
                     }
                   >
                     {it.icon}
                     <span className="flex-1 truncate">{it.label}</span>
-                    {it.tag && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{it.tag}</span>}
+                    {it.tag && <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-white/60">{it.tag}</span>}
                     {!!it.badge && <CountBadge count={f.num(it.badge)} tone={it.badgeTone} />}
                   </NavLink>
                 </li>
@@ -229,12 +247,12 @@ function Sidebar({ groups, onClose }: { groups: Group[]; onClose?: () => void })
         ))}
       </nav>
 
-      <div className="shrink-0 space-y-0.5 border-t border-slate-200 p-3 text-sm">
-        <ThemeToggle label className="h-10 w-full rounded-xl px-3 font-medium text-slate-600 hover:bg-fill hover:text-ink-950" />
+      <div className="shrink-0 space-y-0.5 border-t border-white/10 p-3 text-sm">
+        <ThemeToggle label className="h-9 w-full rounded-md px-3 font-medium text-white/65 hover:bg-white/[0.06] hover:text-white" />
         <button
           type="button"
           onClick={toggleLang}
-          className="flex h-10 w-full items-center gap-3 rounded-xl px-3 font-medium text-slate-600 transition-colors hover:bg-fill hover:text-ink-950"
+          className="flex h-9 w-full items-center gap-3 rounded-md px-3 font-medium text-white/65 transition-colors hover:bg-white/[0.06] hover:text-white"
         >
           <Languages className="size-[18px]" aria-hidden />
           <span lang={otherLang(lang)}>{t.otherLang}</span>
@@ -242,12 +260,12 @@ function Sidebar({ groups, onClose }: { groups: Group[]; onClose?: () => void })
         <button
           type="button"
           onClick={logout}
-          className="flex h-10 w-full items-center gap-3 rounded-xl px-3 font-medium text-slate-600 transition-colors hover:bg-fill hover:text-ink-950"
+          className="flex h-9 w-full items-center gap-3 rounded-md px-3 font-medium text-white/65 transition-colors hover:bg-white/[0.06] hover:text-white"
         >
           <LogOut className="size-[18px] rtl:-scale-x-100" aria-hidden />
           {t.common.logout}
         </button>
-        <Link to="/privacy" className="block px-3 pt-2 text-xs text-slate-400 transition-colors hover:text-slate-600">
+        <Link to="/privacy" className="block px-3 pt-2 text-xs text-white/40 transition-colors hover:text-white/70">
           {t.nav.legal}
         </Link>
       </div>
@@ -261,9 +279,9 @@ function MobileTopBar({ onMenu, alert }: { onMenu: () => void; alert: boolean })
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200/80 bg-surface/90 px-4 backdrop-blur-md lg:hidden">
       <Link to="/" aria-label={t.landing.nav.home} className="rounded-lg">
-        <LogoMark px={34} />
+        <LogoMark px={30} />
       </Link>
-      <span dir="auto" className="min-w-0 flex-1 truncate text-start font-bold text-ink-950">
+      <span dir="auto" className="min-w-0 flex-1 truncate text-start font-semibold text-ink-950">
         {me?.shop.name ?? t.appName}
       </span>
       <ThemeToggle className="size-11 justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-ink-950" />
@@ -290,7 +308,7 @@ function BottomTabs({ handoffs, onMore }: { handoffs?: number; onMore: () => voi
     { to: "/inbox", label: N.inbox, icon: <Inbox /> },
     { to: "/playground", label: N.test, icon: <FlaskConical /> },
   ];
-  const cls = "relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-bold transition-colors [&>svg]:size-[22px]";
+  const cls = "relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors [&>svg]:size-[21px]";
   return (
     <nav
       aria-label={N.main}
@@ -304,8 +322,7 @@ function BottomTabs({ handoffs, onMore }: { handoffs?: number; onMore: () => voi
           className={({ isActive }) =>
             cx(
               cls,
-              "before:absolute before:top-0 before:h-[3px] before:w-8 before:rounded-b-full before:bg-brand-600 before:transition-transform before:duration-300",
-              isActive ? "text-brand-700 before:scale-x-100" : "text-slate-500 before:scale-x-0 hover:text-ink-900",
+              isActive ? "text-brand-600 dark:text-brand-700" : "text-slate-500 hover:text-ink-900",
             )
           }
         >
@@ -348,7 +365,7 @@ function Drawer({ open, onClose, groups }: { open: boolean; onClose: () => void;
       className="m-0 h-dvh max-h-none w-full max-w-none bg-transparent p-0 open:animate-none backdrop:bg-night-950/50 lg:hidden"
     >
       {open && (
-        <aside className="animate-sheet-in h-full w-[18rem] max-w-[85%] bg-surface shadow-float">
+        <aside className="animate-sheet-in h-full w-[18rem] max-w-[85%] bg-night-950 shadow-float">
           <Sidebar groups={groups} onClose={onClose} />
         </aside>
       )}

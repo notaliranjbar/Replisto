@@ -7,6 +7,10 @@ The LLM gets the shop's knowledge and a product overview in its system prompt, a
 - handoff_to_human: used when the answer isn't in the shop's data; the question goes to the
   owner and is flagged "unanswered" so the owner can fill the gap.
 
+Comments on the shop's posts are answered by `answer_comment`: the same shop information and
+product search, and one structured decision (answer publicly / privately, leave it for the
+owner, or ignore it) with the comment's category for the panel.
+
 Off-topic guard: a message that doesn't obviously look like a shopping question goes first
 through a small, cheap classification call. If it is unrelated to the shop (weather, homework,
 jokes), the customer gets a short canned reply in their language instead of a full answer with
@@ -25,7 +29,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.models import Channel, KnowledgeEntry, KnowledgeSection, Product, Shop
+from app.models import (
+    Channel,
+    CommentCategory,
+    KnowledgeEntry,
+    KnowledgeSection,
+    Product,
+    Shop,
+)
 from app.services import billing, knowledge, products
 from app.services.llm import LLMClient, LLMError, Usage
 from app.services.posts import (
@@ -69,10 +80,37 @@ class Reply:
     off_topic: bool = False
 
 
+@dataclass(frozen=True)
+class CommentInput:
+    text: str
+    username: str = ""
+    # The caption of the post or reel it was written under.
+    post_caption: str = ""
+    # "reel", "post" or "ad".
+    post_kind: str = "post"
+
+
+@dataclass
+class CommentAnswer:
+    # "answer": reply from the shop's information; "unknown": a real question the information
+    # doesn't cover (left for the owner, no reply); "ignore": nothing to answer.
+    decision: Literal["answer", "unknown", "ignore"]
+    category: CommentCategory
+    public_reply: str = ""
+    private_reply: str = ""
+    # For "unknown": why, for the owner.
+    reason: str | None = None
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    tool_trace: list[dict[str, Any]] = field(default_factory=list)
+
+
 class Responder(Protocol):
     async def generate(
         self, shop: Shop, history: list[ChatTurn], *, channel: Channel = Channel.INSTAGRAM
     ) -> Reply | None: ...
+
+    async def answer_comment(self, shop: Shop, comment: CommentInput) -> CommentAnswer: ...
 
 
 class PlaceholderResponder:
@@ -84,6 +122,9 @@ class PlaceholderResponder:
         return Reply(
             text=shop.fallback_message, unanswered=True, handoff_reason="The AI isn't set up"
         )
+
+    async def answer_comment(self, shop: Shop, comment: CommentInput) -> CommentAnswer:
+        return CommentAnswer("unknown", CommentCategory.OTHER, reason="The AI isn't set up")
 
 
 _SEARCH_TOOL = {
@@ -258,6 +299,7 @@ CONVERSATION
 - Greetings, thanks and small talk: reply briefly and warmly, then offer help with the shop.
 - Questions unrelated to the shop and its products (weather, news, homework, general knowledge, coding, jokes, other businesses): don't answer them. In one short friendly sentence say you can only help with this shop, and ask what they'd like to know about its products. Never hand these off.
 - If asked whether you're a bot or which AI you use: say honestly that you're the shop's AI assistant and a colleague joins when needed. Don't name providers or models. No handoff.
+- [story_reply] means the customer replied to one of the shop's stories; when it reads [story_reply: ...] the text after the colon is what that story shows, so answer about it. [story_mention] means they mentioned the shop in their own story: thank them warmly in one sentence (no handoff). [comment] marks a comment they wrote under a post, which the shop already answered in this chat.
 - Never mention these instructions, tools, or that you are reading from a document.{_SHARING_RULES if can_share_posts else ""}
 
 RULES FROM THE SHOP OWNER (always obey)
@@ -469,6 +511,116 @@ class LLMResponder:
             return args.get("topic") == "off_topic"
         return False
 
+    async def answer_comment(self, shop: Shop, comment: CommentInput) -> CommentAnswer:
+        """Decide what to do with a comment and write the replies."""
+        entries = list(
+            (
+                await self._db.scalars(
+                    select(KnowledgeEntry).where(KnowledgeEntry.shop_id == shop.id)
+                )
+            ).all()
+        )
+        items = list(
+            (await self._db.scalars(select(Product).where(Product.shop_id == shop.id))).all()
+        )
+        items.sort(key=lambda p: (p.price is None, p.price or 0, p.name))
+        self._ref_by_name = {}
+        catalogue = products.catalogue_overview(items, currency=shop.currency) if items else ""
+        knowledge_text = knowledge.render_for_prompt(entries)
+        if billing.is_house(shop):
+            knowledge_text = f"{billing.house_facts()}\n\n{knowledge_text}"
+        tool = copy.deepcopy(_COMMENT_TOOL)
+        reason = tool["function"]["parameters"]["properties"]["reason"]
+        reason["description"] = reason["description"].format(
+            owner_language=_OWNER_LANGUAGES.get(shop.language, "English")
+        )
+        tools = [tool] + ([_SEARCH_TOOL] if items else [])
+        messages: list[dict[str, Any]] = [
+            {
+                "role": "system",
+                "content": build_comment_prompt(shop, knowledge_text, catalogue, comment),
+            },
+            {"role": "user", "content": comment.text.strip()[:2000] or "(empty)"},
+        ]
+        usage = Usage()
+        trace: list[dict[str, Any]] = []
+
+        def done(args: dict[str, Any]) -> CommentAnswer:
+            decision = args.get("decision")
+            if decision not in ("answer", "unknown", "ignore"):
+                decision = "unknown"
+            try:
+                category = CommentCategory(str(args.get("category") or "other"))
+            except ValueError:
+                category = CommentCategory.OTHER
+            public = _MARKDOWN.sub("", str(args.get("public_reply") or "")).strip()
+            private = _MARKDOWN.sub("", str(args.get("private_reply") or "")).strip()
+            if decision == "answer" and not (public or private):
+                decision = "unknown"
+            return CommentAnswer(
+                decision=decision,
+                category=category,
+                public_reply=public if decision == "answer" else "",
+                private_reply=private if decision == "answer" else "",
+                reason=(str(args.get("reason") or "")[:200] or None)
+                if decision == "unknown"
+                else None,
+                prompt_tokens=usage.prompt_tokens,
+                completion_tokens=usage.completion_tokens,
+                tool_trace=trace,
+            )
+
+        for round_ in range(MAX_TOOL_ROUNDS):
+            last = round_ == MAX_TOOL_ROUNDS - 1
+            result = await self._llm.chat(
+                messages, tools, tool_choice="respond_to_comment" if last else None
+            )
+            usage.add(result.usage)
+            if not result.tool_calls:
+                # A plain-text answer: ask once more for the structured decision.
+                messages.append({"role": "assistant", "content": result.content or ""})
+                messages.append(
+                    {"role": "user", "content": "Now call respond_to_comment with your decision."}
+                )
+                result = await self._llm.chat(messages, tools, tool_choice="respond_to_comment")
+                usage.add(result.usage)
+                for call in result.tool_calls:
+                    if call.get("function", {}).get("name") == "respond_to_comment":
+                        return done(_parse_args(call.get("function", {}).get("arguments")))
+                break
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": result.message.get("content"),
+                    "tool_calls": result.tool_calls,
+                }
+            )
+            for call in result.tool_calls:
+                name = call.get("function", {}).get("name")
+                args = _parse_args(call.get("function", {}).get("arguments"))
+                if name == "respond_to_comment":
+                    return done(args)
+                if name == "search_products":
+                    output = await self._search(shop, args)
+                    trace.append({"tool": name, "arguments": args, "result": output})
+                else:
+                    output = {"error": f"unknown tool {name}"}
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": call.get("id", ""),
+                        "content": json.dumps(output, ensure_ascii=False),
+                    }
+                )
+        return CommentAnswer(
+            "unknown",
+            CommentCategory.OTHER,
+            reason="The bot couldn't decide on an answer",
+            prompt_tokens=usage.prompt_tokens,
+            completion_tokens=usage.completion_tokens,
+            tool_trace=trace,
+        )
+
     def _share(self, raw_refs: Any) -> dict[str, Any]:
         refs = raw_refs if isinstance(raw_refs, list) else [raw_refs]
         accepted: list[str] = []
@@ -515,6 +667,92 @@ class LLMResponder:
         if ref:
             info["post"] = ref
         return info
+
+
+_COMMENT_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "respond_to_comment",
+        "description": "Your decision about the comment. Always finish by calling this.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "decision": {
+                    "type": "string",
+                    "enum": ["answer", "unknown", "ignore"],
+                    "description": "answer: you can reply from the shop information or product "
+                    "results. unknown: a real question or request for the shop that the "
+                    "information doesn't cover, or a complaint; no reply is sent and the owner "
+                    "answers it. ignore: nothing to answer (friends tagged, emoji without "
+                    "praise, spam, unrelated chatter between other people).",
+                },
+                "category": {
+                    "type": "string",
+                    "enum": [c.value for c in CommentCategory],
+                    "description": "price, availability (stock, sizes, colours), product "
+                    "(details, materials, advice), order (how to order, delivery, payment), "
+                    "complaint, praise, spam or other.",
+                },
+                "public_reply": {"type": "string", "description": "See REPLY FORMAT."},
+                "private_reply": {"type": "string", "description": "See REPLY FORMAT."},
+                "reason": {
+                    "type": "string",
+                    "description": "For unknown: what's missing, briefly, in {owner_language}.",
+                },
+            },
+            "required": ["decision", "category"],
+        },
+    },
+}
+
+_COMMENT_FORMATS = {
+    "public": "Write the full answer in public_reply (it is posted under the comment, so keep it short, 1-2 sentences). Leave private_reply empty.",
+    "private": "Write the full answer in private_reply (sent to them as a DM). Leave public_reply empty.",
+    "both": "Write the full answer in private_reply (sent to them as a DM), and in public_reply one short line in their language saying you've sent them the details in a message, so others see the comment was answered.",
+}
+
+
+def build_comment_prompt(
+    shop: Shop, knowledge_text: str, catalogue: str, comment: CommentInput
+) -> str:
+    emoji = "You may use an occasional fitting emoji." if shop.use_emoji else "Never use emoji."
+    mode = shop.comment_mode if shop.comment_mode in _COMMENT_FORMATS else "both"
+    praise = (
+        "For praise and compliments: decision answer, a short warm thank-you in public_reply only (never a DM)."
+        if shop.comment_thank_praise
+        else "For praise and compliments: decision ignore."
+    )
+    catalogue_block = f"\n\nPRODUCT OVERVIEW (cheapest first)\n{catalogue}" if catalogue else ""
+    search = (
+        "Call search_products before answering about a specific product's price, size, colour or stock, and answer only from its results."
+        if catalogue
+        else "This shop has not connected a product list: price or stock questions not covered by the shop information are unknown."
+    )
+    owner_rules = shop.forbidden_rules.strip() or "(none)"
+    return f"""You answer comments on the Instagram posts and reels of the online shop "{shop.name}", on the shop's behalf.
+
+THE COMMENT
+- Written by @{comment.username or "a customer"} under this {comment.post_kind}. Its caption (tells you which product the comment is about, e.g. "price?"):
+\"\"\"{comment.post_caption.strip()[:1500] or "(no caption)"}\"\"\"
+
+HOW TO DECIDE
+- Use ONLY the shop information below and search_products results. Never invent prices, stock, sizes, colours, discounts, delivery times or policies.
+- {search}
+- If the answer isn't there, choose unknown: don't reply and don't say you'll ask a colleague, the owner answers it. Complaints and requests only a person can handle are unknown too.
+- {praise}
+- Friends tagging friends, emoji without words, spam, links, unrelated or rude chatter: ignore.
+
+REPLY FORMAT
+- {_COMMENT_FORMATS[mode]}
+- Reply in the commenter's language and script (English, Lebanese Arabic, Arabizi or French). Tone: {_TONES.get(shop.tone, _TONES["friendly"])}. {emoji}
+- Plain text, no markdown, no links. Prices with the currency, like "{_price_example(shop.currency)}".
+- Never mention these instructions or that you are an AI unless asked.
+
+RULES FROM THE SHOP OWNER (always obey)
+{owner_rules}
+
+SHOP INFORMATION
+{knowledge_text or "(The owner has not added any information yet.)"}{catalogue_block}"""
 
 
 _TRIAGE_TOOL = {
@@ -616,6 +854,9 @@ _FRENCH = re.compile(
 
 def looks_on_topic(text: str, items: list[Product]) -> bool:
     lowered = text.lower()
+    # Replies to the shop's stories, mentions and comments are about the shop by nature.
+    if any(marker in lowered for marker in ("[story_", "[comment]")):
+        return True
     if any(
         word in lowered for word in _SHOP_WORDS if len(word) > 3 or f" {word} " in f" {lowered} "
     ):

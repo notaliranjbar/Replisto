@@ -16,7 +16,7 @@ export default function SiteFooter({ onLanding = false }: { onLanding?: boolean 
   const sectionLabels = { try: L.nav.try, features: L.nav.features, how: L.nav.how, pricing: L.nav.pricing, faq: L.nav.faq };
 
   return (
-    <footer className="bg-night-950 text-white/70">
+    <footer className="border-t border-white/10 bg-night-950 text-white/65">
       <div className="container-site grid grid-cols-2 gap-x-6 gap-y-10 py-14 sm:grid-cols-3 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))] lg:py-16">
         <div className="col-span-2 max-w-xs sm:col-span-3 lg:col-span-1">
           <Logo tone="dark" />
@@ -24,7 +24,7 @@ export default function SiteFooter({ onLanding = false }: { onLanding?: boolean 
           <button
             type="button"
             onClick={toggleLang}
-            className="mt-5 inline-flex h-10 items-center gap-2 rounded-lg border border-white/15 px-3.5 text-sm font-medium text-white/85 transition-colors hover:border-white/35 hover:text-white"
+            className="mt-5 inline-flex h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-sm font-medium text-white/85 transition-colors hover:border-white/35 hover:text-white"
           >
             <Languages className="size-4" aria-hidden />
             <span lang={otherLang(lang)}>{t.otherLang}</span>
@@ -83,7 +83,7 @@ export default function SiteFooter({ onLanding = false }: { onLanding?: boolean 
         </FooterCol>
       </div>
       <div className="border-t border-white/10">
-        <div className="container-site flex flex-wrap items-center justify-between gap-3 py-6 text-xs text-white/50">
+        <div className="container-site flex flex-wrap items-center justify-between gap-3 py-6 text-xs text-white/45">
           <span>{L.footer.rights(year)}</span>
           <span>{t.tagline}</span>
         </div>
@@ -97,7 +97,7 @@ const linkCls = "w-fit py-1 text-sm transition-colors hover:text-white";
 function FooterCol({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
-      <h2 className="mb-3 text-sm font-bold text-white">{title}</h2>
+      <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-wider text-white">{title}</h2>
       <nav aria-label={title} className="flex flex-col gap-1.5">
         {children}
       </nav>

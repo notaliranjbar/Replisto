@@ -84,6 +84,8 @@ export function makeFormat(lang: Lang, t: Dict) {
       return `${shortDay.format(d)}${lang === "ar" ? "،" : ","} ${time.format(d)}`;
     },
     time: (iso: string) => time.format(new Date(iso)),
+    /** "9 Oct" (a date-only "2026-10-09" is read as noon, so it never shifts a day). */
+    shortDay: (iso: string) => shortDay.format(new Date(iso.length === 10 ? `${iso}T12:00:00` : iso)),
     /** "3 minutes ago" */
     ago: (iso: string, now = Date.now()) => {
       const secs = (new Date(iso).getTime() - now) / 1000;

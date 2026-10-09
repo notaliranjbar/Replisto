@@ -103,7 +103,7 @@ function SourceStatus({ source, onChangeColumns, onReupload }: { source: Source;
           </span>
           <div className="min-w-0">
             <div className="text-xs font-semibold text-slate-500">{t.products.statusTitle}</div>
-            <div className="mt-0.5 font-bold text-ink-950">{isSheet ? t.products.kindSheet : t.products.kindFile}</div>
+            <div className="mt-0.5 font-semibold text-ink-950">{isSheet ? t.products.kindSheet : t.products.kindFile}</div>
             {isSheet && source.url && (
               <a href={source.url} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
                 {t.products.openSheet}
@@ -116,12 +116,12 @@ function SourceStatus({ source, onChangeColumns, onReupload }: { source: Source;
         <dl className="flex gap-8">
           <div>
             <dt className="text-xs font-semibold text-slate-500">{t.products.productCount}</dt>
-            <dd className="num mt-0.5 text-2xl font-extrabold text-ink-950">{f.num(source.product_count ?? 0)}</dd>
+            <dd className="num mt-0.5 text-2xl font-semibold tracking-tight text-ink-950">{f.num(source.product_count ?? 0)}</dd>
           </div>
           {source.last_synced_at && (
             <div>
               <dt className="text-xs font-semibold text-slate-500">{t.products.lastSync}</dt>
-              <dd className="mt-1.5 text-sm font-bold text-ink-900" title={f.dateTime(source.last_synced_at)}>
+              <dd className="mt-1.5 text-sm font-semibold text-ink-900" title={f.dateTime(source.last_synced_at)}>
                 {f.ago(source.last_synced_at)}
               </dd>
             </div>
@@ -248,7 +248,7 @@ function Catalogue({ onEdit }: { onEdit: (p: Product) => void }) {
       <div className="space-y-3 border-b border-slate-100 px-5 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-bold text-ink-950">{C.title}</h2>
+            <h2 className="font-semibold text-ink-950">{C.title}</h2>
             {summary.data && (
               <p className="num mt-0.5 text-sm text-slate-500">
                 {C.summary(f.num(summary.data.total), f.num(summary.data.in_stock), f.num(summary.data.out_of_stock))}
@@ -301,7 +301,7 @@ function Catalogue({ onEdit }: { onEdit: (p: Product) => void }) {
               <li key={p.id} className="flex flex-wrap items-center gap-x-1 gap-y-2 px-5 py-3.5 transition-colors hover:bg-brand-50/30 sm:gap-x-4 sm:px-6">
                 <button type="button" onClick={() => onEdit(p)} className="min-w-48 flex-1 basis-full text-start sm:basis-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-ink-950" dir="auto">
+                    <span className="font-semibold text-ink-950" dir="auto">
                       {p.name}
                     </span>
                     <Badge tone={p.origin === "sheet" ? "green" : p.origin === "manual" ? "neutral" : "brand"}>
@@ -318,7 +318,7 @@ function Catalogue({ onEdit }: { onEdit: (p: Product) => void }) {
                   </div>
                 </button>
                 {/* phones: price, stock and actions share one row under the name */}
-                <div className="num me-auto text-sm font-bold text-ink-950 sm:me-0 sm:w-32 sm:text-end">{p.price != null ? f.money(p.price, currency) : "—"}</div>
+                <div className="num me-auto text-sm font-semibold text-ink-950 sm:me-0 sm:w-32 sm:text-end">{p.price != null ? f.money(p.price, currency) : "—"}</div>
                 <div className="flex items-center justify-end gap-1 sm:w-36">
                   {p.editable && (
                     <Button
@@ -536,7 +536,7 @@ function ProductModal({ product, onClose }: { product: Product | "new" | null; o
         </div>
         {knows.length > 0 && (
           <div className="rounded-xl bg-brand-50/60 p-4 ring-1 ring-brand-100">
-            <div className="mb-2 text-xs font-bold text-brand-800">{C.botKnows}</div>
+            <div className="mb-2 text-xs font-semibold text-brand-800">{C.botKnows}</div>
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
               {knows.map(([k, v]) => (
                 <div key={k} className="contents">

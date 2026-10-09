@@ -45,25 +45,24 @@ export default function SiteHeader({ overHero = false }: { overHero?: boolean })
     <header
       className={cx(
         "sticky top-0 z-40 transition-[background-color,border-color,box-shadow] duration-300",
-        light ? "border-b border-transparent bg-brand-600" : "border-b border-slate-200/80 bg-surface/90 shadow-[0_1px_12px_-6px_rgb(35_15_79/0.12)] backdrop-blur-md",
+        light ? "border-b border-transparent bg-night-950" : "border-b border-slate-200 bg-surface/85 backdrop-blur-md",
       )}
     >
-      <div className="container-site flex h-16 items-center gap-4 lg:h-[4.5rem]">
+      <div className="container-site flex h-16 items-center gap-4">
         <Link to="/" aria-label={L.home} className="shrink-0 rounded-lg">
-          <Logo tone={light ? "dark" : "light"} markClassName={cx("transition-shadow", light && "ring-2 ring-white/25")} />
+          <Logo tone={light ? "dark" : "light"} />
         </Link>
 
         <nav aria-label={L.main} className="hidden flex-1 justify-center lg:flex">
-          <ul className="flex items-center gap-1">
+          <ul className="flex items-center gap-0.5">
             {sections.map((id) => (
               <li key={id}>
                 <SectionLink
                   id={id}
                   overHero={overHero}
                   className={cx(
-                    "relative rounded-lg px-3.5 py-2 text-[15px] font-medium transition-colors",
-                    "after:absolute after:inset-x-3.5 after:bottom-1 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:transition-transform after:duration-300 hover:after:scale-x-100",
-                    light ? "text-white/85 after:bg-accent-400 hover:text-white" : "text-slate-600 after:bg-brand-500 hover:text-ink-950",
+                    "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    light ? "text-white/75 hover:bg-white/10 hover:text-white" : "text-slate-600 hover:bg-fill hover:text-ink-950",
                   )}
                 >
                   {labels[id]}
@@ -196,7 +195,7 @@ function MobileMenu({
     >
       {open && (
         <div className="flex min-h-full flex-col">
-          <div className="container-site flex h-16 shrink-0 items-center justify-between border-b border-slate-100">
+          <div className="container-site flex h-16 shrink-0 items-center justify-between border-b border-slate-200">
             <Link to="/" onClick={close} aria-label={L.home} className="rounded-lg">
               <Logo />
             </Link>
@@ -219,7 +218,7 @@ function MobileMenu({
                     id={id}
                     overHero={overHero}
                     onClick={close}
-                    className="flex min-h-16 items-center justify-between text-xl font-bold transition-colors hover:text-brand-700"
+                    className="flex min-h-14 items-center justify-between text-lg font-medium transition-colors hover:text-brand-700"
                   >
                     {labels[id]}
                     <ArrowRight className="size-5 text-slate-300 rtl:-scale-x-100" aria-hidden />

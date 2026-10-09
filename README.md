@@ -1,6 +1,6 @@
 # Replisto
 
-**No customer goes unanswered.** Replisto is an AI assistant for online shops: it answers customers' Instagram direct messages using each shop's own information and products, and hands the conversation to the owner whenever it should. Owners teach it their products any way they like (text, files, photos, a Google link or a live Google Sheet) and pay for what they use from a prepaid wallet.
+**No customer goes unanswered.** Replisto is an AI assistant for online shops on Instagram: it answers customers' direct messages, story replies and comments using each shop's own information and products, and hands the conversation to the owner whenever it should. It also publishes the stories the owner schedules and reads the page's insights, with an AI content assistant that turns them into ideas, captions and a weekly plan. Owners teach it their products any way they like (text, files, photos, a Google link or a live Google Sheet) and pay for what they use from a prepaid wallet.
 
 Replisto launches in **Lebanon**: prices in US dollars (or lira), wallet top-ups by Whish Money or OMT, Lebanese mobile numbers, Lebanese law in the terms and privacy policy, and a bot that answers Lebanese Arabic, Arabizi ("kifak, 3endkon...?"), French and English in the language and script the customer uses.
 
@@ -82,6 +82,32 @@ uv run python -m scripts.simulate dm --echo --text "Yes, it's in stock!"
 ```
 
 The first command attaches a fake Instagram account to the shop and turns the bot on. The second sends three quick customer messages (the bot answers them **once**). The third acts as the owner replying by hand, which pauses the bot for that customer.
+
+A comment under a post (the caption tells the bot which product "how much?" is about):
+
+```bash
+uv run python -m scripts.simulate comment --text "How much is this?" --caption "Linen dress, \$49.90"
+```
+
+With `INSTAGRAM_DRY_RUN=true` nothing reaches Instagram: replies, private replies and published stories are logged instead.
+
+## Instagram: messages, comments, stories and insights
+
+The Meta app uses the **Instagram API with Instagram Login** and asks for five permissions, each with a screen in the panel that shows it at work:
+
+| Permission | What it's for | Panel |
+| --- | --- | --- |
+| `instagram_business_basic` | the account's profile and posts | Instagram |
+| `instagram_business_manage_messages` | answering DMs, story replies and story mentions | Inbox, Waiting for you |
+| `instagram_business_manage_comments` | answering comments publicly or by private reply, hiding spam | Comments |
+| `instagram_business_content_publish` | publishing the stories the owner schedules | Stories |
+| `instagram_business_manage_insights` | the page's numbers and the content assistant | Insights |
+
+In the App Dashboard, subscribe the webhook to the **messages** and **comments** fields. Accounts connected before a permission existed see a "Reconnect" button on the page that needs it.
+
+- **Comments.** Each shop chooses how the bot answers: under the comment, by private message to the commenter, or both (the answer by DM and a short public note). What the shop's information doesn't cover gets **no reply**: it waits in the panel, sorted by category (price, stock, ordering, complaint...). Emoji-only praise gets a heart without an AI call; friends tagging friends are skipped; spam can be hidden automatically. A private reply also lands in the commenter's DM thread, so the bot keeps the context when they answer there. "Try a comment" in the panel shows what the bot would do, without posting or charging.
+- **Stories.** The owner uploads a photo (converted to JPEG) or an MP4/MOV video and picks a time; the worker publishes due stories every minute. Instagram downloads the file from an unguessable URL under `PUBLIC_BASE_URL/api/v1/media/`, so the API must be reachable over HTTPS; files live in `MEDIA_DIR` (a Docker volume) and are deleted 30 days after publishing. The owner's note about each story is what the bot reads when someone replies to it.
+- **Insights.** Read daily (and on demand): profile counts, this week against last week, 30-day reach and new followers, and every recent post's numbers. The panel shows what works (format, best days and hours in the owner's time zone, hashtags, top posts). The content assistant's report and chat are paid from the wallet like any answer.
 
 ## Wallet and payments
 
@@ -181,7 +207,8 @@ backend/
     models/      database tables
     schemas/     API input/output models
     api/routes/  endpoints
-    services/    the core: Instagram, webhooks, messaging, AI, knowledge, products, billing
+    services/    the core: Instagram, webhooks, messaging, comments, stories, insights, AI,
+                 knowledge, products, billing
     worker.py    background jobs (arq + Redis)
   alembic/       database migrations
   scripts/       demo data, DM simulator, LLM checks, wallet, OpenAPI export
