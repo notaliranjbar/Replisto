@@ -46,6 +46,24 @@ async def get_signed_in_user(
 SignedInUser = Annotated[User, Depends(get_signed_in_user)]
 
 
+async def get_optional_user(
+    db: DbSession,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+) -> User | None:
+    """The signed-in user if a valid token came with the request; otherwise a guest (None)."""
+    if credentials is None:
+        return None
+    try:
+        user_id = decode_token(credentials.credentials, "access")
+    except TokenError:
+        return None
+    user = await db.get(User, user_id)
+    return user if user is not None and user.is_active else None
+
+
+OptionalUser = Annotated[User | None, Depends(get_optional_user)]
+
+
 async def get_current_user(user: SignedInUser) -> User:
     if get_settings().require_verified_email and user.email_verified_at is None:
         raise HTTPException(

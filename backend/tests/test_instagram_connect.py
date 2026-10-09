@@ -59,6 +59,13 @@ async def test_connect_flow(
     assert status["connected"] and status["active"]
     assert status["username"] == "layla.boutique"
     assert status["ig_user_id"] == fake_meta.ig_user_id
+    # Meta didn't list the granted permissions: everything the consent screen asked for.
+    assert status["features"] == {
+        "messages": True,
+        "comments": True,
+        "stories": True,
+        "insights": True,
+    }
 
     account = await db.scalar(select(InstagramAccount))
     assert account is not None
@@ -73,6 +80,7 @@ async def test_connect_flow(
         "username": None,
         "ig_user_id": None,
         "token_expires_at": None,
+        "features": None,
     }
 
 

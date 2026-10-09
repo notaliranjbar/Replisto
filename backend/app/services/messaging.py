@@ -37,6 +37,7 @@ from app.models import (
     InstagramAccount,
     Message,
     MessageSender,
+    ScheduledStory,
     Shop,
 )
 from app.services import billing
@@ -45,13 +46,13 @@ from app.services.instagram import InstagramClient, InstagramError
 from app.services.llm import LLMError
 from app.services.notify import Notifier, NullNotifier
 from app.services.posts import POST_MARKER, PostLink, post_key
-from app.services.responder import ChatTurn, Responder
+from app.services.responder import ChatTurn, Responder, looks_on_topic
 from app.services.webhook import MessagingEvent
 
 logger = logging.getLogger(__name__)
 
 HISTORY_LIMIT = 20
-CHANNEL_NAMES = {Channel.INSTAGRAM: "Instagram"}
+CHANNEL_NAMES = {Channel.INSTAGRAM: "Instagram", Channel.WEB: "the website"}
 EMPTY_WALLET_REASON = "The Replisto wallet is empty"
 
 
@@ -93,11 +94,14 @@ async def handle_event(
     if conversation.customer_username is None and instagram is not None:
         await _lookup_username(db, conversation, account, instagram)
 
+    text = event.display_text
+    if event.story_id:
+        text = await _with_story_note(db, shop.id, event.story_id, text)
     await record_customer_message(
         db,
         conversation,
         external_id=event.mid,
-        text=event.display_text,
+        text=text,
         at=event.timestamp,
         queue=queue,
         debounce_seconds=debounce_seconds,
@@ -244,6 +248,15 @@ async def reply_to_conversation(
         await _answer_with_empty_wallet(db, shop, conversation, history, sender, notifier)
         return
 
+    streak = _off_topic_streak(history)
+    if streak >= get_settings().off_topic_max_replies > 0 and not looks_on_topic(
+        _latest_customer_text(history), []
+    ):
+        # Already told twice that the bot only helps with the shop: stay quiet, no AI call,
+        # until the customer asks something that looks like a shopping question.
+        logger.info("conversation %s: off-topic again, staying quiet", conversation.id)
+        return
+
     await sender.typing()
     turns = [ChatTurn(sender=m.sender.value, text=m.text) for m in history]
     try:
@@ -256,6 +269,13 @@ async def reply_to_conversation(
     if reply is None or not reply.text.strip():
         return
     tokens = (reply.prompt_tokens, reply.completion_tokens)
+    if reply.off_topic:
+        if streak >= get_settings().off_topic_max_replies:
+            return
+        # The canned "I only help with the shop": not charged, no handoff.
+        await _send_text(db, conversation, sender, reply.text, False, tokens, off_topic=True)
+        await db.commit()
+        return
     if reply.unanswered and conversation.handoff_open:
         # The customer already got the "a colleague will answer" message; repeating it on
         # every follow-up is noise. Only the part the bot could answer (if any) is sent; the
@@ -287,6 +307,8 @@ async def _send_text(
     text: str,
     unanswered: bool,
     tokens: tuple[int | None, int | None] = (None, None),
+    *,
+    off_topic: bool = False,
 ) -> bool:
     """Send `text` in chunks, storing each bot message first. False if it couldn't be
     delivered; raises the channel's error when it is worth retrying."""
@@ -296,6 +318,7 @@ async def _send_text(
             sender=MessageSender.BOT,
             text=chunk,
             unanswered=unanswered,
+            off_topic=off_topic,
             prompt_tokens=tokens[0] if index == 0 else None,
             completion_tokens=tokens[1] if index == 0 else None,
         )
@@ -352,6 +375,28 @@ async def _charge(
     )
     if running_low:
         await _safe_notify(notifier.wallet_low(shop))
+
+
+def _off_topic_streak(history: list[Message]) -> int:
+    """How many off-topic redirects the bot sent in a row (since the last real answer)."""
+    streak = 0
+    for message in reversed(history):
+        if message.sender == MessageSender.CUSTOMER:
+            continue
+        if message.sender == MessageSender.BOT and message.off_topic:
+            streak += 1
+            continue
+        break
+    return streak
+
+
+def _latest_customer_text(history: list[Message]) -> str:
+    parts: list[str] = []
+    for message in reversed(history):
+        if message.sender != MessageSender.CUSTOMER:
+            break
+        parts.insert(0, message.text)
+    return "\n".join(parts)
 
 
 async def _too_many_replies(db: AsyncSession, conversation: Conversation) -> bool:
@@ -455,6 +500,22 @@ async def _send_posts(
 
 
 # ---------------------------------------------------------------------------- helpers
+
+
+STORY_REPLY_MARKER = "[story_reply]"
+
+
+async def _with_story_note(db: AsyncSession, shop_id: uuid.UUID, story_id: str, text: str) -> str:
+    """A reply to a story the bot published: tell the bot what that story was about."""
+    note = await db.scalar(
+        select(ScheduledStory.note).where(
+            ScheduledStory.shop_id == shop_id, ScheduledStory.ig_media_id == story_id
+        )
+    )
+    if not note or not note.strip():
+        return text
+    about = " ".join(note.split())[:300]
+    return text.replace(STORY_REPLY_MARKER, f"[story_reply: {about}]", 1)
 
 
 async def _lookup_username(

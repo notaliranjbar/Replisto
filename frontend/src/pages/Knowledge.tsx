@@ -99,7 +99,7 @@ function Usage({ used, limit }: { used: number; limit: number }) {
   return (
     <Card className="p-5">
       <div className="text-sm font-semibold text-slate-500">{t.knowledge.usage}</div>
-      <div className="num mb-3 mt-1 text-2xl font-extrabold text-ink-950">
+      <div className="num mb-3 mt-1 text-2xl font-semibold tracking-tight text-ink-950">
         {f.num(pct)}
         %
       </div>
@@ -117,7 +117,7 @@ function SectionNav({ sections, count }: { sections: Section[]; count: (key: Kno
   const { t, f } = useI18n();
   return (
     <nav aria-label={t.panel.knowledge.navTitle}>
-      <div className="mb-2 hidden px-1 text-xs font-bold text-slate-400 lg:block">{t.panel.knowledge.navTitle}</div>
+      <div className="mb-2 hidden px-1 text-xs font-semibold text-slate-400 lg:block">{t.panel.knowledge.navTitle}</div>
       <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar sm:-mx-6 sm:px-6 lg:m-0 lg:flex-col lg:gap-0.5 lg:p-0">
         {sections.map((s) => {
           const n = count(s.key);
@@ -320,7 +320,7 @@ function FileSection({ section, entries, types, maxBytes }: { section: Section; 
             <span aria-hidden className="flex size-12 items-center justify-center rounded-2xl bg-surface text-brand-700 shadow-sm ring-1 ring-brand-100">
               <CloudUpload className="size-6" />
             </span>
-            <p className="mt-3 text-sm font-bold text-ink-900">
+            <p className="mt-3 text-sm font-semibold text-ink-900">
               {t.panel.knowledge.drop} <span className="font-medium text-slate-500">{t.panel.knowledge.or}</span>
             </p>
             <Button size="sm" variant="secondary" className="mt-2" onClick={() => input.current?.click()}>

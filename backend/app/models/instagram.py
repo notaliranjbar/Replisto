@@ -24,8 +24,14 @@ class InstagramAccount(UUIDPk, Timestamps, Base):
     token_expires_at: Mapped[datetime | None] = mapped_column()
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     posts_synced_at: Mapped[datetime | None] = mapped_column()
+    # Permissions the owner granted, comma separated (instagram_business_manage_comments, ...).
+    # Accounts connected before a permission existed have to reconnect to grant it.
+    scopes: Mapped[str] = mapped_column(Text, default="", server_default="")
 
     shop: Mapped["Shop"] = relationship(back_populates="instagram_account")
+
+    def has_scope(self, scope: str) -> bool:
+        return scope in {s.strip() for s in self.scopes.split(",")}
 
 
 class InstagramPost(UUIDPk, Timestamps, Base):

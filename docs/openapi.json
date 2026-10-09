@@ -2871,6 +2871,787 @@
           }
         ]
       }
+    },
+    "/api/v1/site/chat": {
+      "get": {
+        "tags": [
+          "site"
+        ],
+        "summary": "Get Chat",
+        "description": "The chat so far and today's allowance. The widget polls this while waiting.",
+        "operationId": "get_chat_api_v1_site_chat_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "visitor",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 36,
+              "title": "Visitor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteChatOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "site"
+        ],
+        "summary": "Send",
+        "operationId": "send_api_v1_site_chat_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteChatIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteChatOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/comments": {
+      "get": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "List Comments",
+        "operationId": "list_comments_api_v1_comments_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "waiting",
+                "answered",
+                "skipped",
+                "all"
+              ],
+              "type": "string",
+              "default": "waiting",
+              "title": "View"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/comments/{comment_id}/reply": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Reply",
+        "description": "The owner's own answer, under the comment or as a private DM.",
+        "operationId": "reply_api_v1_comments__comment_id__reply_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Comment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerReplyIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/comments/{comment_id}/dismiss": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Dismiss",
+        "description": "Take it off the waiting list without replying.",
+        "operationId": "dismiss_api_v1_comments__comment_id__dismiss_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Comment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/comments/{comment_id}/hide": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Hide",
+        "description": "Hide (or show again) a comment; hidden comments stay visible to their author.",
+        "operationId": "hide_api_v1_comments__comment_id__hide_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Comment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HideIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/comments/{comment_id}/retry": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Retry",
+        "description": "Let the bot try again (after the owner added the missing information).",
+        "operationId": "retry_api_v1_comments__comment_id__retry_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Comment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/comments/try": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Try Comment",
+        "description": "What the bot would do with this comment, in the shop's current comment mode (nothing\nis posted or charged).",
+        "operationId": "try_comment_api_v1_comments_try_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/stories": {
+      "get": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "List Stories",
+        "operationId": "list_stories_api_v1_stories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoriesOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Schedule Story",
+        "description": "Upload a photo or video and the time to publish it.",
+        "operationId": "schedule_story_api_v1_stories_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_schedule_story_api_v1_stories_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/stories/{story_id}": {
+      "patch": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Update Story",
+        "description": "Move a story to another time, or change its note (the note works even after publishing:\nthe bot reads it when people reply to the story).",
+        "operationId": "update_story_api_v1_stories__story_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Delete Story",
+        "description": "Cancel a scheduled story, or remove a finished one from the list.",
+        "operationId": "delete_story_api_v1_stories__story_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stories/{story_id}/publish-now": {
+      "post": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Publish Now",
+        "operationId": "publish_now_api_v1_stories__story_id__publish_now_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/insights": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Get Insights",
+        "operationId": "get_insights_api_v1_insights_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightsOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/insights/refresh": {
+      "post": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Refresh Insights",
+        "description": "Read the page's numbers from Instagram now (they're also refreshed every day).",
+        "operationId": "refresh_insights_api_v1_insights_refresh_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightsOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/insights/report": {
+      "post": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Make Report",
+        "description": "The content assistant analyses the page and writes ideas and a weekly plan.",
+        "operationId": "make_report_api_v1_insights_report_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/insights/assistant": {
+      "post": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Ask Assistant",
+        "description": "A question to the content assistant (captions, ideas, what the numbers mean).",
+        "operationId": "ask_assistant_api_v1_insights_assistant_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2887,6 +3668,137 @@
           "password"
         ],
         "title": "AccountDelete"
+      },
+      "AnalysisOut": {
+        "properties": {
+          "posts_analyzed": {
+            "type": "integer",
+            "title": "Posts Analyzed"
+          },
+          "posts_last_30_days": {
+            "type": "integer",
+            "title": "Posts Last 30 Days"
+          },
+          "posts_per_week": {
+            "type": "number",
+            "title": "Posts Per Week"
+          },
+          "avg_engagement": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Engagement"
+          },
+          "avg_engagement_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Engagement Rate"
+          },
+          "formats": {
+            "items": {
+              "$ref": "#/components/schemas/FormatStat"
+            },
+            "type": "array",
+            "title": "Formats"
+          },
+          "weekdays": {
+            "items": {
+              "$ref": "#/components/schemas/DayStat"
+            },
+            "type": "array",
+            "title": "Weekdays"
+          },
+          "best_days": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Best Days"
+          },
+          "hours": {
+            "items": {
+              "$ref": "#/components/schemas/HourStat"
+            },
+            "type": "array",
+            "title": "Hours"
+          },
+          "best_hours": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Best Hours"
+          },
+          "hashtags": {
+            "items": {
+              "$ref": "#/components/schemas/HashtagStat"
+            },
+            "type": "array",
+            "title": "Hashtags"
+          },
+          "top_posts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Top Posts"
+          },
+          "weakest_posts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Weakest Posts"
+          },
+          "week_change": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Week Change"
+          },
+          "new_followers_30_days": {
+            "type": "integer",
+            "title": "New Followers 30 Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "posts_analyzed",
+          "posts_last_30_days",
+          "posts_per_week",
+          "avg_engagement",
+          "avg_engagement_rate",
+          "formats",
+          "weekdays",
+          "best_days",
+          "hours",
+          "best_hours",
+          "hashtags",
+          "top_posts",
+          "weakest_posts",
+          "week_change",
+          "new_followers_30_days"
+        ],
+        "title": "AnalysisOut"
       },
       "ApplyIn": {
         "properties": {
@@ -2909,6 +3821,61 @@
         },
         "type": "object",
         "title": "ApplyIn"
+      },
+      "AssistantIn": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/AssistantTurn"
+            },
+            "type": "array",
+            "maxItems": 24,
+            "minItems": 1,
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "messages"
+        ],
+        "title": "AssistantIn"
+      },
+      "AssistantOut": {
+        "properties": {
+          "reply": {
+            "type": "string",
+            "title": "Reply"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reply"
+        ],
+        "title": "AssistantOut"
+      },
+      "AssistantTurn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "assistant"
+            ],
+            "title": "Role"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "text"
+        ],
+        "title": "AssistantTurn"
       },
       "BillingOut": {
         "properties": {
@@ -3007,6 +3974,31 @@
         ],
         "title": "Body_preview_file_api_v1_products_file_preview_post"
       },
+      "Body_schedule_story_api_v1_stories_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scheduled At"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "scheduled_at"
+        ],
+        "title": "Body_schedule_story_api_v1_stories_post"
+      },
       "Body_teach_file_api_v1_teach_file_post": {
         "properties": {
           "file": {
@@ -3038,10 +4030,258 @@
       "Channel": {
         "type": "string",
         "enum": [
-          "instagram"
+          "instagram",
+          "web"
         ],
         "title": "Channel",
         "description": "Where a conversation happens. The bot itself is the same on every channel."
+      },
+      "CommentCategory": {
+        "type": "string",
+        "enum": [
+          "price",
+          "availability",
+          "product",
+          "order",
+          "complaint",
+          "praise",
+          "spam",
+          "other"
+        ],
+        "title": "CommentCategory"
+      },
+      "CommentCounts": {
+        "properties": {
+          "waiting": {
+            "type": "integer",
+            "title": "Waiting"
+          },
+          "answered": {
+            "type": "integer",
+            "title": "Answered"
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped"
+          },
+          "waiting_by_category": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Waiting By Category"
+          }
+        },
+        "type": "object",
+        "required": [
+          "waiting",
+          "answered",
+          "skipped",
+          "waiting_by_category"
+        ],
+        "title": "CommentCounts"
+      },
+      "CommentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "author_username": {
+            "type": "string",
+            "title": "Author Username"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "commented_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Commented At"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CommentStatus"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommentCategory"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "public_reply": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Reply"
+          },
+          "private_reply": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Private Reply"
+          },
+          "private_reply_sent": {
+            "type": "boolean",
+            "title": "Private Reply Sent"
+          },
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden"
+          },
+          "is_reply": {
+            "type": "boolean",
+            "title": "Is Reply"
+          },
+          "post_permalink": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post Permalink"
+          },
+          "post_caption": {
+            "type": "string",
+            "title": "Post Caption"
+          },
+          "post_preview_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post Preview Url"
+          },
+          "post_kind": {
+            "type": "string",
+            "enum": [
+              "post",
+              "reel",
+              "ad"
+            ],
+            "title": "Post Kind"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "handled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handled At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "author_username",
+          "text",
+          "commented_at",
+          "status",
+          "category",
+          "reason",
+          "public_reply",
+          "private_reply",
+          "private_reply_sent",
+          "hidden",
+          "is_reply",
+          "post_permalink",
+          "post_caption",
+          "post_preview_url",
+          "post_kind",
+          "error",
+          "handled_at"
+        ],
+        "title": "CommentOut"
+      },
+      "CommentStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "answered",
+          "unanswered",
+          "owner_replied",
+          "skipped",
+          "dismissed"
+        ],
+        "title": "CommentStatus"
+      },
+      "CommentsOut": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "needs_reconnect": {
+            "type": "boolean",
+            "title": "Needs Reconnect"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/CommentCounts"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CommentOut"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available",
+          "needs_reconnect",
+          "counts",
+          "items"
+        ],
+        "title": "CommentsOut"
       },
       "ConnectUrlOut": {
         "properties": {
@@ -3372,6 +4612,9 @@
           "last_7_days": {
             "$ref": "#/components/schemas/Stats"
           },
+          "social": {
+            "$ref": "#/components/schemas/SocialStats"
+          },
           "tokens_this_month": {
             "type": "integer",
             "title": "Tokens This Month"
@@ -3384,9 +4627,33 @@
           "pending_proposals",
           "open_handoffs",
           "last_7_days",
+          "social",
           "tokens_this_month"
         ],
         "title": "DashboardOut"
+      },
+      "DayStat": {
+        "properties": {
+          "day": {
+            "type": "integer",
+            "title": "Day"
+          },
+          "posts": {
+            "type": "integer",
+            "title": "Posts"
+          },
+          "avg_engagement": {
+            "type": "number",
+            "title": "Avg Engagement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "posts",
+          "avg_engagement"
+        ],
+        "title": "DayStat"
       },
       "EntryCreate": {
         "properties": {
@@ -3545,6 +4812,53 @@
           "email"
         ],
         "title": "ForgotPasswordRequest"
+      },
+      "FormatStat": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "title": "Format"
+          },
+          "posts": {
+            "type": "integer",
+            "title": "Posts"
+          },
+          "avg_engagement": {
+            "type": "number",
+            "title": "Avg Engagement"
+          },
+          "avg_reach": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Reach"
+          },
+          "avg_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "format",
+          "posts",
+          "avg_engagement",
+          "avg_reach",
+          "avg_rate"
+        ],
+        "title": "FormatStat"
       },
       "GiftStatus": {
         "properties": {
@@ -3765,6 +5079,248 @@
         ],
         "title": "HandoffResolution"
       },
+      "HashtagStat": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "posts": {
+            "type": "integer",
+            "title": "Posts"
+          },
+          "avg_engagement": {
+            "type": "number",
+            "title": "Avg Engagement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag",
+          "posts",
+          "avg_engagement"
+        ],
+        "title": "HashtagStat"
+      },
+      "HideIn": {
+        "properties": {
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hidden"
+        ],
+        "title": "HideIn"
+      },
+      "HourStat": {
+        "properties": {
+          "from_hour": {
+            "type": "integer",
+            "title": "From Hour"
+          },
+          "posts": {
+            "type": "integer",
+            "title": "Posts"
+          },
+          "avg_engagement": {
+            "type": "number",
+            "title": "Avg Engagement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_hour",
+          "posts",
+          "avg_engagement"
+        ],
+        "title": "HourStat"
+      },
+      "Idea": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "reel",
+              "post",
+              "carousel",
+              "story"
+            ],
+            "title": "Format"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "hook": {
+            "type": "string",
+            "title": "Hook"
+          },
+          "caption": {
+            "type": "string",
+            "title": "Caption"
+          },
+          "when": {
+            "type": "string",
+            "title": "When",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "format",
+          "title",
+          "hook",
+          "caption"
+        ],
+        "title": "Idea"
+      },
+      "InsightsOut": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "needs_reconnect": {
+            "type": "boolean",
+            "title": "Needs Reconnect"
+          },
+          "fetched_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fetched At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfileOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "week": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Week"
+          },
+          "previous_week": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Previous Week"
+          },
+          "reach_series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "type": "array",
+            "title": "Reach Series"
+          },
+          "follower_series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "type": "array",
+            "title": "Follower Series"
+          },
+          "media": {
+            "items": {
+              "$ref": "#/components/schemas/MediaOut"
+            },
+            "type": "array",
+            "title": "Media"
+          },
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "available",
+          "needs_reconnect",
+          "fetched_at",
+          "error",
+          "profile",
+          "week",
+          "previous_week",
+          "reach_series",
+          "follower_series",
+          "media",
+          "analysis",
+          "report"
+        ],
+        "title": "InsightsOut"
+      },
+      "InstagramFeatures": {
+        "properties": {
+          "messages": {
+            "type": "boolean",
+            "title": "Messages"
+          },
+          "comments": {
+            "type": "boolean",
+            "title": "Comments"
+          },
+          "stories": {
+            "type": "boolean",
+            "title": "Stories"
+          },
+          "insights": {
+            "type": "boolean",
+            "title": "Insights"
+          }
+        },
+        "type": "object",
+        "required": [
+          "messages",
+          "comments",
+          "stories",
+          "insights"
+        ],
+        "title": "InstagramFeatures"
+      },
       "InstagramStatusOut": {
         "properties": {
           "available": {
@@ -3814,6 +5370,16 @@
               }
             ],
             "title": "Token Expires At"
+          },
+          "features": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InstagramFeatures"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -3881,6 +5447,141 @@
         ],
         "title": "LoginRequest"
       },
+      "MediaOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "caption": {
+            "type": "string",
+            "title": "Caption"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "reel",
+              "carousel",
+              "video",
+              "photo"
+            ],
+            "title": "Format"
+          },
+          "permalink": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permalink"
+          },
+          "preview_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Url"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          },
+          "likes": {
+            "type": "integer",
+            "title": "Likes"
+          },
+          "comments": {
+            "type": "integer",
+            "title": "Comments"
+          },
+          "reach": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reach"
+          },
+          "views": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Views"
+          },
+          "saves": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saves"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "engagement": {
+            "type": "integer",
+            "title": "Engagement"
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "caption",
+          "format",
+          "permalink",
+          "preview_url",
+          "timestamp",
+          "likes",
+          "comments",
+          "engagement"
+        ],
+        "title": "MediaOut"
+      },
       "MessageOut": {
         "properties": {
           "id": {
@@ -3923,6 +5624,26 @@
           "owner"
         ],
         "title": "MessageSender"
+      },
+      "OwnerReplyIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 900,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "private": {
+            "type": "boolean",
+            "title": "Private",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "OwnerReplyIn"
       },
       "PasswordChange": {
         "properties": {
@@ -4028,6 +5749,35 @@
           "gift_cents"
         ],
         "title": "PhoneVerifiedOut"
+      },
+      "PlanDay": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "title": "Day"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "reel",
+              "post",
+              "carousel",
+              "story"
+            ],
+            "title": "Format"
+          },
+          "idea": {
+            "type": "string",
+            "title": "Idea"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "format",
+          "idea"
+        ],
+        "title": "PlanDay"
       },
       "PlaygroundIn": {
         "properties": {
@@ -4819,6 +6569,50 @@
         ],
         "title": "ProductSummary"
       },
+      "ProfileOut": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          },
+          "picture_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Picture Url"
+          },
+          "followers": {
+            "type": "integer",
+            "title": "Followers",
+            "default": 0
+          },
+          "follows": {
+            "type": "integer",
+            "title": "Follows",
+            "default": 0
+          },
+          "posts": {
+            "type": "integer",
+            "title": "Posts",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "username"
+        ],
+        "title": "ProfileOut"
+      },
       "ProposalOut": {
         "properties": {
           "id": {
@@ -4924,6 +6718,80 @@
         ],
         "title": "ProposalStatus"
       },
+      "QuotaOut": {
+        "properties": {
+          "tier": {
+            "type": "string",
+            "enum": [
+              "guest",
+              "member"
+            ],
+            "title": "Tier"
+          },
+          "used_tokens": {
+            "type": "integer",
+            "title": "Used Tokens"
+          },
+          "limit_tokens": {
+            "type": "integer",
+            "title": "Limit Tokens"
+          },
+          "left_percent": {
+            "type": "integer",
+            "title": "Left Percent"
+          },
+          "answers_left": {
+            "type": "integer",
+            "title": "Answers Left"
+          },
+          "exhausted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exhausted"
+          },
+          "resets_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Resets At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tier",
+          "used_tokens",
+          "limit_tokens",
+          "left_percent",
+          "answers_left",
+          "exhausted",
+          "resets_at"
+        ],
+        "title": "QuotaOut",
+        "description": "Today's AI allowance, for the ring next to the chat."
+      },
+      "Recommendation": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "detail"
+        ],
+        "title": "Recommendation"
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -4985,6 +6853,65 @@
           "text"
         ],
         "title": "ReplyIn"
+      },
+      "ReportOut": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "strengths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Strengths",
+            "default": []
+          },
+          "improvements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Improvements",
+            "default": []
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/Recommendation"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "default": []
+          },
+          "ideas": {
+            "items": {
+              "$ref": "#/components/schemas/Idea"
+            },
+            "type": "array",
+            "title": "Ideas",
+            "default": []
+          },
+          "weekly_plan": {
+            "items": {
+              "$ref": "#/components/schemas/PlanDay"
+            },
+            "type": "array",
+            "title": "Weekly Plan",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_at",
+          "summary"
+        ],
+        "title": "ReportOut"
       },
       "ResetPasswordRequest": {
         "properties": {
@@ -5073,6 +7000,24 @@
           "char_limit"
         ],
         "title": "SectionsOut"
+      },
+      "SeriesPoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "value": {
+            "type": "integer",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "value"
+        ],
+        "title": "SeriesPoint"
       },
       "SetupStatus": {
         "properties": {
@@ -5230,6 +7175,28 @@
               "ar"
             ],
             "title": "Language"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "comment_mode": {
+            "type": "string",
+            "enum": [
+              "off",
+              "public",
+              "private",
+              "both"
+            ],
+            "title": "Comment Mode"
+          },
+          "comment_thank_praise": {
+            "type": "boolean",
+            "title": "Comment Thank Praise"
+          },
+          "comment_hide_spam": {
+            "type": "boolean",
+            "title": "Comment Hide Spam"
           }
         },
         "type": "object",
@@ -5243,7 +7210,11 @@
           "forbidden_rules",
           "handoff_pause_minutes",
           "currency",
-          "language"
+          "language",
+          "timezone",
+          "comment_mode",
+          "comment_thank_praise",
+          "comment_hide_spam"
         ],
         "title": "ShopOut"
       },
@@ -5363,6 +7334,58 @@
               }
             ],
             "title": "Language"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "comment_mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "off",
+                  "public",
+                  "private",
+                  "both"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment Mode"
+          },
+          "comment_thank_praise": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment Thank Praise"
+          },
+          "comment_hide_spam": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment Hide Spam"
           }
         },
         "type": "object",
@@ -5381,6 +7404,154 @@
           "content"
         ],
         "title": "SingleSectionUpdate"
+      },
+      "SiteChatIn": {
+        "properties": {
+          "visitor": {
+            "type": "string",
+            "maxLength": 36,
+            "minLength": 36,
+            "title": "Visitor"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 600,
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "visitor",
+          "text"
+        ],
+        "title": "SiteChatIn"
+      },
+      "SiteChatOut": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/SiteMessageOut"
+            },
+            "type": "array",
+            "title": "Messages"
+          },
+          "quota": {
+            "$ref": "#/components/schemas/QuotaOut"
+          },
+          "waiting_for_team": {
+            "type": "boolean",
+            "title": "Waiting For Team"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available",
+          "messages",
+          "quota",
+          "waiting_for_team"
+        ],
+        "title": "SiteChatOut"
+      },
+      "SiteMessageOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "sender": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "bot",
+              "owner"
+            ],
+            "title": "Sender"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sender",
+          "text",
+          "created_at"
+        ],
+        "title": "SiteMessageOut"
+      },
+      "SocialStats": {
+        "properties": {
+          "comments_waiting": {
+            "type": "integer",
+            "title": "Comments Waiting"
+          },
+          "comments_answered_7_days": {
+            "type": "integer",
+            "title": "Comments Answered 7 Days"
+          },
+          "stories_scheduled": {
+            "type": "integer",
+            "title": "Stories Scheduled"
+          },
+          "next_story_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Story At"
+          },
+          "followers": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Followers"
+          },
+          "reach_7_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reach 7 Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "comments_waiting",
+          "comments_answered_7_days",
+          "stories_scheduled",
+          "next_story_at",
+          "followers",
+          "reach_7_days"
+        ],
+        "title": "SocialStats",
+        "description": "Beyond DMs: comments, stories and the page's reach."
       },
       "SourceOut": {
         "properties": {
@@ -5484,6 +7655,149 @@
           "open_unanswered"
         ],
         "title": "Stats"
+      },
+      "StoriesOut": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "needs_reconnect": {
+            "type": "boolean",
+            "title": "Needs Reconnect"
+          },
+          "upcoming": {
+            "items": {
+              "$ref": "#/components/schemas/StoryOut"
+            },
+            "type": "array",
+            "title": "Upcoming"
+          },
+          "past": {
+            "items": {
+              "$ref": "#/components/schemas/StoryOut"
+            },
+            "type": "array",
+            "title": "Past"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available",
+          "needs_reconnect",
+          "upcoming",
+          "past"
+        ],
+        "title": "StoriesOut"
+      },
+      "StoryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "media_kind": {
+            "type": "string",
+            "title": "Media Kind"
+          },
+          "media_url": {
+            "type": "string",
+            "title": "Media Url"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scheduled At"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StoryStatus"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "media_kind",
+          "media_url",
+          "note",
+          "scheduled_at",
+          "status",
+          "published_at",
+          "error",
+          "size_bytes"
+        ],
+        "title": "StoryOut"
+      },
+      "StoryStatus": {
+        "type": "string",
+        "enum": [
+          "scheduled",
+          "processing",
+          "published",
+          "failed"
+        ],
+        "title": "StoryStatus"
+      },
+      "StoryUpdate": {
+        "properties": {
+          "scheduled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled At"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "title": "StoryUpdate"
       },
       "TextIn": {
         "properties": {
@@ -5645,6 +7959,94 @@
           "created_at"
         ],
         "title": "TransferOut"
+      },
+      "TryIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "post_caption": {
+            "type": "string",
+            "maxLength": 2200,
+            "title": "Post Caption",
+            "default": ""
+          },
+          "post_kind": {
+            "type": "string",
+            "enum": [
+              "post",
+              "reel"
+            ],
+            "title": "Post Kind",
+            "default": "post"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "TryIn"
+      },
+      "TryOut": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "answer",
+              "unknown",
+              "ignore"
+            ],
+            "title": "Decision"
+          },
+          "category": {
+            "$ref": "#/components/schemas/CommentCategory"
+          },
+          "public_reply": {
+            "type": "string",
+            "title": "Public Reply"
+          },
+          "private_reply": {
+            "type": "string",
+            "title": "Private Reply"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "product_lookups": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Product Lookups"
+          },
+          "ai_ready": {
+            "type": "boolean",
+            "title": "Ai Ready"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision",
+          "category",
+          "public_reply",
+          "private_reply",
+          "reason",
+          "product_lookups",
+          "ai_ready"
+        ],
+        "title": "TryOut"
       },
       "UnansweredOut": {
         "properties": {

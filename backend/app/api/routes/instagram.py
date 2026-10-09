@@ -10,8 +10,14 @@ from sqlalchemy import delete, select
 from app.api.deps import CurrentShop, DbSession, Instagram
 from app.core.config import get_settings
 from app.core.security import TokenError, create_token, decode_token
-from app.models import InstagramAccount, InstagramPost, Product, Shop
-from app.services.instagram import InstagramError
+from app.models import InstagramAccount, InstagramInsights, InstagramPost, Product, Shop
+from app.services.instagram import (
+    SCOPE_COMMENTS,
+    SCOPE_INSIGHTS,
+    SCOPE_MESSAGES,
+    SCOPE_PUBLISH,
+    InstagramError,
+)
 from app.services.instagram_accounts import AccountInUseError, connect_account
 from app.services.posts import link_products, load_posts, post_key, sync_posts
 
@@ -26,6 +32,13 @@ class ConnectUrlOut(BaseModel):
 INSTAGRAM_OFF = "Instagram is switched off on this server for now."
 
 
+class InstagramFeatures(BaseModel):
+    messages: bool  # answer DMs and story replies
+    comments: bool  # answer comments publicly or privately, hide spam
+    stories: bool  # publish scheduled stories
+    insights: bool  # read the page's numbers
+
+
 class InstagramStatusOut(BaseModel):
     # False while Instagram is switched off on the server (waiting for Meta's approval).
     available: bool = True
@@ -35,6 +48,9 @@ class InstagramStatusOut(BaseModel):
     username: str | None = None
     ig_user_id: str | None = None
     token_expires_at: datetime | None = None
+    # What the bot may do on this account, from the permissions the owner granted. Accounts
+    # connected before a feature existed reconnect to turn it on.
+    features: InstagramFeatures | None = None
 
 
 @router.get("", response_model=InstagramStatusOut)
@@ -50,6 +66,12 @@ async def get_status(shop: CurrentShop, db: DbSession) -> InstagramStatusOut:
         username=account.username,
         ig_user_id=account.ig_user_id,
         token_expires_at=account.token_expires_at,
+        features=InstagramFeatures(
+            messages=account.has_scope(SCOPE_MESSAGES),
+            comments=account.has_scope(SCOPE_COMMENTS),
+            stories=account.has_scope(SCOPE_PUBLISH),
+            insights=account.has_scope(SCOPE_INSIGHTS),
+        ),
     )
 
 
@@ -101,6 +123,7 @@ async def callback(
 async def disconnect(shop: CurrentShop, db: DbSession) -> None:
     await db.execute(delete(InstagramAccount).where(InstagramAccount.shop_id == shop.id))
     await db.execute(delete(InstagramPost).where(InstagramPost.shop_id == shop.id))
+    await db.execute(delete(InstagramInsights).where(InstagramInsights.shop_id == shop.id))
     await db.commit()
 
 

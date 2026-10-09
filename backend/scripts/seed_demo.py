@@ -34,6 +34,8 @@ from app.models import (
     WalletEntryKind,
 )
 from app.services.accounts import delete_user
+from app.services.instagram import SCOPES
+from scripts import demo_social
 
 EMAIL = "demo@shop.com"
 PASSWORD = "demopass123"
@@ -99,6 +101,32 @@ CONVERSATIONS = [
             ("owner", "Hi Maya, it's back next week 🌷", False, 3),
         ],
         True,
+    ),
+    (
+        # Replied to the shop's story; the bot knew what the story showed from its note.
+        "nadine.a",
+        [
+            (
+                "customer",
+                "is it available in M? [story_reply: New linen dresses in black and navy, "
+                "$49.90, sizes S to M]",
+                False,
+                95,
+            ),
+            ("bot", "Yes! The linen dress is available in M in black, $49.90 🖤", False, 94),
+        ],
+        False,
+    ),
+    (
+        # Commented "How much is this dress?"; the bot answered by private reply.
+        "rana.k",
+        [
+            ("customer", "[comment] How much is this dress?", False, 35),
+            ("bot", "Hi Rana! The linen dress is $49.90, in black (S, M) and navy 🖤", False, 34),
+            ("customer", "Perfect, can I pay with Whish?", False, 20),
+            ("bot", "Yes, Whish Money before delivery, or cash on delivery 🙂", False, 19),
+        ],
+        False,
     ),
 ]
 # Instagram posts of the demo page: (media id, shortcode, caption, days ago). The bot links a
@@ -168,6 +196,7 @@ async def main(language: str) -> None:
                 access_token_encrypted=encrypt_secret("demo-token"),
                 token_expires_at=now + timedelta(days=55),
                 posts_synced_at=now - timedelta(hours=2),
+                scopes=",".join(SCOPES),
             )
         )
         db.add_all(
@@ -242,6 +271,7 @@ async def main(language: str) -> None:
                         completion_tokens=40 if sender == "bot" else None,
                     )
                 )
+        await demo_social.seed(db, shop_id, language, now)
         await db.commit()
     print(f"demo shop ready: {EMAIL} / {PASSWORD}")
 

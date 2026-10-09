@@ -52,7 +52,7 @@ export default function InstagramCallback() {
         >
           {ok ? <Check className="size-8" strokeWidth={3} /> : <X className="size-8" strokeWidth={3} />}
         </span>
-        <h1 className="mt-6 text-xl font-extrabold text-ink-950">{title}</h1>
+        <h1 className="mt-6 text-xl font-semibold tracking-tight text-ink-950">{title}</h1>
         {hint && <p className="mt-2 text-sm leading-7 text-slate-500">{hint}</p>}
         <div className="mt-8 flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:justify-center">
           {ok ? (

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import decrypt_secret, encrypt_secret
 from app.core.timeutil import as_utc, utcnow
 from app.models import InstagramAccount, Shop
-from app.services.instagram import InstagramClient, InstagramError
+from app.services.instagram import SCOPES, InstagramClient, InstagramError
 from app.services.posts import sync_posts
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ async def connect_account(
     db: AsyncSession, shop: Shop, code: str, instagram: InstagramClient
 ) -> InstagramAccount:
     short_lived = await instagram.exchange_code(code)
-    token = await instagram.get_long_lived_token(short_lived)
+    token = await instagram.get_long_lived_token(short_lived.access_token)
     profile = await instagram.get_profile(token.access_token)
 
     owner = await db.scalar(
@@ -47,6 +47,8 @@ async def connect_account(
     account.access_token_encrypted = encrypt_secret(token.access_token)
     account.token_expires_at = token.expires_at
     account.is_active = True
+    # Meta lists what was granted; when it doesn't, the consent screen asked for all of them.
+    account.scopes = ",".join(short_lived.permissions or SCOPES)
     await db.commit()
     try:
         await sync_posts(db, account, instagram)

@@ -227,7 +227,7 @@ export function GiftCard({ gift }: { gift: Dashboard["wallet"]["gift"] }) {
           <Gift />
         </IconChip>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-extrabold text-ink-950">{G.title(f.usd(gift.amount_cents))}</h2>
+          <h2 className="text-base font-semibold tracking-tight text-ink-950">{G.title(f.usd(gift.amount_cents))}</h2>
           <p className="mt-1 text-sm text-slate-600">{G.body}</p>
           <ol className="mt-4 space-y-3">
             {steps.map((s) => (

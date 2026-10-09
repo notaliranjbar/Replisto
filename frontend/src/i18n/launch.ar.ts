@@ -8,6 +8,7 @@ const launch = {
 
   channel: {
     instagram: "إنستغرام",
+    web: "الموقع",
     openIn: (channel: string) => `فتح في ${channel}`,
   },
 
@@ -179,6 +180,27 @@ const launch = {
       category: "الفئة",
       sku: "الرمز",
     } as Record<string, string>,
+  },
+
+  ask: {
+    botName: "مساعد Replisto",
+    status: "متصل · نفس المساعد الذي سيعمل لمتجرك",
+    empty: "اسأل أي شيء عن Replisto، وشاهد بنفسك كيف يرد.",
+    suggestions: ["ماذا يفعل Replisto بالضبط؟", "كم يكلّف؟", "كيف أربطه بإنستغرام؟", "ماذا لو لم يعرف الجواب؟"],
+    placeholder: "اكتب سؤالك…",
+    send: "إرسال",
+    typing: "يكتب",
+    team: "فريق Replisto",
+    waiting: "وصل سؤالك إلى فريق Replisto، وسيظهر ردّهم هنا.",
+    unavailable: "سيكون المساعد متاحًا هنا قريبًا.",
+    ringLabel: (percent: string, answers: string) => `تبقّى ${percent}% من حصة اليوم (نحو ${answers} ردود)`,
+    ringEmpty: "انتهت حصة اليوم",
+    guestHint: "أنت زائر ولديك حصة يومية أصغر؛ الحساب المجاني يمنحك المزيد.",
+    guestLimit: "انتهت حصة الزوار لهذا اليوم. أنشئ حسابًا مجانيًا (دقيقة واحدة) لتكمل.",
+    memberLimit: (time: string) => `انتهت حصتك لهذا اليوم؛ تتجدد عند ${time}.`,
+    signUp: "إنشاء حساب مجاني",
+    logIn: "دخول",
+    launcher: "اسأل عن Replisto",
   },
 
   signupTerms: {

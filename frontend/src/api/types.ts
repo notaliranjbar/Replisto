@@ -32,6 +32,21 @@ export type PlaygroundTurn = S["PlaygroundTurn"];
 export type PlaygroundReply = S["PlaygroundOut"];
 export type Posts = S["PostsOut"];
 
+// Comments, stories, insights and the content assistant
+export type Comment = S["CommentOut"];
+export type CommentList = S["CommentsOut"];
+export type CommentCategory = S["CommentCategory"];
+export type CommentStatus = S["CommentStatus"];
+export type CommentTry = S["TryOut"];
+export type Story = S["StoryOut"];
+export type StoryList = S["StoriesOut"];
+export type Insights = S["InsightsOut"];
+export type InsightsMedia = S["MediaOut"];
+export type InsightsAnalysis = S["AnalysisOut"];
+export type ContentReport = S["ReportOut"];
+export type ContentIdea = S["Idea"];
+export type CommentMode = Shop["comment_mode"];
+
 export type ConversationFilter = "all" | "needs_owner" | "unanswered" | "paused";
 
 // Wallet, catalogue and "teach Replisto"

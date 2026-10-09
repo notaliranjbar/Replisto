@@ -21,6 +21,9 @@ export const keys = {
   conversation: (id: string) => ["conversation", id] as const,
   handoffs: ["handoffs"] as const,
   unanswered: ["unanswered"] as const,
+  comments: (view: string, category: string) => ["comments", view, category] as const,
+  stories: ["stories"] as const,
+  insights: ["insights"] as const,
 };
 
 export function useMe() {

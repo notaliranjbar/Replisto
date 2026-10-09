@@ -3,6 +3,7 @@
 import landing from "./landing.ar";
 import panel from "./panel.ar";
 import launch from "./launch.ar";
+import social from "./social.ar";
 
 const ar = {
   appName: "Replisto",
@@ -448,6 +449,7 @@ const ar = {
   landing,
   panel,
   launch,
+  social,
 };
 
 export default ar;

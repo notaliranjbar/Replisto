@@ -1,6 +1,14 @@
 """Client for the Instagram API with Instagram Login (graph.instagram.com).
 
 Every call Meta makes us do lives here, so the rest of the app never builds Meta URLs itself.
+
+Permissions and what they are used for:
+- instagram_business_basic: the account's profile and its posts
+- instagram_business_manage_messages: answering DMs (and story replies, which arrive as DMs)
+- instagram_business_manage_comments: answering comments publicly or by private reply,
+  hiding spam
+- instagram_business_content_publish: publishing the stories the owner scheduled
+- instagram_business_manage_insights: the page's numbers for the insights page
 """
 
 import logging
@@ -20,7 +28,12 @@ logger = logging.getLogger(__name__)
 AUTHORIZE_URL = "https://www.instagram.com/oauth/authorize"
 TOKEN_URL = "https://api.instagram.com/oauth/access_token"
 GRAPH_URL = "https://graph.instagram.com"
-SCOPES = ("instagram_business_basic", "instagram_business_manage_messages")
+SCOPE_BASIC = "instagram_business_basic"
+SCOPE_MESSAGES = "instagram_business_manage_messages"
+SCOPE_COMMENTS = "instagram_business_manage_comments"
+SCOPE_PUBLISH = "instagram_business_content_publish"
+SCOPE_INSIGHTS = "instagram_business_manage_insights"
+SCOPES = (SCOPE_BASIC, SCOPE_MESSAGES, SCOPE_COMMENTS, SCOPE_PUBLISH, SCOPE_INSIGHTS)
 
 # Instagram rejects DM text longer than this.
 MAX_TEXT_LENGTH = 1000
@@ -55,6 +68,13 @@ class InstagramError(Exception):
         if self.token_invalid:
             return False
         return self.status is None or self.status >= 500 or self.code in _RETRYABLE_CODES
+
+
+@dataclass(frozen=True)
+class ShortLivedToken:
+    access_token: str
+    # What the owner granted on the consent screen; empty when Meta didn't say.
+    permissions: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -113,7 +133,7 @@ class InstagramClient:
         )
         return f"{AUTHORIZE_URL}?{query}"
 
-    async def exchange_code(self, code: str) -> str:
+    async def exchange_code(self, code: str) -> ShortLivedToken:
         """Trade the OAuth code for a short-lived (1 hour) token."""
         data = await self._request(
             "POST",
@@ -128,7 +148,13 @@ class InstagramClient:
         )
         # Meta has returned both {"data": [{...}]} and a flat object for this endpoint.
         item = data["data"][0] if isinstance(data.get("data"), list) else data
-        return item["access_token"]
+        granted = item.get("permissions") or ()
+        if isinstance(granted, str):
+            granted = granted.split(",")
+        return ShortLivedToken(
+            access_token=item["access_token"],
+            permissions=tuple(str(p).strip() for p in granted if str(p).strip()),
+        )
 
     async def get_long_lived_token(self, short_lived_token: str) -> LongLivedToken:
         data = await self._request(
@@ -159,12 +185,13 @@ class InstagramClient:
         )
         return Profile(ig_user_id=str(data["user_id"]), username=data.get("username", ""))
 
-    async def subscribe_webhooks(self, token: str) -> None:
-        """Ask Meta to deliver this account's DMs to our webhook."""
+    async def subscribe_webhooks(self, token: str, *, comments: bool = True) -> None:
+        """Ask Meta to deliver this account's DMs (and comments) to our webhook."""
+        fields = "messages,comments" if comments else "messages"
         await self._request(
             "POST",
             f"{self._graph}/me/subscribed_apps",
-            params={"subscribed_fields": "messages", "access_token": token},
+            params={"subscribed_fields": fields, "access_token": token},
         )
 
     async def get_customer_username(self, token: str, igsid: str) -> str | None:
@@ -223,6 +250,205 @@ class InstagramClient:
             json={"recipient": {"id": recipient_igsid}, "message": {"text": text}},
         )
         return data["message_id"]
+
+    # ------------------------------------------------------------------ comments
+
+    async def get_media(self, token: str, media_id: str) -> dict[str, Any]:
+        """One post or reel: caption, link and picture (to give a comment its context)."""
+        if self._settings.instagram_dry_run:
+            return {}
+        return await self._request(
+            "GET",
+            f"{self._graph}/{media_id}",
+            params={
+                "fields": "id,caption,media_type,media_product_type,media_url,thumbnail_url,"
+                "permalink,timestamp",
+                "access_token": token,
+            },
+        )
+
+    async def reply_to_comment(self, token: str, comment_id: str, text: str) -> str:
+        """A public reply under the comment; returns the new comment's id."""
+        if self._settings.instagram_dry_run:
+            logger.info("DRY RUN: reply to comment %s: %s", comment_id, text)
+            return f"dry-run-{uuid.uuid4().hex[:16]}"
+        data = await self._request(
+            "POST",
+            f"{self._graph}/{comment_id}/replies",
+            headers={"Authorization": f"Bearer {token}"},
+            data={"message": text},
+        )
+        return str(data["id"])
+
+    async def send_private_reply(self, token: str, comment_id: str, text: str) -> str:
+        """A DM to the person who wrote the comment (once per comment, within 7 days)."""
+        if self._settings.instagram_dry_run:
+            logger.info("DRY RUN: private reply to comment %s: %s", comment_id, text)
+            return f"dry-run-{uuid.uuid4().hex}"
+        data = await self._request(
+            "POST",
+            f"{self._graph}/me/messages",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"recipient": {"comment_id": comment_id}, "message": {"text": text}},
+        )
+        return data["message_id"]
+
+    async def hide_comment(self, token: str, comment_id: str, hide: bool = True) -> None:
+        """Hidden comments stay visible to their author only."""
+        if self._settings.instagram_dry_run:
+            logger.info("DRY RUN: hide=%s comment %s", hide, comment_id)
+            return
+        await self._request(
+            "POST",
+            f"{self._graph}/{comment_id}",
+            headers={"Authorization": f"Bearer {token}"},
+            data={"hide": "true" if hide else "false"},
+        )
+
+    # ------------------------------------------------------------------ stories
+
+    async def create_story(
+        self,
+        token: str,
+        ig_user_id: str,
+        *,
+        image_url: str | None = None,
+        video_url: str | None = None,
+    ) -> str:
+        """Hand a story's media to Instagram (it downloads it from the URL); returns the
+        container id to publish once it's ready."""
+        if self._settings.instagram_dry_run:
+            logger.info("DRY RUN: story container for %s", image_url or video_url)
+            return f"dry-run-{uuid.uuid4().hex[:16]}"
+        params: dict[str, str] = {"media_type": "STORIES"}
+        if video_url:
+            params["video_url"] = video_url
+        else:
+            params["image_url"] = image_url or ""
+        data = await self._request(
+            "POST",
+            f"{self._graph}/{ig_user_id}/media",
+            headers={"Authorization": f"Bearer {token}"},
+            data=params,
+        )
+        return str(data["id"])
+
+    async def container_status(self, token: str, container_id: str) -> str:
+        """IN_PROGRESS, FINISHED, PUBLISHED, ERROR or EXPIRED."""
+        if self._settings.instagram_dry_run:
+            return "FINISHED"
+        data = await self._request(
+            "GET",
+            f"{self._graph}/{container_id}",
+            params={"fields": "status_code", "access_token": token},
+        )
+        return str(data.get("status_code") or "IN_PROGRESS")
+
+    async def publish(self, token: str, ig_user_id: str, container_id: str) -> str:
+        """Publish a ready container; returns the story's media id."""
+        if self._settings.instagram_dry_run:
+            logger.info("DRY RUN: publish container %s", container_id)
+            return f"dry-run-story-{uuid.uuid4().hex[:12]}"
+        data = await self._request(
+            "POST",
+            f"{self._graph}/{ig_user_id}/media_publish",
+            headers={"Authorization": f"Bearer {token}"},
+            data={"creation_id": container_id},
+        )
+        return str(data["id"])
+
+    # ------------------------------------------------------------------ insights
+
+    async def get_account(self, token: str) -> dict[str, Any]:
+        """The profile with its follower and post counts."""
+        return await self._request(
+            "GET",
+            f"{self._graph}/me",
+            params={
+                "fields": "user_id,username,name,profile_picture_url,followers_count,"
+                "follows_count,media_count",
+                "access_token": token,
+            },
+        )
+
+    async def account_totals(
+        self, token: str, ig_user_id: str, metrics: list[str], since: datetime, until: datetime
+    ) -> dict[str, int]:
+        """Each metric's total over [since, until) (at most 30 days)."""
+        data = await self._request(
+            "GET",
+            f"{self._graph}/{ig_user_id}/insights",
+            params={
+                "metric": ",".join(metrics),
+                "period": "day",
+                "metric_type": "total_value",
+                "since": int(since.timestamp()),
+                "until": int(until.timestamp()),
+                "access_token": token,
+            },
+        )
+        totals: dict[str, int] = {}
+        for item in data.get("data") or []:
+            value = (item.get("total_value") or {}).get("value")
+            if isinstance(value, int | float):
+                totals[str(item.get("name"))] = int(value)
+        return totals
+
+    async def account_series(
+        self, token: str, ig_user_id: str, metric: str, since: datetime, until: datetime
+    ) -> list[tuple[str, int]]:
+        """A metric day by day: [("2026-10-01", 120), ...]."""
+        data = await self._request(
+            "GET",
+            f"{self._graph}/{ig_user_id}/insights",
+            params={
+                "metric": metric,
+                "period": "day",
+                "since": int(since.timestamp()),
+                "until": int(until.timestamp()),
+                "access_token": token,
+            },
+        )
+        series: list[tuple[str, int]] = []
+        for item in data.get("data") or []:
+            for point in item.get("values") or []:
+                value, end = point.get("value"), str(point.get("end_time") or "")
+                if isinstance(value, int | float) and end:
+                    series.append((end[:10], int(value)))
+        return series
+
+    async def recent_media(self, token: str, limit: int = 30) -> list[dict[str, Any]]:
+        """The newest posts and reels with their like and comment counts."""
+        url: str | None = f"{self._graph}/me/media"
+        params: dict[str, Any] | None = {
+            "fields": "id,caption,media_type,media_product_type,media_url,thumbnail_url,"
+            "permalink,timestamp,like_count,comments_count",
+            "limit": min(limit, 50),
+            "access_token": token,
+        }
+        media: list[dict[str, Any]] = []
+        while url and len(media) < limit:
+            data = await self._request("GET", url, params=params)
+            media.extend(data.get("data") or [])
+            url = (data.get("paging") or {}).get("next")
+            params = None
+        return media[:limit]
+
+    async def media_insights(self, token: str, media_id: str, metrics: list[str]) -> dict[str, int]:
+        data = await self._request(
+            "GET",
+            f"{self._graph}/{media_id}/insights",
+            params={"metric": ",".join(metrics), "access_token": token},
+        )
+        values: dict[str, int] = {}
+        for item in data.get("data") or []:
+            points = item.get("values") or []
+            value = (
+                points[0].get("value") if points else (item.get("total_value") or {}).get("value")
+            )
+            if isinstance(value, int | float):
+                values[str(item.get("name"))] = int(value)
+        return values
 
     @staticmethod
     def _long_lived(data: dict[str, Any]) -> LongLivedToken:

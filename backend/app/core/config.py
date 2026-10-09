@@ -65,6 +65,11 @@ class Settings(BaseSettings):
     knowledge_char_limit: int = 40_000
     product_row_limit: int = 2_000
     upload_max_bytes: int = 5 * 1024 * 1024
+    # Story photos and videos the owner schedules are kept here until they're published (and
+    # served to Instagram from PUBLIC_BASE_URL). In Docker this is a volume.
+    media_dir: str = "media"
+    story_image_max_bytes: int = 8 * 1024 * 1024
+    story_video_max_bytes: int = 100 * 1024 * 1024
     # How often Google Sheets product sources are re-read.
     product_sync_interval_minutes: int = 5
     # Longest text (a Google Doc, a pasted price list) read in one "teach the bot" request.
@@ -76,6 +81,22 @@ class Settings(BaseSettings):
 
     # A safety net against one chatty customer (or a spammer) draining a shop's wallet.
     max_bot_replies_per_customer_hour: int = 30
+    # Questions unrelated to the shop (weather, homework, jokes) get a short canned reply
+    # instead of a full AI answer, and aren't charged; after this many in a row the bot stays
+    # silent until the customer asks about the shop again. A small, cheap AI call decides
+    # when a message doesn't obviously look like a shopping question.
+    off_topic_guard: bool = True
+    off_topic_max_replies: int = 2
+    # Optional cheaper model for that check; empty = LLM_MODEL.
+    llm_triage_model: str = ""
+
+    # Replisto's own assistant on the website ("Ask Replisto"), answered by our own shop
+    # (created with scripts/seed_house.py; the team teaches it like any shop and it isn't
+    # charged). Daily AI token allowances:
+    site_chat_guest_tokens: int = 25_000  # a visitor who isn't logged in
+    site_chat_member_tokens: int = 100_000  # a logged-in user
+    site_chat_ip_tokens: int = 150_000  # all guests behind one IP (mobile networks share)
+    site_chat_daily_tokens: int = 3_000_000  # all guests together
 
     # Billing: shops top up a wallet and every AI answer is paid from it. Amounts in US cents.
     billing_enabled: bool = True
@@ -114,6 +135,11 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = "Replisto <no-reply@replisto.app>"
     smtp_starttls: bool = True
+    # Port 465 providers want SSL from the first byte instead of STARTTLS.
+    smtp_ssl: bool = False
+    # Email the owner when a customer is waiting for them and when the wallet runs low or
+    # out (the panel shows these too, but only while it's open).
+    email_alerts: bool = True
     password_reset_minutes: int = 30
     email_verify_days: int = 7
     # The panel stays closed until the owner clicks the emailed link (only /me, resending

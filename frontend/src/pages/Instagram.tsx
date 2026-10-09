@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, Images, RefreshCw, ShieldCheck } from "lucide-react";
+import { Camera, CheckCircle2, Images, RefreshCw, ShieldCheck, XCircle } from "lucide-react";
 import { api } from "../api/client";
 import { keys } from "../api/queries";
 import type { InstagramStatus, Posts } from "../api/types";
@@ -48,7 +48,7 @@ export default function Instagram() {
       <>
         {header}
         <Card className="p-6">
-          <h2 className="text-lg font-extrabold text-ink-950">{t.launch.instagramSoon.title}</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-ink-950">{t.launch.instagramSoon.title}</h2>
           <p className="mt-2 max-w-xl text-sm leading-7 text-slate-600">{t.launch.instagramSoon.body}</p>
         </Card>
       </>
@@ -92,7 +92,7 @@ export default function Instagram() {
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-lg font-extrabold text-ink-950">
+                <span className="text-lg font-semibold tracking-tight text-ink-950">
                   {data.connected ? (
                     data.username ? (
                       <a href={`https://instagram.com/${data.username}`} target="_blank" rel="noopener noreferrer" className="ltr hover:text-brand-700 hover:underline">
@@ -129,7 +129,7 @@ export default function Instagram() {
 
           {state !== "ok" && (
             <div className="border-t border-slate-100 bg-slate-50/60 p-5 sm:p-6">
-              <h2 className="font-bold text-ink-950">{t.panel.instagram.stepsTitle}</h2>
+              <h2 className="font-semibold text-ink-950">{t.panel.instagram.stepsTitle}</h2>
               <ol className="mt-4 space-y-4">
                 <li className="flex gap-3.5">
                   <StepNumber n={1} />
@@ -152,9 +152,34 @@ export default function Instagram() {
             </div>
           )}
 
+          {state === "ok" && data.features && (
+            <div className="border-t border-slate-100 p-5 sm:p-6">
+              <h2 className="text-sm font-semibold text-ink-950">{t.social.instagram.featuresTitle}</h2>
+              <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
+                {(["messages", "comments", "stories", "insights"] as const).map((key) => {
+                  const on = data.features![key];
+                  return (
+                    <li key={key} className="flex items-start gap-2.5 text-sm leading-6">
+                      {on ? (
+                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+                      ) : (
+                        <XCircle className="mt-0.5 size-4 shrink-0 text-slate-400" aria-hidden />
+                      )}
+                      <span className={on ? "text-ink-800" : "text-slate-500"}>
+                        {t.social.instagram.features[key]}
+                        {!on && <span className="block text-xs text-amber-700">{t.social.instagram.missing}</span>}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 px-5 py-4 sm:px-6">
             {state === "none" && connectButton(t.instagram.connect)}
             {state === "inactive" && connectButton(t.instagram.reconnect)}
+            {state === "ok" && data.features && Object.values(data.features).some((on) => !on) && connectButton(t.instagram.reconnect)}
             {data.connected && (
               <Button variant="ghost" onClick={() => setConfirm(true)} className={state === "ok" ? undefined : "sm:ms-auto"}>
                 <span className="text-red-700">{t.instagram.disconnect}</span>
@@ -184,7 +209,7 @@ export default function Instagram() {
 function StepNumber({ n }: { n: number }) {
   const { f } = useI18n();
   return (
-    <span aria-hidden className="num flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
+    <span aria-hidden className="num flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
       {f.num(n)}
     </span>
   );

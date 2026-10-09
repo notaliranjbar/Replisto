@@ -1,43 +1,41 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import {
   ArrowRight,
+  BarChart3,
+  BellRing,
   BookOpen,
+  CalendarClock,
   Check,
-  ChevronDown,
-  Clock,
-  EyeOff,
-  Hand,
   Inbox,
-  KeyRound,
+  MessageCircleMore,
   PackageSearch,
+  Plus,
+  Search,
   ShieldCheck,
   SlidersHorizontal,
-  Trash,
-  UserRound,
-  BellRing,
-  BookOpenCheck,
-  ShoppingBag,
-  Headset,
-  Compass,
-  ClipboardList,
-  ListChecks,
 } from "lucide-react";
-import { CHANNELS, ChannelMark } from "../components/site/channels";
-import HeroChat from "../components/site/HeroChat";
+import { AskReplisto } from "../components/AskReplisto";
 import SiteFooter from "../components/site/SiteFooter";
 import SiteHeader from "../components/site/SiteHeader";
 import { Bullets, Section, SectionHeader } from "../components/site/Section";
-import { HandoffDemo, KnowledgeDemo, ProductsDemo, ToneDemo } from "../components/site/demos";
-import { Reveal, useInView } from "../components/site/motion";
+import { CommentsDemo, HandoffDemo, InsightsDemo, KnowledgeDemo, ProductsDemo, StoriesDemo, ToneDemo } from "../components/site/demos";
+import { Reveal } from "../components/site/motion";
 import { LogoMark } from "../components/Logo";
 import { buttonClass, cx } from "../components/ui";
 import { useI18n } from "../i18n";
 
-/** Public home page for visitors who aren't logged in. */
+/**
+ * Public home page for visitors who aren't logged in. A centred headline over a picture of the
+ * product (the inbox), a strip of plain numbers, then a live chat with our own assistant, the
+ * features, three setup steps, the price and the FAQ. On phones a "Start free" bar follows once
+ * the hero's buttons scroll away.
+ */
 export default function Landing() {
   const { t } = useI18n();
   const { hash } = useLocation();
+  const heroActions = useRef<HTMLDivElement>(null);
+  const [showSticky, setShowSticky] = useState(false);
 
   useEffect(() => {
     document.title = t.landing.meta.title;
@@ -49,6 +47,15 @@ export default function Landing() {
     if (hash) document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
   }, [hash]);
 
+  // The sticky "Start free" bar appears once the hero's own buttons are out of view.
+  useEffect(() => {
+    const el = heroActions.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setShowSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="bg-surface text-ink-950">
       <a
@@ -57,19 +64,20 @@ export default function Landing() {
       >
         {t.landing.nav.skip}
       </a>
-      <SiteHeader overHero />
+      <Announcement />
+      <SiteHeader />
       <main id="main">
-        <Hero />
-        <Roles />
-        <Channels />
-        <Problem />
+        <Hero actionsRef={heroActions} />
+        <Metrics />
+        <Try />
         <Features />
-        <How />
-        <Trust />
+        <Steps />
+        <Pricing />
         <Faq />
         <FinalCta />
       </main>
       <SiteFooter onLanding />
+      <StickyCta show={showSticky} />
     </div>
   );
 }
@@ -83,353 +91,330 @@ function Arrow() {
   );
 }
 
-function Hero() {
+/** A slim navy bar above the header with the latest news. */
+function Announcement() {
   const { t } = useI18n();
-  const h = t.landing.hero;
+  const h = t.landing.home;
   return (
-    <section aria-labelledby="hero-title" className="relative overflow-hidden bg-brand-600 text-white">
-      <div aria-hidden className="dot-grid absolute inset-0 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]" />
-      <div className="container-site relative grid grid-cols-1 items-center gap-x-16 gap-y-16 pb-20 pt-10 sm:pt-14 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:pb-28 lg:pt-16">
-        <div className="max-w-2xl">
-          <p className="animate-pop-in inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-sm font-medium text-white/90 ring-1 ring-white/20">
-            <span aria-hidden className="size-1.5 rounded-full bg-accent-400" />
-            {h.eyebrow}
-          </p>
-          <h1 id="hero-title" className="t-display animate-pop-in mt-6 text-balance [animation-delay:80ms]">
-            {h.titleBefore}
-            <span className="relative inline-block whitespace-nowrap text-accent-300">
-              {h.titleMark}
-              <svg aria-hidden viewBox="0 0 200 14" preserveAspectRatio="none" className="absolute inset-x-0 -bottom-1.5 h-[0.22em] w-full rtl:-scale-x-100">
-                <path d="M3 10 C 48 3, 118 2, 197 8" pathLength="1" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="draw-in" />
-              </svg>
-            </span>
-            {h.titleAfter}
-          </h1>
-          <p className="t-lead animate-pop-in mt-6 max-w-xl text-pretty text-white/80 [animation-delay:160ms]">{h.lead}</p>
-          <div className="animate-pop-in mt-9 flex flex-col gap-3 [animation-delay:240ms] sm:flex-row sm:flex-wrap">
-            <Link to="/register" className={buttonClass("inverse", "lg")}>
-              {h.primary}
-              <Arrow />
-            </Link>
-            <a href="#roles" className={buttonClass("outlineInverse", "lg")}>
-              {h.secondary}
-            </a>
-          </div>
-          {/* what it does, then where it works: the first screen answers both */}
-          <div className="animate-pop-in mt-9 space-y-4 [animation-delay:320ms]">
-            <ul aria-label={h.rolesLabel} className="flex flex-wrap gap-2">
-              {h.roles.map((role) => (
-                <li key={role} className="rounded-full bg-white/10 px-3.5 py-1.5 text-sm font-semibold text-white ring-1 ring-white/20">
-                  {role}
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-white/75">
-              <span>{h.channelsLabel}</span>
-              <ul className="flex gap-2">
-                {CHANNELS.map(({ key }) => (
-                  <li
-                    key={key}
-                    title={t.landing.channels.names[key]}
-                    className="flex size-9 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15"
-                  >
-                    <ChannelMark channel={key} className="size-[18px]" />
-                    <span className="sr-only">{t.landing.channels.names[key]}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+    <div className="bg-night-950 text-white">
+      <div className="container-site flex min-h-10 items-center justify-center gap-x-3 py-2 text-center text-[13px]">
+        <span className="text-white/80">{h.announce}</span>
+        <a href="#try" className="inline-flex shrink-0 items-center gap-1 font-medium text-[#93b1fb] hover:text-white">
+          {h.announceLink}
+          <ArrowRight aria-hidden className="size-3.5 rtl:-scale-x-100" />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function Hero({ actionsRef }: { actionsRef: React.RefObject<HTMLDivElement | null> }) {
+  const { t } = useI18n();
+  const h = t.landing.home;
+  return (
+    <section aria-labelledby="hero-title" className="relative overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(55%_45%_at_50%_0%,rgb(37_72_224/0.09),transparent)]" />
+      <div aria-hidden className="line-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]" />
+      <div className="container-site relative pb-12 pt-12 text-center sm:pt-16 lg:pt-20">
+        <p className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-surface px-3 py-1 text-[13px] font-medium text-slate-600 shadow-soft">
+          <span aria-hidden className="size-1.5 rounded-full bg-brand-600" />
+          {h.eyebrow}
+        </p>
+        <h1 id="hero-title" className="t-display mx-auto mt-5 max-w-4xl text-ink-950 max-sm:text-balance">
+          {h.titleBefore}
+          <br />
+          <span className="t-accent">{h.titleMark}</span>
+          {h.titleAfter}
+        </h1>
+        <p className="t-lead mx-auto mt-5 max-w-2xl text-pretty text-slate-600">{h.lead}</p>
+        <div ref={actionsRef} className="mx-auto mt-8 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
+          <Link to="/register" className={buttonClass("primary", "lg", "group/btn")}>
+            {h.primary}
+            <Arrow />
+          </Link>
+          <a href="#try" className={buttonClass("secondary", "lg")}>
+            {h.secondary}
+          </a>
         </div>
-        <div className="animate-pop-in [animation-delay:200ms]">
-          <HeroChat />
+        <ul className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2">
+          {h.perks.map((perk) => (
+            <li key={perk} className="flex items-center gap-1.5 text-sm text-slate-600">
+              <Check aria-hidden className="size-4 text-emerald-600" strokeWidth={2.5} />
+              {perk}
+            </li>
+          ))}
+        </ul>
+        {/* phones skip the picture: the live chat follows right below */}
+        <div className="mx-auto mt-14 hidden max-w-5xl sm:block">
+          <InboxMock />
         </div>
       </div>
     </section>
   );
 }
 
-/** The jobs Replisto does for a business: five equal roles, one card each. */
-function Roles() {
+/** A still picture of the panel's inbox: the thread list and one answered conversation. */
+function InboxMock() {
   const { t } = useI18n();
-  const R = t.landing.roles;
-  const icons = [<ShoppingBag key="s" />, <Headset key="h" />, <Compass key="c" />, <ClipboardList key="a" />, <ListChecks key="f" />];
+  const m = t.landing.home.mock;
+  const c = t.landing.chat;
   return (
-    <Section id="roles">
-      <SectionHeader id="roles" eyebrow={R.eyebrow} title={R.title} lead={R.lead} />
-      <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:mt-14 lg:grid-cols-5">
-        {R.items.map((item, i) => (
-          <li key={item.title} className="sm:last:col-span-2 lg:last:col-span-1">
-            <Reveal
-              delay={i * 70}
-              className="h-full rounded-2xl bg-surface p-6 shadow-soft ring-1 ring-line transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lift"
-            >
-              <span aria-hidden className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-brand-700 [&>svg]:size-5">
-                {icons[i]}
-              </span>
-              <h3 className="mt-5 text-lg font-bold text-ink-950">{item.title}</h3>
-              <p className="mt-2 text-[15px] leading-7 text-slate-600">{item.body}</p>
-            </Reveal>
-          </li>
+    <div aria-hidden className="overflow-hidden rounded-xl border border-slate-200 bg-surface text-start shadow-float">
+      <div className="flex h-11 items-center gap-2.5 border-b border-slate-200 bg-slate-50 px-4">
+        <LogoMark px={20} />
+        <span className="text-[13px] font-semibold text-ink-900">{m.title}</span>
+        <span className="ms-auto flex h-7 w-48 items-center gap-2 rounded-md border border-slate-200 bg-surface px-2.5 text-xs text-slate-400 max-md:hidden">
+          <Search className="size-3.5" />
+        </span>
+      </div>
+      <div className="grid h-[23rem] grid-cols-[15rem_minmax(0,1fr)] max-md:grid-cols-1">
+        <div className="border-e border-slate-200 max-md:hidden">
+          <div className="flex gap-4 border-b border-slate-200 px-4 text-xs font-medium">
+            <span className="-mb-px border-b-2 border-brand-600 py-2.5 text-ink-950">{m.all}</span>
+            <span className="py-2.5 text-slate-500">{m.waiting}</span>
+          </div>
+          <ul>
+            {m.threads.map((th, i) => (
+              <li key={th.name} className={cx("flex gap-3 border-b border-slate-100 px-4 py-3", i === 0 && "bg-brand-50")}>
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold uppercase text-slate-600">{th.name[0]}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className="ltr truncate text-[13px] font-semibold text-ink-900">{th.name}</span>
+                    <span className="ms-auto shrink-0 text-[11px] text-slate-400">{th.time}</span>
+                  </span>
+                  <span className="mt-0.5 flex items-center gap-1.5">
+                    <span className="truncate text-xs text-slate-500">{th.text}</span>
+                    {"waiting" in th && th.waiting && <span className="size-1.5 shrink-0 rounded-full bg-red-500" />}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex min-w-0 flex-col">
+          <div className="flex h-12 items-center gap-2.5 border-b border-slate-200 px-5">
+            <span className="ltr text-sm font-semibold text-ink-900">{m.threads[0].name}</span>
+            <span className="ms-auto inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
+              <span className="size-1.5 rounded-full bg-emerald-500" />
+              {c.botOn}
+            </span>
+          </div>
+          <div className="flex-1 space-y-3 overflow-hidden bg-canvas/60 px-5 py-4 text-[13px] leading-6">
+            <p className="w-fit max-w-[75%] rounded-lg rounded-ss-sm border border-slate-200 bg-surface px-3 py-2 text-ink-900">{c.m1}</p>
+            <div className="ms-auto w-fit max-w-[75%]">
+              <p className="rounded-lg rounded-se-sm bg-brand-600 px-3 py-2 text-white">{c.m2}</p>
+              <p className="mt-1 flex items-center justify-end gap-1 text-[11px] text-slate-500">
+                <Check className="size-3 text-brand-600" strokeWidth={3} />
+                {m.auto} · {c.lookup}
+              </p>
+            </div>
+            <p className="w-fit max-w-[75%] rounded-lg rounded-ss-sm border border-slate-200 bg-surface px-3 py-2 text-ink-900">{c.m3}</p>
+            <div className="ms-auto w-fit max-w-[75%]">
+              <p className="rounded-lg rounded-se-sm bg-brand-600 px-3 py-2 text-white">{c.m4}</p>
+              <p className="mt-1 flex items-center justify-end gap-1 text-[11px] text-slate-500">
+                <Check className="size-3 text-brand-600" strokeWidth={3} />
+                {m.auto}
+              </p>
+            </div>
+          </div>
+          <div className="flex h-12 items-center border-t border-slate-200 px-5 text-xs text-slate-400">{m.reply}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Four plain numbers in a ruled strip. */
+function Metrics() {
+  const { t } = useI18n();
+  return (
+    <section aria-label={t.landing.home.featuresEyebrow} className="bg-night-950 text-white">
+      <dl className="container-site grid grid-cols-2 md:grid-cols-4">
+        {t.landing.home.metrics.map((m, i) => (
+          <div
+            key={m.label}
+            className={cx(
+              "border-white/10 px-2 py-6 text-center sm:py-8",
+              i % 2 === 0 && "border-e",
+              i < 2 && "max-md:border-b",
+              i === 1 && "md:border-e",
+            )}
+          >
+            <dt className="sr-only">{m.label}</dt>
+            <dd dir="auto" className="num text-2xl font-semibold tracking-tight text-white sm:text-3xl">{m.value}</dd>
+            <dd className="mt-1 text-[13px] text-white/60 sm:text-sm">{m.label}</dd>
+          </div>
         ))}
-      </ul>
+      </dl>
+    </section>
+  );
+}
+
+/** The real thing: our own assistant, answering questions about Replisto. */
+function Try() {
+  const { t } = useI18n();
+  const h = t.landing.home;
+  return (
+    <Section id="try" compact>
+      <div className="grid grid-cols-1 items-center gap-x-16 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <div>
+          <SectionHeader id="try" eyebrow={h.tryEyebrow} title={h.tryTitle} lead={h.tryLead} align="start" />
+          <ul className="mt-6 hidden space-y-3 lg:block">
+            {h.tryPoints.map((point) => (
+              <li key={point} className="flex items-start gap-3 text-[15px] leading-7 text-slate-700">
+                <Check className="mt-1 size-5 shrink-0 text-emerald-600" aria-hidden />
+                {point}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <Reveal delay={80}>
+          <AskReplisto />
+        </Reveal>
+      </div>
     </Section>
   );
 }
 
 /**
- * The messaging channels Replisto works on, as identical tiles. Channels that aren't connected in
- * the product yet say "coming soon" instead of offering a dead button.
+ * One feature at a time. Desktop: a vertical list on the start side (the open one shows its
+ * summary) and the demo beside it. Phones: underline tabs that scroll sideways, then the copy.
  */
-function Channels() {
-  const { t } = useI18n();
-  const C = t.landing.channels;
-  return (
-    <Section id="channels" tone="tint" compact>
-      <SectionHeader id="channels" eyebrow={C.eyebrow} title={C.title} lead={C.lead} />
-      <ul className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-        {CHANNELS.map(({ key, live }, i) => {
-          const name = C.names[key];
-          return (
-            <li key={key}>
-              <Reveal delay={i * 70} className="flex h-full flex-col rounded-2xl bg-surface p-4 ring-1 ring-line sm:p-5">
-                <div className="flex items-start justify-between gap-2">
-                  <span aria-hidden className="flex size-11 items-center justify-center rounded-xl bg-fill text-ink-900">
-                    <ChannelMark channel={key} className="size-[22px]" />
-                  </span>
-                  <span
-                    className={cx(
-                      "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold",
-                      live ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500",
-                    )}
-                  >
-                    {live && <span aria-hidden className="size-1.5 rounded-full bg-emerald-500" />}
-                    {live ? C.live : C.soon}
-                  </span>
-                </div>
-                <h3 className="mt-4 font-bold text-ink-950">{name}</h3>
-                <div className="mt-auto pt-4">
-                  {live ? (
-                    <Link to="/register" className={buttonClass("secondary", "sm", "w-full")}>
-                      {C.connect(name)}
-                    </Link>
-                  ) : (
-                    <span aria-disabled className={buttonClass("secondary", "sm", "w-full cursor-default opacity-55")}>
-                      {C.connect(name)}
-                    </span>
-                  )}
-                </div>
-              </Reveal>
-            </li>
-          );
-        })}
-      </ul>
-    </Section>
-  );
-}
-
-function Problem() {
-  const { t } = useI18n();
-  const p = t.landing.problem;
-  const icons = [<Clock key="c" />, <BookOpenCheck key="b" />, <Hand key="h" />];
-  return (
-    <Section id="why">
-      <div className="grid grid-cols-1 items-center gap-x-16 gap-y-12 lg:grid-cols-2">
-        <div>
-          <SectionHeader id="why" eyebrow={p.eyebrow} title={p.title} lead={p.lead} align="start" />
-          <ul className="mt-10 space-y-6">
-            {p.points.map((pt, i) => (
-              <li key={pt.title}>
-                <Reveal delay={i * 90} className="flex gap-4">
-                  <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 [&>svg]:size-5">
-                    {icons[i]}
-                  </span>
-                  <div>
-                    <h3 className="font-bold text-ink-950">{pt.title}</h3>
-                    <p className="mt-1 text-[15px] leading-7 text-slate-600">{pt.body}</p>
-                  </div>
-                </Reveal>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <NightInbox />
-      </div>
-    </Section>
-  );
-}
-
-/** Last night's unread messages flip to "answered" one by one as the card scrolls in. */
-function NightInbox() {
-  const { t } = useI18n();
-  const p = t.landing.problem;
-  const ref = useRef<HTMLDivElement>(null);
-  const on = useInView(ref);
-  return (
-    <Reveal>
-      <div ref={ref} className="overflow-hidden rounded-2xl bg-surface shadow-lift ring-1 ring-line">
-        <div className="flex items-center gap-2.5 border-b border-slate-100 px-5 py-3.5">
-          <span aria-hidden className="flex size-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
-            <Inbox className="size-4" />
-          </span>
-          <h3 className="flex-1 text-sm font-bold">{p.inboxTitle}</h3>
-        </div>
-        <ul className="divide-y divide-slate-100">
-          {p.questions.map((q, i) => (
-            <li key={q.q} className="flex items-center gap-3 px-5 py-3.5">
-              <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                <UserRound className="size-4" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span
-                  className={cx("block truncate text-sm transition-[color,font-weight] duration-500", on ? "font-medium text-slate-600" : "font-bold text-ink-950")}
-                  style={{ transitionDelay: on ? `${500 + i * 380}ms` : undefined }}
-                >
-                  {q.q}
-                </span>
-                <span className="num block text-xs text-slate-400">{q.time}</span>
-              </span>
-              <span className="relative flex h-6 w-24 shrink-0 items-center justify-end">
-                <Status on={!on} delay={500 + i * 380} className="text-brand-700">
-                  <span aria-hidden className="size-2 rounded-full bg-brand-600" />
-                  {p.unread}
-                </Status>
-                <Status on={on} delay={500 + i * 380} className="text-emerald-700">
-                  <Check className="size-3.5" strokeWidth={3} aria-hidden />
-                  {p.answered}
-                </Status>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </Reveal>
-  );
-}
-
-function Status({ on, delay, className, children }: { on: boolean; delay: number; className?: string; children: ReactNode }) {
-  return (
-    <span
-      aria-hidden={!on}
-      className={cx(
-        "absolute inset-y-0 end-0 flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold transition-[opacity,transform] duration-500",
-        on ? "opacity-100" : "translate-y-1 opacity-0",
-        className,
-      )}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </span>
-  );
-}
-
 function Features() {
   const { t } = useI18n();
   const F = t.landing.features;
-  const rows: { key: string; icon: ReactNode; copy: { title: string; body: string; bullets: readonly string[] }; demo: ReactNode }[] = [
-    { key: "knowledge", icon: <BookOpen />, copy: F.knowledge, demo: <KnowledgeDemo /> },
-    { key: "products", icon: <PackageSearch />, copy: F.products, demo: <ProductsDemo /> },
-    { key: "handoff", icon: <BellRing />, copy: F.handoff, demo: <HandoffDemo /> },
-    { key: "control", icon: <SlidersHorizontal />, copy: F.control, demo: <ToneDemo /> },
+  const h = t.landing.home;
+  const items: { icon: ReactNode; copy: { title: string; body: string; bullets: readonly string[] }; demo: ReactNode }[] = [
+    { icon: <BookOpen />, copy: F.knowledge, demo: <KnowledgeDemo /> },
+    { icon: <PackageSearch />, copy: F.products, demo: <ProductsDemo /> },
+    { icon: <MessageCircleMore />, copy: F.comments, demo: <CommentsDemo /> },
+    { icon: <CalendarClock />, copy: F.stories, demo: <StoriesDemo /> },
+    { icon: <BarChart3 />, copy: F.insights, demo: <InsightsDemo /> },
+    { icon: <BellRing />, copy: F.handoff, demo: <HandoffDemo /> },
+    { icon: <SlidersHorizontal />, copy: F.control, demo: <ToneDemo /> },
   ];
+  const [active, setActive] = useState(0);
+  const item = items[active];
   return (
     <Section id="features" tone="tint">
-      <SectionHeader id="features" eyebrow={F.eyebrow} title={F.title} lead={F.lead} />
-      <div className="mt-16 space-y-20 lg:mt-24 lg:space-y-28">
-        {rows.map((row, i) => (
-          <article key={row.key} className="grid grid-cols-1 items-center gap-x-16 gap-y-10 lg:grid-cols-2">
-            <Reveal className={cx("max-w-xl", i % 2 === 1 && "lg:order-last")}>
-              <span aria-hidden className="flex size-12 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-md shadow-brand-600/25 [&>svg]:size-6">
-                {row.icon}
-              </span>
-              <h3 className="t-h3 mt-6 text-ink-950">{row.copy.title}</h3>
-              <p className="mt-3 text-[16px] leading-8 text-slate-600">{row.copy.body}</p>
-              <Bullets items={row.copy.bullets} className="mt-6" />
-            </Reveal>
-            <Reveal delay={120} className="mx-auto w-full max-w-lg">
-              {row.demo}
-            </Reveal>
-          </article>
-        ))}
+      <SectionHeader id="features" eyebrow={h.featuresEyebrow} title={h.featuresTitle} align="start" />
+      <div className="mt-8 grid grid-cols-1 gap-x-12 gap-y-6 lg:mt-12 lg:grid-cols-[16rem_minmax(0,1fr)]">
+        <div
+          role="tablist"
+          aria-label={h.featuresTitle}
+          aria-orientation="vertical"
+          className="no-scrollbar -mx-4 flex gap-5 overflow-x-auto border-b border-slate-200 px-4 sm:mx-0 sm:px-0 lg:flex-col lg:gap-2 lg:overflow-visible lg:border-0"
+        >
+          {items.map((it, i) => {
+            const on = active === i;
+            return (
+              <button
+                key={h.tabs[i]}
+                type="button"
+                role="tab"
+                id={`feature-tab-${i}`}
+                aria-selected={on}
+                aria-controls="feature-panel"
+                onClick={() => setActive(i)}
+                className={cx(
+                  "-mb-px flex shrink-0 items-center gap-2 border-b-2 py-3 text-sm font-medium transition-colors [&>svg]:size-4",
+                  "lg:mb-0 lg:gap-3 lg:rounded-lg lg:border lg:px-3 lg:py-2.5 lg:text-start",
+                  on
+                    ? "border-brand-600 text-ink-950 lg:border-slate-200 lg:bg-surface lg:shadow-soft"
+                    : "border-transparent text-slate-500 hover:text-ink-900 lg:hover:bg-surface/60",
+                )}
+              >
+                <span className={cx("flex shrink-0 items-center [&>svg]:size-4 lg:size-8 lg:justify-center lg:rounded-md lg:border lg:border-slate-200 lg:bg-surface", on ? "text-brand-600" : "text-slate-400")}>
+                  {it.icon}
+                </span>
+                <span className="min-w-0 lg:self-center lg:text-[15px]">{h.tabs[i]}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div id="feature-panel" role="tabpanel" aria-labelledby={`feature-tab-${active}`} key={active} className="animate-fade-in grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] xl:gap-10">
+          <div>
+            <h3 className="t-h3 text-ink-950">{item.copy.title}</h3>
+            <p className="mt-2 text-[15px] leading-7 text-slate-600">{item.copy.body}</p>
+            <Bullets items={item.copy.bullets} className="mt-5" />
+          </div>
+          <Reveal className="w-full">{item.demo}</Reveal>
+        </div>
       </div>
     </Section>
   );
 }
 
-function How() {
+/** Three steps on a line: down the page on phones, across it on larger screens. */
+function Steps() {
   const { t, f } = useI18n();
-  const H = t.landing.how;
-  const ref = useRef<HTMLOListElement>(null);
-  const on = useInView(ref);
+  const h = t.landing.home;
   return (
-    <Section id="how">
-      <SectionHeader id="how" eyebrow={H.eyebrow} title={H.title} lead={H.lead} />
-      <ol ref={ref} className="relative mx-auto mt-16 grid max-w-md grid-cols-1 gap-10 lg:mt-20 lg:max-w-none lg:grid-cols-4 lg:gap-8">
-        {/* progress line through the step numbers: vertical on phones, horizontal on desktop */}
-        <span
-          aria-hidden
-          className={cx(
-            "absolute start-[1.4375rem] top-6 bottom-6 w-0.5 origin-top bg-brand-200 transition-transform duration-[1400ms] ease-[var(--ease-out-soft)]",
-            "lg:start-[12.5%] lg:end-[12.5%] lg:bottom-auto lg:h-0.5 lg:w-auto lg:origin-left rtl:lg:origin-right",
-            on ? "scale-100" : "scale-y-0 lg:scale-x-0 lg:scale-y-100",
-          )}
-        />
-        {H.steps.map((step, i) => (
-          <li key={step.title} className="relative flex gap-5 lg:flex-col lg:items-center lg:text-center">
-            <span
-              className={cx(
-                "num relative flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-extrabold ring-4 ring-surface transition-colors duration-500",
-                on ? "bg-brand-600 text-white" : "bg-brand-50 text-brand-700",
-              )}
-              style={{ transitionDelay: `${250 + i * 300}ms` }}
-            >
+    <Section id="how" compact>
+      <SectionHeader id="how" eyebrow={h.stepsEyebrow} title={h.stepsTitle} align="start" />
+      <ol className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
+        {h.steps.map((step, i) => (
+          <li key={step.title} className="relative ps-12 sm:ps-0 sm:pt-14">
+            {/* connector to the next step */}
+            {i < h.steps.length - 1 && (
+              <span
+                aria-hidden
+                className="absolute start-[0.9375rem] top-9 -bottom-8 w-px bg-slate-200 sm:start-11 sm:-end-6 sm:top-4 sm:bottom-auto sm:h-px sm:w-auto"
+              />
+            )}
+            <span className="num absolute start-0 top-0 flex size-8 items-center justify-center rounded-full border border-brand-600 bg-surface text-sm font-semibold text-brand-700">
               {f.num(i + 1)}
             </span>
-            <Reveal delay={150 + i * 120}>
-              <h3 className="text-lg font-bold text-ink-950 lg:mt-5">{step.title}</h3>
-              <p className="mt-1.5 text-[15px] leading-7 text-slate-600">{step.body}</p>
-            </Reveal>
+            <h3 className="text-[17px] font-semibold tracking-tight text-ink-950">{step.title}</h3>
+            <p className="mt-1.5 text-[15px] leading-7 text-slate-600">{step.body}</p>
           </li>
         ))}
       </ol>
-      <Reveal className="mt-14 flex justify-center">
-        <Link to="/register" className={buttonClass("primary", "lg")}>
-          {t.landing.nav.start}
-          <Arrow />
-        </Link>
-      </Reveal>
     </Section>
   );
 }
 
-function Trust() {
+function Pricing() {
   const { t } = useI18n();
-  const T = t.landing.trust;
-  const icons = [<ShieldCheck key="s" />, <KeyRound key="k" />, <EyeOff key="e" />, <Trash key="t" />];
+  const h = t.landing.home;
   return (
-    <Section id="trust" tone="ink">
-      <SectionHeader id="trust" eyebrow={T.eyebrow} title={T.title} lead={T.lead} dark />
-      <ul className="mt-14 grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2 lg:mt-16 lg:grid-cols-4">
-        {T.items.map((item, i) => (
-          <li key={item.title}>
-            <Reveal delay={i * 90} className="h-full border-t border-white/15 pt-6">
-              <span aria-hidden className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-accent-300 [&>svg]:size-5">
-                {icons[i]}
-              </span>
-              <h3 className="mt-5 font-bold text-white">{item.title}</h3>
-              <p className="mt-2 text-[15px] leading-7 text-white/65">{item.body}</p>
-            </Reveal>
-          </li>
-        ))}
-      </ul>
-      <Reveal className="mt-12 text-center">
-        <Link
-          to="/privacy"
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/85 underline decoration-white/30 underline-offset-4 transition-colors hover:text-white hover:decoration-white"
-        >
-          {T.privacyLink}
-          <ArrowRight className="size-4 rtl:-scale-x-100" aria-hidden />
-        </Link>
+    <Section id="pricing" tone="tint" compact>
+      <Reveal className="mx-auto max-w-4xl overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-lift">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_17rem]">
+          <div className="p-6 sm:p-8">
+            <p className="text-[13px] font-semibold uppercase tracking-wider text-brand-600">{h.pricingEyebrow}</p>
+            <h2 id="pricing-title" className="t-h2 mt-2 text-balance text-ink-950">
+              {h.pricingTitle}
+            </h2>
+            <p className="mt-3 text-[15px] leading-7 text-slate-600">{h.pricingLead}</p>
+            <ul className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              {h.pricingPoints.map((point) => (
+                <li key={point} className="flex items-start gap-2.5 text-sm leading-6 text-slate-700">
+                  <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-emerald-600" strokeWidth={2.5} />
+                  {point}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex flex-col justify-center gap-5 border-t border-slate-200 bg-slate-50 p-6 sm:p-8 md:border-s md:border-t-0">
+            <div>
+              <span dir="auto" className="num text-4xl font-semibold tracking-tight text-ink-950">{h.pricingPrice}</span>
+              <span className="ms-2 text-sm text-slate-500">{h.pricingUnit}</span>
+            </div>
+            <Link to="/register" className={buttonClass("primary", "lg", "group/btn w-full")}>
+              {h.pricingCta}
+              <Arrow />
+            </Link>
+          </div>
+        </div>
+        <ul className="flex flex-wrap gap-x-5 gap-y-2 border-t border-slate-200 px-6 py-4 text-[13px] text-slate-500 sm:px-8">
+          {h.trust.map((item) => (
+            <li key={item} className="flex items-center gap-1.5">
+              <ShieldCheck aria-hidden className="size-4 text-slate-400" />
+              {item}
+            </li>
+          ))}
+        </ul>
       </Reveal>
     </Section>
   );
@@ -439,27 +424,20 @@ function Faq() {
   const { t } = useI18n();
   const Q = t.landing.faq;
   return (
-    <Section id="faq">
-      <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <SectionHeader id="faq" eyebrow={Q.eyebrow} title={Q.title} align="start" className="lg:sticky lg:top-28 lg:self-start" />
-        <Reveal>
-          <div className="divide-y divide-slate-200 border-y border-slate-200">
-            {Q.items.map((item) => (
-              <details key={item.q} name="faq" className="group">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-start text-[17px] font-bold text-ink-950 transition-colors hover:text-brand-700 [&::-webkit-details-marker]:hidden">
-                  {item.q}
-                  <span
-                    aria-hidden
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-[transform,background-color,color] duration-300 group-open:rotate-180 group-open:bg-brand-600 group-open:text-white"
-                  >
-                    <ChevronDown className="size-4" />
-                  </span>
-                </summary>
-                <p className="animate-pop-in pb-6 pe-12 text-[15px] leading-8 text-slate-600">{item.a}</p>
-              </details>
-            ))}
-          </div>
-        </Reveal>
+    <Section id="faq" compact>
+      <div className="grid grid-cols-1 gap-x-16 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)]">
+        <SectionHeader id="faq" eyebrow={Q.eyebrow} title={Q.title} align="start" />
+        <div className="divide-y divide-slate-200 border-y border-slate-200">
+          {Q.items.map((item) => (
+            <details key={item.q} name="faq" className="group">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-start text-[15px] font-medium text-ink-950 transition-colors hover:text-brand-700 [&::-webkit-details-marker]:hidden">
+                {item.q}
+                <Plus aria-hidden className="size-4 shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-45" />
+              </summary>
+              <p className="animate-fade-in pb-5 pe-8 text-[15px] leading-7 text-slate-600">{item.a}</p>
+            </details>
+          ))}
+        </div>
       </div>
     </Section>
   );
@@ -469,24 +447,48 @@ function FinalCta() {
   const { t } = useI18n();
   const C = t.landing.cta;
   return (
-    <section aria-labelledby="cta-title" className="relative overflow-hidden bg-brand-600 text-white">
-      <div aria-hidden className="dot-grid absolute inset-0 [mask-image:radial-gradient(ellipse_60%_80%_at_50%_100%,black,transparent)]" />
-      <Reveal className="container-site relative flex flex-col items-center py-[clamp(4.5rem,10vw,7.5rem)] text-center">
-        <LogoMark px={64} className="shadow-float ring-2 ring-white/25" />
-        <h2 id="cta-title" className="t-h2 mt-8 max-w-2xl text-balance">
-          {C.title}
-        </h2>
-        <p className="t-lead mt-4 max-w-xl text-pretty text-white/80">{C.lead}</p>
-        <div className="mt-9 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
-          <Link to="/register" className={buttonClass("inverse", "lg")}>
+    <section aria-labelledby="cta-title" className="relative overflow-hidden bg-night-950 text-white">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.05)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_60%_100%_at_100%_50%,black,transparent)] rtl:[mask-image:radial-gradient(ellipse_60%_100%_at_0%_50%,black,transparent)]"
+      />
+      <div className="container-site relative flex flex-col gap-8 py-[clamp(3.5rem,7vw,5.5rem)] md:flex-row md:items-center md:justify-between">
+        <div className="max-w-xl">
+          <h2 id="cta-title" className="t-h2 text-balance">
+            {C.title}
+          </h2>
+          <p className="mt-3 text-pretty text-[16px] leading-7 text-white/70">{C.lead}</p>
+        </div>
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+          <Link to="/register" className={buttonClass("primary", "lg", "group/btn")}>
             {C.primary}
             <Arrow />
           </Link>
           <Link to="/login" className={buttonClass("outlineInverse", "lg")}>
+            <Inbox aria-hidden className="size-4" />
             {C.secondary}
           </Link>
         </div>
-      </Reveal>
+      </div>
     </section>
+  );
+}
+
+/** Phones: a "Start free" bar at the bottom once the hero's buttons have scrolled away. */
+function StickyCta({ show }: { show: boolean }) {
+  const { t } = useI18n();
+  return (
+    <div
+      aria-hidden={!show}
+      className={cx(
+        "fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-surface/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md transition-transform duration-300 lg:hidden",
+        show ? "translate-y-0" : "pointer-events-none translate-y-full",
+      )}
+    >
+      <Link to="/register" tabIndex={show ? 0 : -1} className={buttonClass("primary", "lg", "group/btn w-full")}>
+        {t.landing.home.stickyCta}
+        <Arrow />
+      </Link>
+    </div>
   );
 }

@@ -72,7 +72,7 @@ function Balance({ b }: { b: BillingData }) {
     <section className="animate-pop-in relative overflow-hidden rounded-3xl bg-brand-600 p-6 text-white shadow-lift lg:col-span-2">
       <div className="text-sm font-semibold text-white/75">{B.balance}</div>
       <div className="mt-2 flex items-baseline gap-2">
-        <span className="num text-4xl font-extrabold">{f.usd(b.balance_cents)}</span>
+        <span className="num text-4xl font-semibold tracking-tight">{f.usd(b.balance_cents)}</span>
       </div>
       <div className="mt-4 text-sm text-white/80">{B.perAnswer(f.usd(b.pricing.typical_answer_cents))}</div>
       {b.low_balance && <div className="mt-4 rounded-xl bg-white/15 px-3 py-2 text-sm font-semibold">{t.launch.lowBalance(f.usd(b.balance_cents))}</div>}
@@ -183,7 +183,7 @@ function Topup({ b }: { b: BillingData }) {
         )}
         {b.pending_transfers.length > 0 && (
           <div className="rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200">
-            <div className="text-sm font-bold text-amber-900">{B.pendingTitle}</div>
+            <div className="text-sm font-semibold text-amber-900">{B.pendingTitle}</div>
             <ul className="mt-2 space-y-1 text-sm text-amber-900">
               {b.pending_transfers.map((p) => (
                 <li key={p.id} className="flex flex-wrap gap-x-3">
@@ -206,7 +206,7 @@ function Pricing({ b }: { b: BillingData }) {
   const B = t.launch.billing;
   return (
     <Card className="p-5 sm:p-6">
-      <h2 className="font-bold text-ink-950">{B.pricingTitle}</h2>
+      <h2 className="font-semibold text-ink-950">{B.pricingTitle}</h2>
       <ul className="mt-3 list-disc space-y-1.5 ps-5 text-sm leading-6 text-slate-600">
         <li>{B.pricingAnswer}</li>
         <li>{B.perAnswer(f.usd(b.pricing.typical_answer_cents))}</li>
@@ -251,7 +251,7 @@ function HistoryCard() {
                 <span className="min-w-0 truncate text-sm text-ink-900 sm:flex-1">{e.description}</span>
                 <span className="text-xs text-slate-400">{f.smart(e.created_at)}</span>
               </span>
-              <span className={cx("num shrink-0 text-end text-sm font-bold sm:w-28", e.amount_cents >= 0 ? "text-emerald-700" : "text-ink-900")}>
+              <span className={cx("num shrink-0 text-end text-sm font-semibold sm:w-28", e.amount_cents >= 0 ? "text-emerald-700" : "text-ink-900")}>
                 {e.amount_cents >= 0 ? "+" : "−"}
                 {f.usd(Math.abs(e.amount_cents))}
               </span>

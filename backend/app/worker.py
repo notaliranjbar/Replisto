@@ -19,12 +19,22 @@ from app.core.database import SessionLocal
 from app.core.monitoring import setup_monitoring
 from app.core.queue import ArqQueue
 from app.core.timeutil import utcnow
-from app.models import InstagramAccount, ProposalStatus, TeachProposal
-from app.services import instagram_accounts, messaging, payments, posts, products
-from app.services.instagram import InstagramClient, InstagramError
+from app.models import InstagramAccount, ProposalStatus, SiteChatUsage, TeachProposal
+from app.services import (
+    comments,
+    insights,
+    instagram_accounts,
+    messaging,
+    payments,
+    posts,
+    products,
+    stories,
+)
+from app.services.instagram import SCOPE_INSIGHTS, InstagramClient, InstagramError
 from app.services.llm import LLMError
+from app.services.notify import EmailNotifier
 from app.services.responder import get_responder
-from app.services.webhook import MessagingEvent
+from app.services.webhook import CommentEvent, MessagingEvent
 
 logger = logging.getLogger(__name__)
 
@@ -52,11 +62,58 @@ async def reply_conversation(ctx: dict[str, Any], conversation_id: str, trigger_
                 datetime.fromisoformat(trigger_at),
                 InstagramClient(ctx["http"]),
                 get_responder(db, ctx["http"]),
+                notifier=EmailNotifier(db),
             )
         except (InstagramError, LLMError) as exc:
             # Only retryable errors propagate out of reply_to_conversation.
             logger.warning("reply failed (try %s), retrying: %s", ctx.get("job_try"), exc)
             raise Retry(defer=ctx.get("job_try", 1) * 10) from exc
+
+
+async def process_comment(ctx: dict[str, Any], event: CommentEvent) -> None:
+    async with SessionLocal() as db:
+        await comments.record_comment(db, event, ctx["queue"], InstagramClient(ctx["http"]))
+
+
+async def answer_comment(ctx: dict[str, Any], comment_id: str) -> None:
+    async with SessionLocal() as db:
+        try:
+            await comments.answer_comment(
+                db,
+                uuid.UUID(comment_id),
+                InstagramClient(ctx["http"]),
+                get_responder(db, ctx["http"]),
+            )
+        except (InstagramError, LLMError) as exc:
+            logger.warning("comment answer failed (try %s), retrying: %s", ctx.get("job_try"), exc)
+            raise Retry(defer=ctx.get("job_try", 1) * 15) from exc
+
+
+async def publish_stories(ctx: dict[str, Any]) -> None:
+    """Every minute: publish the stories whose time has come."""
+    if not get_settings().instagram_enabled:
+        return
+    async with SessionLocal() as db:
+        published = await stories.publish_due(db, InstagramClient(ctx["http"]))
+    if published:
+        logger.info("published %d stories", published)
+
+
+async def refresh_insights(ctx: dict[str, Any]) -> None:
+    """Daily: read every page's numbers so the insights page is ready when the owner opens it."""
+    if not get_settings().instagram_enabled:
+        return
+    async with SessionLocal() as db:
+        accounts = (
+            await db.scalars(select(InstagramAccount).where(InstagramAccount.is_active.is_(True)))
+        ).all()
+        for account in accounts:
+            if not account.has_scope(SCOPE_INSIGHTS):
+                continue
+            try:
+                await insights.refresh(db, account, InstagramClient(ctx["http"]), force=True)
+            except insights.InsightsError:
+                logger.warning("insights refresh failed for account %s", account.id)
 
 
 async def sync_product_sheets(ctx: dict[str, Any]) -> None:
@@ -103,7 +160,13 @@ async def drop_stale_proposals(ctx: dict[str, Any]) -> None:
                 TeachProposal.created_at < utcnow() - PROPOSAL_LIFETIME,
             )
         )
+        # The website chat's daily counters (they include visitors' IP addresses).
+        await db.execute(
+            delete(SiteChatUsage).where(SiteChatUsage.created_at < utcnow() - timedelta(days=7))
+        )
         await db.commit()
+        # Story files Instagram already has its own copy of.
+        await stories.cleanup(db)
 
 
 async def startup(ctx: dict[str, Any]) -> None:
@@ -120,12 +183,16 @@ async def shutdown(ctx: dict[str, Any]) -> None:
 FUNCTIONS = {
     "process_event": process_event,
     "reply_conversation": reply_conversation,
+    "process_comment": process_comment,
+    "answer_comment": answer_comment,
 }
 
 
 class WorkerSettings:
-    functions = [process_event, reply_conversation]
+    functions = [process_event, reply_conversation, process_comment, answer_comment]
     cron_jobs = [
+        cron(publish_stories, minute=set(range(60))),
+        cron(refresh_insights, hour={5}, minute={15}),
         cron(refresh_instagram_tokens, hour={3}, minute={0}),
         cron(sync_instagram_posts, hour={4}, minute={30}),
         cron(sync_product_sheets, minute=set(range(0, 60, 5))),

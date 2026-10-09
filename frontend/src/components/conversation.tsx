@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Bot, FileIcon, Image, Mic, Paperclip, Smile, UserRound, Video } from "lucide-react";
+import { AtSign, Bot, CircleDashed, FileIcon, Image, MessageCircleMore, Mic, Paperclip, Share2, Smile, UserRound, Video } from "lucide-react";
 import type { Message } from "../api/types";
 import { useI18n } from "../i18n";
 import { PostCard, sharedPostUrl } from "./PostCard";
@@ -22,7 +22,7 @@ export function Avatar({ name, className, solid }: { name: string; className?: s
     <span
       aria-hidden
       className={cx(
-        "flex size-10 shrink-0 items-center justify-center rounded-full font-bold transition-colors",
+        "flex size-10 shrink-0 items-center justify-center rounded-full font-semibold transition-colors",
         solid ? "bg-brand-600 text-white" : "bg-brand-100 text-brand-700",
         className,
       )}
@@ -32,7 +32,8 @@ export function Avatar({ name, className, solid }: { name: string; className?: s
   );
 }
 
-const MARKER = /\[([a-z_]+)\]/g;
+// "[image]", or "[story_reply: what the story showed]"
+const MARKER = /\[([a-z_]+)(?::\s*([^\]]*))?\]/g;
 
 /** Message text with `[image]`/`[audio]`… markers (media the customer sent) shown as chips. */
 export function MessageText({ text }: { text: string }) {
@@ -49,6 +50,11 @@ export function MessageText({ text }: { text: string }) {
     file: [t.inbox.attachment, <FileIcon key="f" className="size-3.5" />],
     sticker: [t.inbox.sticker, <Smile key="s" className="size-3.5" />],
     animated_image: [t.inbox.sticker, <Smile key="s2" className="size-3.5" />],
+    story_reply: [t.social.markers.story_reply, <CircleDashed key="sr" className="size-3.5" />],
+    story_mention: [t.social.markers.story_mention, <AtSign key="sm" className="size-3.5" />],
+    comment: [t.social.markers.comment, <MessageCircleMore key="c" className="size-3.5" />],
+    share: [t.social.markers.share, <Share2 key="sh" className="size-3.5" />],
+    ig_post: [t.social.markers.ig_post, <Image key="ip" className="size-3.5" />],
   };
 
   const parts: ReactNode[] = [];
@@ -58,9 +64,12 @@ export function MessageText({ text }: { text: string }) {
     if (idx > last) parts.push(text.slice(last, idx));
     const [label, icon] = labels[m[1]] ?? [m[1], <Paperclip key="p" className="size-3.5" />];
     parts.push(
-      <span key={idx} className="mx-0.5 inline-flex items-center gap-1 rounded-md bg-black/5 px-1.5 py-0.5 align-middle text-xs">
+      <span key={idx} className="mx-0.5 inline-flex max-w-full items-center gap-1 rounded-md bg-black/5 px-1.5 py-0.5 align-middle text-xs" title={m[2] || undefined}>
         {icon}
-        {label}
+        <span className="truncate">
+          {label}
+          {m[2] ? `: ${m[2]}` : ""}
+        </span>
       </span>,
     );
     last = idx + m[0].length;
@@ -80,6 +89,10 @@ export function useMessagePreview() {
     video: t.inbox.video,
     sticker: t.inbox.sticker,
     file: t.inbox.attachment,
+    story_reply: t.social.markers.story_reply,
+    story_mention: t.social.markers.story_mention,
+    comment: t.social.markers.comment,
+    share: t.social.markers.share,
   };
   return (text: string) => text.replace(MARKER, (_, k: string) => `(${labels[k] ?? k})`).replace(/\s+/g, " ").trim();
 }

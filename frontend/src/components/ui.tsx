@@ -19,21 +19,21 @@ type Variant = "primary" | "secondary" | "danger" | "ghost" | "soft" | "ink" | "
 type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-brand-600 text-white hover:bg-brand-deep shadow-sm hover:shadow-md hover:shadow-brand-600/25",
-  secondary: "bg-surface text-ink-900 border border-slate-200 hover:border-brand-300 hover:text-brand-700 shadow-sm",
-  danger: "bg-red-600 text-white hover:bg-red-500 shadow-sm",
+  primary: "bg-brand-600 text-white hover:bg-brand-deep shadow-soft",
+  secondary: "bg-surface text-ink-900 border border-slate-200 hover:bg-slate-50 shadow-soft",
+  danger: "bg-red-600 text-white hover:bg-red-700 shadow-soft",
   ghost: "text-slate-600 hover:bg-fill hover:text-ink-950",
   soft: "bg-brand-50 text-brand-700 hover:bg-brand-100",
-  ink: "bg-night-900 text-white hover:bg-night-800 shadow-sm",
-  // for violet and ink surfaces
-  inverse: "bg-surface text-ink-900 hover:bg-brand-50 shadow-[0_1px_0_rgb(14_10_25/0.25),0_8px_24px_-8px_rgb(14_10_25/0.45)]",
-  outlineInverse: "text-white border border-white/35 hover:bg-white/10 hover:border-white/60",
+  ink: "bg-night-900 text-white hover:bg-night-800 shadow-soft",
+  // for brand and navy surfaces
+  inverse: "bg-white text-night-950 hover:bg-slate-100",
+  outlineInverse: "text-white border border-white/25 hover:bg-white/10 hover:border-white/45",
   ghostInverse: "text-white/90 hover:bg-white/10 hover:text-white",
 };
 const sizes: Record<Size, string> = {
-  sm: "h-8 px-3 text-sm gap-1.5 rounded-lg font-medium",
+  sm: "h-8 px-3 text-sm gap-1.5 rounded-md font-medium",
   md: "h-10 px-4 text-sm gap-2 rounded-lg font-medium",
-  lg: "h-12 px-6 text-[15px] gap-2 rounded-xl font-semibold",
+  lg: "h-11 px-5 text-[15px] gap-2 rounded-lg font-semibold",
 };
 
 /**
@@ -43,7 +43,7 @@ const sizes: Record<Size, string> = {
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra?: string) {
   return cx(
     "group/btn inline-flex items-center justify-center whitespace-nowrap select-none",
-    "transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out active:scale-[0.97]",
+    "transition-[background-color,border-color,color,box-shadow] duration-150 ease-out",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500",
     "disabled:opacity-50 disabled:pointer-events-none",
     variants[variant],
@@ -89,26 +89,23 @@ export function ExternalButton({ href, variant, size, icon, children, className 
   );
 }
 
-/**
- * Panel surfaces share the public site's card language: 2xl radius, a hairline ring instead
- * of a grey border, and a soft violet-tinted shadow.
- */
+/** Panel surface: a crisp bordered sheet with a faint shadow. */
 export function Card({ className, children, danger }: { className?: string; children: ReactNode; danger?: boolean }) {
-  return <div className={cx("rounded-2xl bg-surface shadow-soft ring-1", danger ? "ring-red-200" : "ring-line", className)}>{children}</div>;
+  return <div className={cx("rounded-xl border bg-surface shadow-soft", danger ? "border-red-200" : "border-slate-200", className)}>{children}</div>;
 }
 
-/** Violet-tinted square holding a section icon (same as the site's demo cards). */
+/** Outlined square holding a section icon. */
 export function IconChip({ children, tone = "brand", className }: { children: ReactNode; tone?: "brand" | "solid" | "red" | "amber" | "green" | "ink"; className?: string }) {
   const tones = {
-    brand: "bg-brand-50 text-brand-700",
-    solid: "bg-brand-600 text-white shadow-md shadow-brand-600/25",
+    brand: "border border-slate-200 bg-surface text-brand-600",
+    solid: "bg-brand-600 text-white",
     red: "bg-red-50 text-red-700",
     amber: "bg-amber-50 text-amber-600",
     green: "bg-emerald-50 text-emerald-600",
     ink: "bg-white/10 text-accent-300",
   };
   return (
-    <span aria-hidden className={cx("flex size-9 shrink-0 items-center justify-center rounded-xl [&>svg]:size-[18px]", tones[tone], className)}>
+    <span aria-hidden className={cx("flex size-9 shrink-0 items-center justify-center rounded-lg [&>svg]:size-[18px]", tones[tone], className)}>
       {children}
     </span>
   );
@@ -120,7 +117,7 @@ export function CardHeader({ title, action, subtitle, icon }: { title: ReactNode
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {icon && <IconChip>{icon}</IconChip>}
         <div className="min-w-0">
-          <h2 className="font-bold text-ink-950">{title}</h2>
+          <h2 className="font-semibold tracking-tight text-ink-950">{title}</h2>
           {subtitle && <p className="mt-0.5 text-sm leading-6 text-slate-500">{subtitle}</p>}
         </div>
       </div>
@@ -129,19 +126,15 @@ export function CardHeader({ title, action, subtitle, icon }: { title: ReactNode
   );
 }
 
-/** Page title in the site's heading style, with the page's icon on a solid violet chip. */
+/** Page title: plain semibold heading over a hairline rule, the page's icon in a small outlined square. */
 export function PageHeader({ title, subtitle, action, icon }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode; icon?: ReactNode }) {
   return (
-    <header className="animate-pop-in mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-      <div className="flex min-w-0 items-start gap-4">
-        {icon && (
-          <IconChip tone="solid" className="mt-0.5 size-12 rounded-2xl max-sm:hidden [&>svg]:size-6">
-            {icon}
-          </IconChip>
-        )}
+    <header className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-b border-slate-200 pb-5">
+      <div className="flex min-w-0 items-start gap-3.5">
+        {icon && <IconChip className="mt-0.5 max-sm:hidden">{icon}</IconChip>}
         <div className="min-w-0">
-          <h1 className="text-2xl font-extrabold text-ink-950 sm:text-[1.75rem] sm:leading-tight">{title}</h1>
-          {subtitle && <p className="mt-1.5 max-w-2xl text-[15px] leading-7 text-slate-500">{subtitle}</p>}
+          <h1 className="text-[1.375rem] font-semibold tracking-tight text-ink-950 sm:text-2xl">{title}</h1>
+          {subtitle && <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">{subtitle}</p>}
         </div>
       </div>
       {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
@@ -151,8 +144,8 @@ export function PageHeader({ title, subtitle, action, icon }: { title: ReactNode
 
 type Tone = "neutral" | "brand" | "red" | "amber" | "green";
 const badgeTones: Record<Tone, string> = {
-  neutral: "bg-slate-100 text-slate-600",
-  brand: "bg-brand-50 text-brand-700 ring-1 ring-brand-100",
+  neutral: "bg-slate-50 text-slate-600 ring-1 ring-slate-200",
+  brand: "bg-brand-50 text-brand-700 ring-1 ring-brand-200",
   red: "bg-red-50 text-red-700 ring-1 ring-red-200",
   amber: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
   green: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
@@ -160,7 +153,7 @@ const badgeTones: Record<Tone, string> = {
 
 export function Badge({ tone = "neutral", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
   return (
-    <span className={cx("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap [&>svg]:size-3.5", badgeTones[tone], className)}>
+    <span className={cx("inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap ring-inset [&>svg]:size-3.5", badgeTones[tone], className)}>
       {children}
     </span>
   );
@@ -171,7 +164,7 @@ export function CountBadge({ count, tone = "red" }: { count: string; tone?: "red
   return (
     <span
       className={cx(
-        "num inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-5",
+        "num inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold leading-5",
         tone === "red" ? "bg-red-500 text-white" : "bg-slate-200 text-slate-700",
       )}
     >
@@ -191,7 +184,7 @@ const alertStyles: Record<AlertKind, { box: string; icon: ReactNode }> = {
 export function Alert({ kind = "info", children, action, className }: { kind?: AlertKind; children: ReactNode; action?: ReactNode; className?: string }) {
   const s = alertStyles[kind];
   return (
-    <div role={kind === "error" ? "alert" : "status"} className={cx("flex flex-wrap items-start gap-3 rounded-xl px-4 py-3 text-sm leading-6 ring-1", s.box, className)}>
+    <div role={kind === "error" ? "alert" : "status"} className={cx("flex flex-wrap items-start gap-3 rounded-lg px-4 py-3 text-sm leading-6 ring-1", s.box, className)}>
       {s.icon}
       <div className="min-w-0 flex-1 user-text">{children}</div>
       {action && <div className="shrink-0">{action}</div>}
@@ -211,16 +204,16 @@ export function PageLoading() {
   );
 }
 
-/** Friendly "nothing here" block: icon in a soft violet circle, bold line, optional detail. */
+/** Friendly "nothing here" block: icon in an outlined square, one line, optional detail. */
 export function EmptyState({ icon, title, children }: { icon?: ReactNode; title: ReactNode; children?: ReactNode }) {
   return (
     <div className="animate-pop-in flex flex-col items-center justify-center px-6 py-14 text-center">
       {icon && (
-        <div aria-hidden className="mb-4 flex size-16 items-center justify-center rounded-full bg-brand-50 text-brand-500 ring-8 ring-brand-50/50 [&>svg]:size-7">
+        <div aria-hidden className="mb-4 flex size-12 items-center justify-center rounded-xl border border-slate-200 bg-surface text-slate-500 shadow-soft [&>svg]:size-6">
           {icon}
         </div>
       )}
-      <p className="max-w-sm font-bold text-ink-900">{title}</p>
+      <p className="max-w-sm font-semibold text-ink-900">{title}</p>
       {children && <div className="mt-1.5 max-w-sm text-sm leading-6 text-slate-500">{children}</div>}
     </div>
   );
@@ -232,7 +225,7 @@ export function Field({ label, hint, error, children, className }: FieldProps) {
   const id = useId();
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-2 block text-sm font-semibold text-ink-900">
+      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-ink-900">
         {label}
       </label>
       {children(id)}
@@ -246,7 +239,7 @@ export function Field({ label, hint, error, children, className }: FieldProps) {
 }
 
 const inputBase =
-  "block w-full rounded-xl border bg-surface px-3.5 text-sm text-ink-950 placeholder:text-slate-400 transition-[border-color,box-shadow] duration-200 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-brand-500/15 disabled:bg-slate-50";
+  "block w-full rounded-lg border bg-surface px-3.5 text-sm text-ink-950 shadow-soft placeholder:text-slate-400 transition-[border-color,box-shadow] duration-150 hover:border-slate-300 focus:outline-none focus:ring-[3px] focus:ring-brand-500/20 disabled:bg-slate-50";
 
 export function Input({ invalid, className, ...rest }: InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }) {
   return (
@@ -299,7 +292,7 @@ export function Toggle({
         // a 44px-tall touch area around the 24px track
         "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors duration-200 after:absolute after:-inset-x-1 after:-inset-y-2.5 after:content-['']",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:opacity-50",
-        checked ? "bg-emerald-500" : "bg-slate-300 hover:bg-slate-400/80",
+        checked ? "bg-brand-600" : "bg-slate-300 hover:bg-slate-400/80",
       )}
     >
       {/* knob slides from the start edge to the end edge (mirrored in RTL) */}
@@ -329,8 +322,8 @@ export function Tabs<T extends string>({
     <div
       role="tablist"
       className={cx(
-        "max-w-full gap-1 overflow-x-auto rounded-xl bg-fill p-1 no-scrollbar",
-        compact ? "flex w-full [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 [&>button]:text-[13px]" : "inline-flex",
+        "max-w-full overflow-x-auto border-b border-slate-200 no-scrollbar",
+        compact ? "flex w-full [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 [&>button]:text-[13px]" : "flex gap-5",
       )}
     >
       {items.map((it) => {
@@ -343,13 +336,13 @@ export function Tabs<T extends string>({
             aria-selected={on}
             onClick={() => onChange(it.value)}
             className={cx(
-              "flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 text-sm font-semibold transition-[color,background-color,box-shadow] duration-200",
-              on ? "bg-surface text-ink-950 shadow-sm" : "text-slate-500 hover:text-ink-900",
+              "-mb-px flex min-h-10 items-center gap-1.5 whitespace-nowrap border-b-2 px-0.5 text-sm font-medium transition-colors duration-150",
+              on ? "border-brand-600 text-ink-950" : "border-transparent text-slate-500 hover:border-slate-300 hover:text-ink-900",
             )}
           >
             {it.label}
             {it.count && (
-              <span className={cx("num rounded-full px-1.5 text-xs leading-5", on ? "bg-brand-600 text-white" : "bg-slate-200/80 text-slate-600")}>{it.count}</span>
+              <span className={cx("num rounded-md px-1.5 text-xs leading-5", on ? "bg-brand-50 text-brand-700" : "bg-slate-100 text-slate-600")}>{it.count}</span>
             )}
           </button>
         );
@@ -398,14 +391,14 @@ export function Modal({
         if (e.target === ref.current) onClose();
       }}
       className={cx(
-        "m-auto w-[calc(100%-2rem)] rounded-2xl bg-surface p-0 text-ink-950 shadow-float backdrop:bg-night-950/45 backdrop:backdrop-blur-[2px]",
+        "m-auto w-[calc(100%-2rem)] rounded-xl border border-slate-200 bg-surface p-0 text-ink-950 shadow-float backdrop:bg-night-950/50",
         size === "lg" ? "max-w-2xl" : "max-w-md",
       )}
     >
       {open && (
         <div className="flex max-h-[85vh] flex-col">
           <div className="flex items-center justify-between gap-3 px-6 pb-2 pt-5">
-            <h2 className="text-lg font-extrabold text-ink-950">{title}</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-ink-950">{title}</h2>
             <button
               type="button"
               onClick={onClose}
@@ -470,7 +463,7 @@ export function ProgressBar({ value, max, tone }: { value: number; max: number; 
   const auto = pct >= 100 ? "red" : pct >= 85 ? "amber" : "brand";
   const color = { brand: "bg-brand-500", amber: "bg-amber-500", red: "bg-red-500" }[tone ?? auto];
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-fill" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={max}>
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-fill" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={max}>
       <div className={cx("h-full rounded-full transition-[width] duration-700 ease-[var(--ease-out-soft)]", color)} style={{ width: `${pct}%` }} />
     </div>
   );

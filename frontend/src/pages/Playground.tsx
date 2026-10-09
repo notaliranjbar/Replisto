@@ -78,8 +78,8 @@ export default function Playground() {
           <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 sm:px-5">
             <LogoMark px={36} />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold text-ink-950">{t.panel.playground.botName(me?.shop.name ?? t.appName)}</div>
-              <span className="mt-0.5 inline-flex rounded-full bg-accent-300 px-2 text-[11px] font-bold leading-5 text-night-900">{t.panel.playground.env}</span>
+              <div className="truncate text-sm font-semibold text-ink-950">{t.panel.playground.botName(me?.shop.name ?? t.appName)}</div>
+              <span className="mt-0.5 inline-flex rounded-full bg-accent-300 px-2 text-[11px] font-semibold leading-5 text-night-900">{t.panel.playground.env}</span>
             </div>
             {turns.length > 0 && (
               <Button variant="ghost" size="sm" icon={<RotateCcw className="size-4" />} onClick={restart}>
@@ -171,7 +171,7 @@ function Tips() {
           <IconChip>
             <Lightbulb />
           </IconChip>
-          <h2 className="text-sm font-bold text-ink-950">{P.tipsTitle}</h2>
+          <h2 className="text-sm font-semibold text-ink-950">{P.tipsTitle}</h2>
         </div>
         <ul className="mt-4 space-y-2.5">
           {P.tips.map((tip) => (
@@ -187,12 +187,12 @@ function Tips() {
         {P.safe}
       </div>
       <Card className="p-2">
-        <div className="px-3 pb-1 pt-2 text-xs font-bold text-slate-400">{P.improveTitle}</div>
+        <div className="px-3 pb-1 pt-2 text-xs font-semibold text-slate-400">{P.improveTitle}</div>
         {[
           { to: "/knowledge", icon: <BookOpen />, label: t.nav.knowledge },
           { to: "/settings", icon: <SlidersHorizontal />, label: t.nav.settings },
         ].map((l) => (
-          <Link key={l.to} to={l.to} className="group flex items-center gap-3 rounded-xl p-3 text-sm font-bold text-ink-900 transition-colors hover:bg-brand-50/70">
+          <Link key={l.to} to={l.to} className="group flex items-center gap-3 rounded-xl p-3 text-sm font-semibold text-ink-900 transition-colors hover:bg-brand-50/70">
             <IconChip>{l.icon}</IconChip>
             <span className="flex-1">{l.label}</span>
             <ArrowRight className="size-4 text-slate-300 transition-[transform,color] group-hover:translate-x-0.5 group-hover:text-brand-700 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" aria-hidden />
@@ -223,13 +223,13 @@ function BotBubble({ turn }: { turn: Turn }) {
 
       {r?.unanswered && (
         <div className="me-9 max-w-[85%] rounded-xl bg-amber-50 px-3.5 py-2.5 text-xs leading-5 text-amber-900 ring-1 ring-amber-200 sm:max-w-[70%]">
-          <div className="font-bold">{t.playground.unansweredLabel}</div>
+          <div className="font-semibold">{t.playground.unansweredLabel}</div>
           {r.handoff_reason && (
             <div className="mt-0.5 opacity-80">
               {t.playground.reason}: {r.handoff_reason}
             </div>
           )}
-          <Link to="/knowledge" className="mt-1 inline-block font-bold text-amber-800 underline underline-offset-2">
+          <Link to="/knowledge" className="mt-1 inline-block font-semibold text-amber-800 underline underline-offset-2">
             {t.playground.unansweredAdd}
           </Link>
         </div>
@@ -304,7 +304,7 @@ function ProductList({ items }: { items: ProductInfo[] }) {
     <ul className="divide-y divide-slate-100 rounded-lg bg-slate-50">
       {items.map((p, i) => (
         <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2.5 py-2">
-          <span className="font-bold text-ink-900">{p.name}</span>
+          <span className="font-semibold text-ink-900">{p.name}</span>
           {p.color && <span className="text-slate-500">{p.color}</span>}
           {p.size && <span className="num text-slate-500">{p.size}</span>}
           {p.price != null && <span className="num text-ink-800">{f.money(p.price, currency)}</span>}

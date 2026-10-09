@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 // so visitors don't download the whole panel.
 const Layout = lazy(() => import("./components/Layout"));
 const Account = lazy(() => import("./pages/Account"));
+const Help = lazy(() => import("./pages/Help"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Handoffs = lazy(() => import("./pages/Handoffs"));
 const Inbox = lazy(() => import("./pages/Inbox"));
@@ -26,6 +27,9 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const Unanswered = lazy(() => import("./pages/Unanswered"));
+const Comments = lazy(() => import("./pages/Comments"));
+const Stories = lazy(() => import("./pages/Stories"));
+const Insights = lazy(() => import("./pages/Insights"));
 const Privacy = lazy(() => import("./pages/public/Legal").then((m) => ({ default: m.Privacy })));
 const Terms = lazy(() => import("./pages/public/Legal").then((m) => ({ default: m.Terms })));
 const DataDeletion = lazy(() => import("./pages/public/Legal").then((m) => ({ default: m.DataDeletion })));
@@ -79,6 +83,9 @@ export default function App() {
           <Route path="inbox" element={<Inbox />} />
           <Route path="inbox/:id" element={<Inbox />} />
           <Route path="unanswered" element={<Unanswered />} />
+          <Route path="comments" element={<Comments />} />
+          <Route path="stories" element={<Stories />} />
+          <Route path="insights" element={<Insights />} />
           <Route path="knowledge" element={<Knowledge />} />
           <Route path="products" element={<Products />} />
           <Route path="playground" element={<Playground />} />
@@ -87,6 +94,7 @@ export default function App() {
           <Route path="instagram" element={<Instagram />} />
           <Route path="instagram/callback" element={<InstagramCallback />} />
           <Route path="account" element={<Account />} />
+          <Route path="help" element={<Help />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

@@ -2,6 +2,7 @@ import type { Dict } from "./ar";
 import landing from "./landing.en";
 import panel from "./panel.en";
 import launch from "./launch.en";
+import social from "./social.en";
 
 const en: Dict = {
   appName: "Replisto",
@@ -447,6 +448,7 @@ const en: Dict = {
   landing,
   panel,
   launch,
+  social,
 };
 
 export default en;

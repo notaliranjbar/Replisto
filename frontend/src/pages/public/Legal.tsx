@@ -56,11 +56,11 @@ function LegalShell({ page }: { page: Page }) {
               </Link>
             ))}
           </nav>
-          <h1 className="mt-10 text-3xl font-extrabold text-ink-950 sm:text-4xl">{page.title[lang]}</h1>
+          <h1 className="mt-10 text-3xl font-semibold tracking-tight text-ink-950 sm:text-4xl">{page.title[lang]}</h1>
           <p className="mt-3 text-sm text-slate-400">
             {t.legal.lastUpdated}: {f.date(UPDATED)}
           </p>
-          <article className="legal mt-10 space-y-4 text-[15px] leading-8 text-slate-700 [&_a]:font-medium [&_a]:text-brand-700 [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-10 [&_h2]:scroll-mt-24 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-ink-950 [&_h3]:mt-6 [&_h3]:font-bold [&_h3]:text-ink-900 [&_li]:ms-5 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ul]:list-disc [&_ul]:space-y-1">
+          <article className="legal mt-10 space-y-4 text-[15px] leading-8 text-slate-700 [&_a]:font-medium [&_a]:text-brand-700 [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-10 [&_h2]:scroll-mt-24 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-ink-950 [&_h3]:mt-6 [&_h3]:font-semibold [&_h3]:text-ink-900 [&_li]:ms-5 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ul]:list-disc [&_ul]:space-y-1">
             {page.body[lang]}
           </article>
           {loggedIn && (
@@ -113,20 +113,40 @@ const privacy: Page = {
           <li>
             <b>الاستخدام:</b> عدد ردود الذكاء الاصطناعي وحجمها (لحساب التكلفة).
           </li>
+          <li>
+            <b>القصص المجدولة:</b> الصور والفيديوهات التي ترفعها لتُنشر كقصص، مع موعد كل منها ووصفك لموضوعها. يُحفظ الملف على خوادمنا حتى يُنشر، ويُتاح لإنستغرام عبر
+            رابط سري ليحمّله، ثم يُحذف بعد 30 يومًا من النشر.
+          </li>
+          <li>
+            <b>إحصاءات الصفحة:</b> أرقام حسابك على إنستغرام التي تتيحها Meta (المتابعون، الوصول، المشاهدات، التفاعلات، وأداء كل منشور)، وتحليلات وتقارير مساعد المحتوى
+            ومحادثاتك معه. تُستخدم لعرضها لك وتقديم الاقتراحات فقط.
+          </li>
         </ul>
 
         <h2>2. بيانات عملاء المتاجر</h2>
         <p>عندما يربط متجر حسابه الاحترافي على إنستغرام عبر المسار الرسمي لـ Meta، ويراسله أحد العملاء، نخزّن:</p>
         <ul>
           <li>نص الرسائل المباشرة والردود التي أرسلها البوت أو المتجر. أما المرفقات (صور، صوت، ملفات…) فيُسجَّل نوعها فقط دون حفظ الملف.</li>
+          <li>ردود العملاء على قصص المتجر وإشاراتهم إليه في قصصهم (كرسائل مباشرة؛ يُسجَّل أنها ردّ على قصة دون حفظ القصة).</li>
+          <li>
+            التعليقات على منشورات المتجر والريلز: نص التعليق ومعرّف كاتبه واسم المستخدم، والمنشور الذي كُتب تحته، وتصنيفه، والرد العلني أو الخاص الذي أرسله البوت أو
+            المتجر.
+          </li>
           <li>معرّف العميل على إنستغرام واسم المستخدم، لتصل المحادثة إلى المتجر الصحيح ويعرف صاحب المتجر مع من يتحدث.</li>
           <li>معرّف حساب المتجر واسم المستخدم ومنشوراته (لعرض المنتجات)، ورمز وصول صادر عن Meta يُخزَّن مشفّرًا.</li>
         </ul>
         <p>هذه البيانات ملك لذلك المتجر، ولا يراها إلا صاحبه في لوحته. ويتحمّل المتجر مسؤولية إعلام عملائه باستخدام مساعد ذكاء اصطناعي.</p>
 
+        <h3>المحادثة مع مساعد Replisto على موقعنا</h3>
+        <p>
+          إذا تحدثت مع مساعد Replisto على موقعنا، نخزّن نص الرسائل ومعرّفًا عشوائيًا يحتفظ به متصفحك (وحسابك إن كنت مسجّل الدخول)، لتستمر المحادثة ويتمكن
+          فريقنا من الرد على ما لا يعرفه المساعد. ولمنع إساءة الاستخدام نحسب الاستهلاك اليومي مع عنوان IP الخاص بك، ونحتفظ بهذه العدّادات 7 أيام كحد أقصى.
+        </p>
+
         <h2>3. كيف نستخدمها</h2>
         <ul>
-          <li>لإنشاء الردود وإرسالها إلى العملاء نيابة عن المتجر، ولتحويل المحادثة إلى صاحب المتجر عندما لا يعرف البوت الإجابة.</li>
+          <li>لإنشاء الردود على الرسائل والتعليقات وإرسالها نيابة عن المتجر، ولترك ما لا يعرفه البوت لصاحب المتجر.</li>
+          <li>لنشر القصص التي يجدولها صاحب المتجر في موعدها، ولعرض إحصاءات صفحته واقتراح المحتوى عليه.</li>
           <li>لعرض المحادثات والمنتجات والتقارير في اللوحة، وإرسال الإشعارات إلى صاحب المتجر.</li>
           <li>لحساب التكاليف والخصم من المحفظة ومعالجة الشحن.</li>
           <li>لتأكيد البريد الإلكتروني وأرقام الجوال ومنع إساءة الاستخدام؛ مثل منح هدية البداية مرة واحدة لكل شخص، وتحديد عدد محاولات الدخول وطلبات الرموز.</li>
@@ -141,10 +161,11 @@ const privacy: Page = {
         <p>فقط ما يلزم لتشغيل الخدمة:</p>
         <ul>
           <li>
-            <b>مزوّد الذكاء الاصطناعي:</b> رسالة العميل وبضع رسائل سابقة من المحادثة ومعلومات المتجر ومنتجاته ذات الصلة، فقط لإنشاء الرد.
+            <b>مزوّد الذكاء الاصطناعي:</b> رسالة العميل أو تعليقه وبضع رسائل سابقة من المحادثة ومعلومات المتجر ومنتجاته ذات الصلة، فقط لإنشاء الرد؛ وملخص أرقام
+            الصفحة حين يطلب صاحب المتجر تحليلًا من مساعد المحتوى.
           </li>
           <li>
-            <b>Meta (إنستغرام):</b> تمرّ الرسائل بطبيعتها عبر إنستغرام، وتخضع أيضًا لشروط Meta وسياسة الخصوصية الخاصة بها.
+            <b>Meta (إنستغرام):</b> تمرّ الرسائل والتعليقات والقصص بطبيعتها عبر إنستغرام، وتخضع أيضًا لشروط Meta وسياسة الخصوصية الخاصة بها.
           </li>
           <li>
             <b>Whish Money</b> و<b>OMT</b> و<b>Stripe</b> (لشحن المحفظة)، و<b>Twilio</b> (لرموز التحقق عبر SMS)، و<b>مزوّد البريد الإلكتروني</b> (لرسائل الخدمة)،
@@ -231,20 +252,41 @@ const privacy: Page = {
           <li>
             <b>Usage:</b> the number and size of AI answers (to calculate costs).
           </li>
+          <li>
+            <b>Scheduled stories:</b> the photos and videos you upload to be published as stories, with each one's time and your description of it. The file is kept on our
+            servers until it's published, made available to Instagram through a secret link so it can download it, and deleted 30 days after publishing.
+          </li>
+          <li>
+            <b>Page insights:</b> your Instagram account's numbers that Meta provides (followers, reach, views, interactions and how each post did), and the content
+            assistant's analyses, reports and your chats with it. They are used only to show them to you and to make suggestions.
+          </li>
         </ul>
 
         <h2>2. Data about the shops' customers</h2>
         <p>When a shop connects its Instagram professional account through Meta's official flow and a customer messages it, we store:</p>
         <ul>
           <li>The text of the direct messages and of the replies sent by the bot or the shop. For attachments (photos, audio, files…) only the type is recorded, not the file.</li>
+          <li>Customers' replies to the shop's stories and mentions of the shop in their stories (they arrive as direct messages; we record that it was a story reply, not the story).</li>
+          <li>
+            Comments on the shop's posts and reels: the comment's text, its author's Instagram-scoped ID and username, the post it was written under, its category, and the
+            public or private reply the bot or the shop sent.
+          </li>
           <li>The customer's Instagram-scoped ID and username, so the conversation reaches the right shop and the owner knows who they're talking to.</li>
           <li>The shop account's ID and username, its posts (to show products), and an access token issued by Meta, which is stored encrypted.</li>
         </ul>
         <p>This data belongs to that shop and only that shop's owner sees it in their panel. The shop is responsible for letting its customers know an AI assistant is used.</p>
 
+        <h3>Chatting with the Replisto assistant on our website</h3>
+        <p>
+          If you chat with the Replisto assistant on our website, the messages, a random ID your browser keeps (and your account, if you're logged in) are stored so the
+          conversation can continue and our team can answer what the assistant doesn't know. To prevent abuse, daily usage is counted together with your IP address;
+          these counters are kept for at most 7 days.
+        </p>
+
         <h2>3. How we use it</h2>
         <ul>
-          <li>To generate and send replies to customers on the shop's behalf, and to hand a conversation to the owner when the bot doesn't know the answer.</li>
+          <li>To generate and send replies to messages and comments on the shop's behalf, and to leave what the bot doesn't know to the owner.</li>
+          <li>To publish the stories the owner schedules on time, and to show the page's insights and suggest content.</li>
           <li>To show conversations, products and reports in the panel, and to notify the owner.</li>
           <li>To calculate costs, charge the wallet and process top-ups.</li>
           <li>To verify emails and phone numbers and prevent abuse — for example giving the welcome gift only once per person, and limiting login attempts and code requests.</li>
@@ -259,10 +301,11 @@ const privacy: Page = {
         <p>Only what is needed to run the service:</p>
         <ul>
           <li>
-            <b>The AI provider:</b> the customer's message, a few earlier messages of the conversation and the shop's relevant information and products, only to produce a reply.
+            <b>The AI provider:</b> the customer's message or comment, a few earlier messages of the conversation and the shop's relevant information and products, only to
+            produce a reply; and a summary of the page's numbers when the owner asks the content assistant for an analysis.
           </li>
           <li>
-            <b>Meta (Instagram):</b> messages travel through Instagram by nature and are also subject to Meta's own terms and privacy policy.
+            <b>Meta (Instagram):</b> messages, comments and stories travel through Instagram by nature and are also subject to Meta's own terms and privacy policy.
           </li>
           <li>
             <b>Whish Money</b>, <b>OMT</b> and <b>Stripe</b> (wallet top-ups), <b>Twilio</b> (SMS verification codes), an <b>email provider</b> (service emails) and
@@ -334,8 +377,8 @@ const terms: Page = {
 
         <h2>1. الخدمة</h2>
         <p>
-          Replisto مساعد ذكاء اصطناعي يرد على الرسائل المباشرة لعملائك على <b>إنستغرام</b> نيابة عن متجرك باستخدام المعلومات والمنتجات التي تقدّمها، ويحوّل إليك الأسئلة
-          التي لا يعرف إجابتها، ويعرض المحادثات في لوحتك.
+          Replisto مساعد ذكاء اصطناعي لحسابك على <b>إنستغرام</b>: يرد على الرسائل المباشرة وردود القصص والتعليقات نيابة عن متجرك باستخدام المعلومات والمنتجات التي
+          تقدّمها، ويحوّل إليك ما لا يعرف إجابته، وينشر القصص التي تجدولها في موعدها، ويقرأ إحصاءات صفحتك ليقترح عليك المحتوى، ويعرض كل ذلك في لوحتك.
         </p>
         <p>يجيب Replisto عن الأسئلة فقط؛ فهو لا يستلم الطلبات أو المدفوعات وليس طرفًا في مبيعاتك.</p>
 
@@ -418,8 +461,9 @@ const terms: Page = {
 
         <h2>1. The service</h2>
         <p>
-          Replisto is an AI assistant that answers your customers' <b>Instagram</b> direct messages on behalf of your shop using the information and products you provide,
-          hands you the questions it can't answer, and shows conversations in your panel.
+          Replisto is an AI assistant for your <b>Instagram</b> account: it answers direct messages, story replies and comments on behalf of your shop using the
+          information and products you provide, hands you what it can't answer, publishes the stories you schedule on time, reads your page's insights to suggest
+          content, and shows all of it in your panel.
         </p>
         <p>Replisto only answers questions; it doesn't take orders or payments and is not a party to your sales.</p>
 

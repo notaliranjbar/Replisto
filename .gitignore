@@ -8,3 +8,6 @@ __pycache__/
 
 # Database dumps on the server
 /backups/
+
+# Story uploads waiting to be published (local development)
+/backend/media/

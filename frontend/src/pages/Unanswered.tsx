@@ -62,7 +62,7 @@ export default function Unanswered() {
                   <Avatar name={name} className="size-9" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-x-2 text-sm">
-                      <span dir="auto" className="font-bold text-ink-950">
+                      <span dir="auto" className="font-semibold text-ink-950">
                         {name}
                       </span>
                       <span className="text-xs text-slate-400" title={f.dateTime(item.created_at)}>

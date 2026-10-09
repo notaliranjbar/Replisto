@@ -2,14 +2,17 @@ import type { Dict } from "./ar";
 
 const landing: Dict["landing"] = {
   meta: {
-    title: "Replisto — AI agent for your business",
-    description: "Replisto is an AI agent for your business: it talks to your customers using your own info and products, helps with sales and support, and works on your messaging channels.",
+    title: "Replisto — AI assistant for Instagram DMs, comments and stories",
+    description: "Replisto answers your customers' Instagram messages and comments in seconds, using only your products and prices, publishes your stories on time, and turns your page's numbers into content ideas. Pay only for what you use.",
   },
 
   nav: {
     roles: "Capabilities",
     channels: "Channels",
     how: "Setup",
+    features: "Features",
+    try: "Try it",
+    pricing: "Pricing",
     faq: "FAQ",
     login: "Log in",
     start: "Create account",
@@ -32,6 +35,72 @@ const landing: Dict["landing"] = {
     rolesLabel: "Replisto's roles",
     roles: ["Sales", "Support", "Advisor", "Assistant", "Follow-up"],
     channelsLabel: "On your channels",
+  },
+
+  home: {
+    eyebrow: "AI assistant for Instagram shops",
+    titleBefore: "Your smartest employee, ",
+    titleMark: "never off the clock",
+    titleAfter: "",
+    lead: "Replisto answers your customers' Instagram messages and comments day and night, using only your products and prices, publishes your stories on time, and tells you what to post next.",
+    primary: "Start free",
+    secondary: "Try it live",
+    perks: ["$5 free credit", "No subscription", "Ready in 15 minutes"],
+    languages: "Replies in English, Arabic, Arabizi and French",
+    tryEyebrow: "Try it yourself",
+    tryTitle: "Ask Replisto anything",
+    tryLead: "This chat is answered by the same assistant your shop gets. Ask about prices, setup or what it can do.",
+    tryPoints: [
+      "It answers only from what we've taught it; it never guesses",
+      "What it doesn't know reaches our team, and our answer appears right here",
+      "It politely turns away unrelated questions, so your credit isn't wasted",
+    ],
+    featuresEyebrow: "What it does",
+    featuresTitle: "A teammate that knows your shop",
+    tabs: ["Your info", "Your products", "Comments", "Stories", "Insights", "Hands off to you", "Your rules"],
+    stepsEyebrow: "Setup",
+    stepsTitle: "Three steps and you're live",
+    steps: [
+      { title: "Connect Instagram", body: "Through Meta's official login. No passwords, ever." },
+      { title: "Teach it your shop", body: "Describe products in your own words, upload a file, or link a Google Sheet." },
+      { title: "Turn it on", body: "Try it as a customer on the test page, then switch it on." },
+    ],
+    pricingEyebrow: "Pricing",
+    pricingTitle: "Pay only for answers",
+    pricingLead: "No subscription, no seats. Top up a wallet and each answer costs about a cent.",
+    pricingPrice: "~$0.01",
+    pricingUnit: "per answer",
+    pricingPoints: [
+      "$5 free credit to start (about 500 answers)",
+      "Questions unrelated to your shop are free",
+      "Top up with Whish Money or OMT",
+      "No contract, stop any time",
+    ],
+    pricingCta: "Start free",
+    trust: ["Official Instagram login", "Encrypted data", "Never sold", "Delete any time"],
+    stickyCta: "Start free · $5 credit",
+    announce: "New: comment replies, scheduled stories and an AI content assistant",
+    announceLink: "Try it",
+    metrics: [
+      { value: "< 10s", label: "Average reply time" },
+      { value: "24/7", label: "Works through holidays" },
+      { value: "4", label: "Languages and dialects" },
+      { value: "~$0.01", label: "Per answer, no subscription" },
+    ],
+    mock: {
+      title: "Inbox",
+      all: "All",
+      waiting: "Waiting",
+      threads: [
+        { name: "sara_k", text: "Do you have the linen coat in size 44?", time: "now" },
+        { name: "ali.haddad", text: "Thanks, the order arrived 🙏", time: "2m" },
+        { name: "maya_store", text: "Can you issue an official invoice?", time: "5m", waiting: true },
+        { name: "rami.b", text: "How much is delivery to Saida?", time: "12m" },
+      ],
+      auto: "Auto-reply",
+      handedOff: "Waiting for you",
+      reply: "Replisto replies automatically…",
+    },
   },
 
   chat: {
@@ -136,6 +205,33 @@ const landing: Dict["landing"] = {
       body: "Friendly or formal, with or without emoji. Write rules Replisto must never break, and pause it for any single customer whenever you like.",
       bullets: ["Before you start, ask questions as a customer on the test page", "Turn Replisto on or off for everyone with one switch"],
     },
+    comments: {
+      title: "Answers comments, publicly or by DM",
+      body: "Replisto reads the comments under your posts and reels, and the post's caption tells it which product \"how much?\" is about. It answers by private message with a short public note, or however you choose.",
+      bullets: [
+        "What it doesn't know, it doesn't reply to: it waits for you, sorted by price, stock, ordering, complaint…",
+        "Thanks people for compliments, ignores friends tagging friends, and can hide spam",
+        "Try any comment in the panel and see the reply before you switch it on",
+      ],
+    },
+    stories: {
+      title: "Your stories, published on time",
+      body: "Upload story photos and videos, pick a time for each, and Replisto publishes them to your account right on schedule. Add a line about what each story shows.",
+      bullets: [
+        "When someone replies to a story, the bot knows what it's about and answers",
+        "It also thanks people who mention your shop in their story",
+        "A clear timeline of today's, tomorrow's and past stories",
+      ],
+    },
+    insights: {
+      title: "Your page's numbers, and a content assistant",
+      body: "Replisto reads your page's reach, engagement, followers and how every post did, and tells you plainly what works: which format, which day, which hour, which hashtags.",
+      bullets: [
+        "An AI content assistant turns your numbers into ideas, captions and a weekly plan",
+        "Ask it \"what should I post this week?\" or \"write a caption for this product\"",
+        "Numbers refresh daily, or whenever you press refresh",
+      ],
+    },
   },
 
   demos: {
@@ -192,6 +288,45 @@ const landing: Dict["landing"] = {
       rules: "Rules",
       rulesText: "Never offer discounts. Don't talk about competitors.",
     },
+    comments: {
+      title: "Comments",
+      author: "rana.k",
+      comment: "How much is this dress?",
+      privateLabel: "Private message",
+      privateReply: "Hi Rana! The linen dress is $49.90, in black and navy 🖤",
+      publicLabel: "Public reply",
+      publicReply: "Sent you the details in a message 💌",
+      waitingTitle: "Waiting for you",
+      waiting: [
+        { category: "Ordering & delivery", text: "Can I order 20 pieces? Wholesale price?" },
+        { category: "Complaint", text: "My order still hasn't arrived!" },
+      ],
+    },
+    stories: {
+      title: "Scheduled stories",
+      items: [
+        { when: "Today 18:00", note: "Weekend sale on silk blouses", status: "Scheduled" },
+        { when: "Tomorrow 19:00", note: "Cream linen shirt back in stock", status: "Scheduled" },
+        { when: "Yesterday 20:00", note: "New linen dresses, $49.90", status: "Published" },
+      ],
+      reply: "Replied to your story: \"Is it available in M?\"",
+      answer: "Yes, M is available in black 🖤",
+    },
+    insights: {
+      title: "Insights",
+      reach: "Reach (7 days)",
+      reachValue: "11.8K",
+      change: "+21.8%",
+      formats: [
+        { label: "Reel", value: 92 },
+        { label: "Carousel", value: 38 },
+        { label: "Photo", value: 22 },
+      ],
+      best: "Best time to post",
+      bestValue: "Thursday & Saturday, 18:00",
+      idea: "An idea from the content assistant",
+      ideaText: "Reel: \"3 ways to style the linen dress\" on Thursday at 18:00",
+    },
   },
 
   how: {
@@ -224,8 +359,8 @@ const landing: Dict["landing"] = {
     title: "Before you start, you might ask",
     items: [
       {
-        q: "Which channels does Replisto work on?",
-        a: "Today, Instagram direct messages. WhatsApp is coming soon.",
+        q: "What does Replisto do on Instagram?",
+        a: "It answers direct messages and story replies, answers comments under your posts and reels (publicly or by private message), publishes the stories you schedule, and reads your page's insights to suggest what to post. WhatsApp is coming soon.",
       },
       {
         q: "Do you need my account passwords to connect?",
@@ -245,7 +380,7 @@ const landing: Dict["landing"] = {
       },
       {
         q: "Does it reply to comments too?",
-        a: "Not yet. Replisto works on customers' private messages.",
+        a: "Yes. You choose: under the comment, by private message, or both. What it doesn't know, it doesn't reply to: it waits for you in the panel, sorted by topic.",
       },
     ],
   },

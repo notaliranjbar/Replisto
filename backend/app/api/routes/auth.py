@@ -28,7 +28,7 @@ from app.core.timeutil import utcnow
 from app.models import Shop, User
 from app.models.user import default_fallback
 from app.schemas.auth import LoginRequest, RefreshRequest, RegisterRequest, TokenPair
-from app.services.email import send_email
+from app.services.email import action_email, send_email
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -180,17 +180,19 @@ async def forgot_password(body: ForgotPasswordRequest, db: DbSession) -> ForgotP
     token = create_password_reset_token(user.id, user.password_hash)
     link = f"{settings.frontend_url.rstrip('/')}/reset-password?token={token}"
     try:
-        await send_email(
-            user.email,
-            tr("Reset your Replisto password"),
-            tr(
-                "Hi,\n\nOpen this link to choose a new password:\n{link}\n\nThe link works once, "
-                "for {minutes} minutes. If you didn't ask for this, you can ignore this email."
-                "\n\nReplisto",
-                link=link,
+        text, page = action_email(
+            title=tr("Choose a new password"),
+            intro=tr("Tap the button to choose a new password for your Replisto account."),
+            button=tr("Choose a new password"),
+            link=link,
+            note=tr(
+                "The link works once, for {minutes} minutes. If you didn't ask for this, you can "
+                "ignore this email.",
                 minutes=settings.password_reset_minutes,
             ),
+            rtl=i18n.current() == "ar",
         )
+        await send_email(user.email, tr("Reset your Replisto password"), text, page)
     except Exception:
         logger.exception("could not send password reset email")
     return answer
@@ -220,17 +222,19 @@ async def _send_verification(user: User) -> None:
     token = create_email_verify_token(user.id, user.email)
     link = f"{settings.frontend_url.rstrip('/')}/verify-email?token={token}"
     try:
-        await send_email(
-            user.email,
-            tr("Confirm your Replisto email"),
-            tr(
-                "Hi,\n\nWelcome to Replisto! Open this link to confirm your email:\n{link}\n\n"
+        text, page = action_email(
+            title=tr("Welcome to Replisto!"),
+            intro=tr("Tap the button to confirm your email address."),
+            button=tr("Confirm my email"),
+            link=link,
+            note=tr(
                 "The link works for {days} days. If you didn't sign up for Replisto, you can "
-                "ignore this email.\n\nReplisto",
-                link=link,
+                "ignore this email.",
                 days=settings.email_verify_days,
             ),
+            rtl=i18n.current() == "ar",
         )
+        await send_email(user.email, tr("Confirm your Replisto email"), text, page)
     except Exception:
         logger.exception("could not send the verification email")
 

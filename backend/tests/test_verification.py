@@ -175,7 +175,7 @@ async def test_email_verification(client: AsyncClient, monkeypatch: pytest.Monke
 
     mails: list[tuple[str, str]] = []
 
-    async def fake_send(to: str, subject: str, body: str) -> None:
+    async def fake_send(to: str, subject: str, body: str, html_body: str | None = None) -> None:
         mails.append((to, body))
 
     monkeypatch.setattr(auth, "send_email", fake_send)

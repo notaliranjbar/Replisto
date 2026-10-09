@@ -63,7 +63,7 @@ export function TeachBox() {
           <Sparkles className="size-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-bold text-ink-950">{T.title}</h2>
+          <h2 className="font-semibold text-ink-950">{T.title}</h2>
           <p className="mt-0.5 text-sm leading-6 text-slate-500">{T.subtitle}</p>
         </div>
       </div>
@@ -128,7 +128,7 @@ export function PendingProposals() {
   if (!pending.data?.items.length) return null;
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-bold text-slate-500">{t.launch.teach.pendingTitle}</h2>
+      <h2 className="text-sm font-semibold text-slate-500">{t.launch.teach.pendingTitle}</h2>
       {pending.data.items.map((p) => (
         <ProposalCard key={p.id} proposal={p} />
       ))}
@@ -275,7 +275,7 @@ function ProductRow({ change, checked, onToggle }: { change: ProposedProduct; ch
       <div className="min-w-0 flex-1 text-sm">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={tone}>{T[change.action]}</Badge>
-          <span className="font-bold text-ink-950" dir="auto">
+          <span className="font-semibold text-ink-950" dir="auto">
             {name}
           </span>
           {variant && <span className="text-slate-500">{variant}</span>}

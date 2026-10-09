@@ -128,7 +128,7 @@ function HandoffCard({ item, now, index, onAddFaq }: { item: HandoffItem; now: n
       <div className="flex flex-wrap items-center gap-3 px-5 pt-5 sm:px-6">
         <Avatar name={name} />
         <div className="min-w-0 flex-1">
-          <span dir="auto" className="font-bold text-ink-950">
+          <span dir="auto" className="font-semibold text-ink-950">
             {name}
           </span>
           <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
