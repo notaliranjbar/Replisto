@@ -103,6 +103,9 @@ class Settings(BaseSettings):
     # The sign-up gift ($5). Given once per person, after the owner verifies their mobile
     # number.
     signup_credit_cents: int = 500
+    # false: the gift is given right at sign-up, without verifying a mobile number (a test
+    # server without SMS). Each new account then gets it, so keep this true in production.
+    gift_requires_phone: bool = True
     # Usage prices may be fractions of a cent; an answer's total is rounded up to a cent.
     usage_cents_per_1k_prompt_tokens: float = 0.05
     usage_cents_per_1k_completion_tokens: float = 0.2

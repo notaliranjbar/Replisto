@@ -5,7 +5,8 @@ verifies their mobile number. Each number can earn a gift once: it's remembered 
 `gift_claims`, even after the shop is deleted, so deleting and signing up again with the same
 number doesn't pay twice.
 
-`check` is called when a number is verified; it is idempotent.
+`check` is called when a number is verified; it is idempotent. With GIFT_REQUIRES_PHONE off (a
+test server without SMS) `grant_at_signup` gives it to every new account instead.
 """
 
 import logging
@@ -76,6 +77,18 @@ async def check(db: AsyncSession, shop: Shop) -> int:
         return 0
     await billing.apply(db, shop, credit, WalletEntryKind.BONUS, "Welcome gift")
     logger.info("sign-up gift of %s cents given to shop %s", credit, shop.id)
+    return credit
+
+
+async def grant_at_signup(db: AsyncSession, shop: Shop) -> int:
+    """The gift for a brand-new shop, when the server doesn't ask for a verified number."""
+    credit = amount()
+    if get_settings().gift_requires_phone or credit <= 0 or shop.signup_gift_at is not None:
+        return 0
+    shop.signup_gift_at = utcnow()
+    await db.commit()
+    await billing.apply(db, shop, credit, WalletEntryKind.BONUS, "Welcome gift")
+    logger.info("sign-up gift of %s cents given at sign-up to shop %s", credit, shop.id)
     return credit
 
 

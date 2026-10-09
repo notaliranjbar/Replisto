@@ -186,6 +186,22 @@ async def test_billing_off_charges_nothing(
     assert [m["message"]["text"] for m in fake_meta.sent] == ["Yes, it's in stock"]
 
 
+async def test_without_phone_check_the_gift_comes_at_sign_up(
+    client: AsyncClient, billing_on: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A test server without SMS (GIFT_REQUIRES_PHONE=false) gives the gift right away."""
+    monkeypatch.setattr(get_settings(), "gift_requires_phone", False)
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "new@shop.com", "password": "strongpass1", "shop_name": "S"},
+    )
+    headers = {"Authorization": f"Bearer {resp.json()['access_token']}"}
+    body = (await client.get("/api/v1/billing", headers=headers)).json()
+    assert body["balance_cents"] == get_settings().signup_credit_cents
+    gift = (await client.get("/api/v1/dashboard", headers=headers)).json()["wallet"]["gift"]
+    assert gift["granted"] is True
+
+
 async def test_signing_up_alone_earns_no_gift(client: AsyncClient, billing_on: None) -> None:
     """The gift waits for a verified phone number (test_verification.py)."""
     resp = await client.post(

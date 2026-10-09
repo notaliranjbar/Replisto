@@ -28,6 +28,7 @@ from app.core.timeutil import utcnow
 from app.models import Shop, User
 from app.models.user import default_fallback
 from app.schemas.auth import LoginRequest, RefreshRequest, RegisterRequest, TokenPair
+from app.services import gifts
 from app.services.email import action_email, send_email
 
 logger = logging.getLogger(__name__)
@@ -115,7 +116,9 @@ async def register(body: RegisterRequest, db: DbSession) -> TokenPair:
     except IntegrityError:  # concurrent registration with the same email
         await db.rollback()
         raise email_taken from None
-    # No credit yet: the sign-up gift comes after verifying a phone number (services/gifts.py).
+    # Normally no credit yet: the sign-up gift comes after verifying a phone number
+    # (services/gifts.py), unless the server gives it at sign-up (GIFT_REQUIRES_PHONE=false).
+    await gifts.grant_at_signup(db, user.shop)
     if verify:
         await _send_verification(user)
     logger.info("new sign-up: shop %s", user.shop.id)
