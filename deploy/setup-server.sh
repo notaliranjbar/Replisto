@@ -10,8 +10,9 @@
 # fresh secrets, opens ports 80 and 443 and starts everything. Later runs: download the latest
 # code and restart; .env is kept as it is.
 #
-# A private repository asks for a GitHub token (read-only access to the repository's contents
-# is enough); it is kept in /root/.git-credentials for the next updates.
+# A private repository needs a GitHub token (read-only access to the repository's contents is
+# enough), asked for or given as GITHUB_TOKEN; it is kept in ~/.git-credentials for the next
+# updates.
 #
 # When the domain's nameservers are this server itself (ns1.<domain> and ns2.<domain>, with
 # glue records at the registrar pointing here), add --dns: this server then answers DNS for the
@@ -32,6 +33,7 @@ warn() { printf '\033[33mWARNING: %s\033[0m\n' "$*"; }
 die() { printf '\033[31mERROR: %s\033[0m\n' "$*" >&2; exit 1; }
 
 install_tools() {
+  command -v apt-get >/dev/null || die "this script needs Ubuntu or Debian (apt-get not found)"
   say "Installing git, curl and Docker"
   export DEBIAN_FRONTEND=noninteractive
   apt-get update -qq
@@ -53,14 +55,16 @@ fetch_code() {
   if git clone --quiet --branch "$BRANCH" "$REPO" "$DIR" 2>/dev/null; then
     return
   fi
-  echo "The repository is private (or unreachable)."
-  local token
-  read -rsp "GitHub token with read access to the repository: " token </dev/tty
-  echo
+  local token="${GITHUB_TOKEN:-}"
+  if [ -z "$token" ]; then
+    echo "The repository is private (or unreachable)."
+    read -rsp "GitHub token with read access to the repository: " token </dev/tty
+    echo
+  fi
   [ -n "$token" ] || die "no token given"
   git config --global credential.helper store
-  printf 'https://x-access-token:%s@github.com\n' "$token" >/root/.git-credentials
-  chmod 600 /root/.git-credentials
+  printf 'https://x-access-token:%s@github.com\n' "$token" >"$HOME/.git-credentials"
+  chmod 600 "$HOME/.git-credentials"
   git clone --quiet --branch "$BRANCH" "$REPO" "$DIR" || die "could not download $REPO"
 }
 
