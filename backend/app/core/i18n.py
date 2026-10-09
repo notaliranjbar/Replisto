@@ -158,19 +158,7 @@ AR: dict[str, str] = {
     ),
     # emails and SMS
     "Reset your Replisto password": "إعادة تعيين كلمة مرور Replisto",
-    "Hi,\n\nOpen this link to choose a new password:\n{link}\n\nThe link works once, for "
-    "{minutes} minutes. If you didn't ask for this, you can ignore this email.\n\nReplisto": (
-        "مرحبًا،\n\nافتح هذا الرابط لاختيار كلمة مرور جديدة:\n{link}\n\nيعمل الرابط مرة واحدة "
-        "ولمدة {minutes} دقيقة. إذا لم تطلب ذلك، يمكنك تجاهل هذه الرسالة.\n\nReplisto"
-    ),
     "Confirm your Replisto email": "تأكيد بريدك الإلكتروني في Replisto",
-    "Hi,\n\nWelcome to Replisto! Open this link to confirm your email:\n{link}\n\nThe link "
-    "works for {days} days. If you didn't sign up for Replisto, you can ignore this email."
-    "\n\nReplisto": (
-        "مرحبًا،\n\nأهلًا بك في Replisto! افتح هذا الرابط لتأكيد بريدك الإلكتروني:\n{link}\n\n"
-        "يعمل الرابط لمدة {days} أيام. إذا لم تسجّل في Replisto، يمكنك تجاهل هذه الرسالة."
-        "\n\nReplisto"
-    ),
     "Your {app} verification code is {code}": "رمز التحقق في {app} هو {code}",
     # phone
     "Enter a valid mobile number, like 70 123 456 or +961 70 123 456.": (

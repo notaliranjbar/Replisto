@@ -164,7 +164,6 @@ const social = {
     reach: "الوصول (7 أيام)",
     interactions: "التفاعلات (7 أيام)",
     views: "المشاهدات (7 أيام)",
-    linkTaps: "نقرات الرابط (7 أيام)",
     vsLastWeek: "مقارنة بالأسبوع السابق",
     reachChart: "الوصول اليومي",
     reachChartHint: "عدد الحسابات التي رأت محتواك، آخر 30 يومًا",
@@ -180,7 +179,6 @@ const social = {
     postsPerWeek: (n: string) => `تنشر نحو ${n} منشورات أسبوعيًا`,
     engagementRate: (n: string) => `معدل التفاعل ${n}% من الوصول`,
     topPosts: "أفضل المنشورات",
-    perPost: "لكل منشور",
     formats: { reel: "ريلز", carousel: "ألبوم", video: "فيديو", photo: "صورة", post: "منشور", story: "قصة" },
     days: ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"],
     daysShort: ["ن", "ث", "ر", "خ", "ج", "س", "ح"],
@@ -192,11 +190,8 @@ const social = {
     engagement: "تفاعل",
     rate: "معدل",
     noNumbers: "—",
-    tableView: "عرض كجدول",
-    chartView: "عرض كرسم",
     date: "التاريخ",
     value: "القيمة",
-    demoNote: "",
   },
 
   assistant: {

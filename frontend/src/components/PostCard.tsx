@@ -3,7 +3,7 @@ import { useI18n } from "../i18n";
 import { cx } from "./ui";
 
 /** How the backend records a shared post in a conversation: "[post] <permalink>". */
-export const POST_MARKER = "[post]";
+const POST_MARKER = "[post]";
 
 export function sharedPostUrl(text: string): string | null {
   if (!text.startsWith(POST_MARKER)) return null;

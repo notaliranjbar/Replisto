@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileUp, Link2, Lock, RefreshCw, Sparkles, Type, Undo2 } from "lucide-react";
+import { FileUp, Link2, Lock, RefreshCw, Sparkles, Type } from "lucide-react";
 import { api } from "../api/client";
 import { keys, useSections } from "../api/queries";
 import type { Proposal, ProposalChanges, ProposalPage, ProposedProduct } from "../api/types";
@@ -136,7 +136,7 @@ export function PendingProposals() {
   );
 }
 
-export function ProposalCard({ proposal }: { proposal: Proposal }) {
+function ProposalCard({ proposal }: { proposal: Proposal }) {
   const { t, f, lang } = useI18n();
   const sections = useSections();
   const sectionLabel = (key: string) => {
@@ -299,25 +299,5 @@ function ProductRow({ change, checked, onToggle }: { change: ProposedProduct; ch
         )}
       </div>
     </li>
-  );
-}
-
-/** Undo for an applied proposal (e.g. a channel post read as a product by mistake). */
-export function UndoProposal({ id }: { id: string }) {
-  const { t } = useI18n();
-  const toast = useToast();
-  const invalidate = useInvalidateCatalogue();
-  const undo = useMutation({
-    mutationFn: () => api(`/teach/proposals/${id}/undo`, { method: "POST" }),
-    onSuccess: () => {
-      toast.success(t.launch.teach.undone);
-      invalidate();
-    },
-    onError: (err) => toast.error(errorMessage(err, t)),
-  });
-  return (
-    <Button size="sm" variant="ghost" icon={<Undo2 className="size-4" />} loading={undo.isPending} onClick={() => undo.mutate()}>
-      {t.launch.teach.undo}
-    </Button>
   );
 }

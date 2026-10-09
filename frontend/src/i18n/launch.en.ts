@@ -129,7 +129,6 @@ const launch: Dict["launch"] = {
     stockPlus: "One more",
     stockMinus: "One less",
     empty: "No products yet. Describe them to the bot in the box above, or add them by hand.",
-    viewPost: "View post",
   },
 
   teach: {
@@ -168,8 +167,6 @@ const launch: Dict["launch"] = {
     applied: "Saved",
     discarded: "Discarded",
     undo: "Undo",
-    undone: "Undone",
-    recentTitle: "Recently learned",
     fields: {
       name: "Name",
       price: "Price",

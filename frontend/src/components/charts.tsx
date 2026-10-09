@@ -5,7 +5,7 @@ import { cx } from "./ui";
 // Small single-series charts for the insights page. One hue (the brand blue), thin marks,
 // hairline grid, a hover tooltip on every chart, and a screen-reader table for each.
 
-export type Point = { label: string; value: number; title?: string };
+type Point = { label: string; value: number; title?: string };
 
 function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null);

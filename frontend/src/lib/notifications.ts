@@ -6,7 +6,7 @@ import type { Dashboard, HandoffPage } from "../api/types";
 import { useI18n } from "../i18n";
 import { customerName } from "./format";
 
-export function notificationsSupported(): boolean {
+function notificationsSupported(): boolean {
   return typeof window !== "undefined" && "Notification" in window;
 }
 

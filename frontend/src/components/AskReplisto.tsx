@@ -35,7 +35,7 @@ function visitorId(): string {
 }
 
 /** The allowance ring: fills down as today's AI allowance is used. */
-export function QuotaRing({ quota, size = 34 }: { quota: Quota; size?: number }) {
+function QuotaRing({ quota, size = 34 }: { quota: Quota; size?: number }) {
   const { t, f } = useI18n();
   const A = t.launch.ask;
   const left = Math.max(0, Math.min(100, quota.left_percent));
