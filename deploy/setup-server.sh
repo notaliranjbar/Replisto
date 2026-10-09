@@ -12,12 +12,20 @@
 #
 # A private repository asks for a GitHub token (read-only access to the repository's contents
 # is enough); it is kept in /root/.git-credentials for the next updates.
+#
+# When the domain's nameservers are this server itself (ns1.<domain> and ns2.<domain>, with
+# glue records at the registrar pointing here), add --dns: this server then answers DNS for the
+# domain (BIND, authoritative only) with the records the site needs.
+#
+#   bash setup-server.sh example.com --dns
 set -euo pipefail
 
 DOMAIN="${1:-}"
+DNS="${2:-}"
 REPO="${REPO:-https://github.com/notaliranjbar/Replisto.git}"
 BRANCH="${BRANCH:-master}"
 DIR="${DIR:-/opt/replisto}"
+BIND_DIR="${BIND_DIR:-/etc/bind}"
 
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 warn() { printf '\033[33mWARNING: %s\033[0m\n' "$*"; }
@@ -101,9 +109,67 @@ open_firewall() {
   fi
 }
 
+public_ip() {
+  curl -fsS --max-time 10 https://api.ipify.org || true
+}
+
+# The domain's zone: the site, the API and the two nameservers, all on this server.
+write_zone() {
+  local ip="$1"
+  cat >"$BIND_DIR/named.conf.options" <<EOF
+options {
+	directory "/var/cache/bind";
+	// Answer only for our own zone: never look up other names for anyone.
+	recursion no;
+	allow-transfer { none; };
+	listen-on-v6 { any; };
+};
+EOF
+  cat >"$BIND_DIR/named.conf.local" <<EOF
+zone "$DOMAIN" {
+	type master;
+	file "$BIND_DIR/db.$DOMAIN";
+};
+EOF
+  cat >"$BIND_DIR/db.$DOMAIN" <<EOF
+\$TTL 300
+@	IN	SOA	ns1.$DOMAIN. hostmaster.$DOMAIN. ( $(date +%s) 3600 600 1209600 300 )
+@	IN	NS	ns1.$DOMAIN.
+@	IN	NS	ns2.$DOMAIN.
+ns1	IN	A	$ip
+ns2	IN	A	$ip
+@	IN	A	$ip
+api	IN	A	$ip
+EOF
+}
+
+setup_dns() {
+  local ip
+  ip="${SERVER_IP:-$(public_ip)}"
+  [ -n "$ip" ] || die "could not find this server's public IP; run again with SERVER_IP=<ip>"
+  say "Answering DNS for $DOMAIN on this server ($ip)"
+  apt-get install -y -qq bind9 bind9-dnsutils >/dev/null
+  if [ -f "$BIND_DIR/db.$DOMAIN" ]; then
+    echo "Keeping the existing zone $BIND_DIR/db.$DOMAIN"
+  else
+    write_zone "$ip"
+  fi
+  named-checkconf
+  named-checkzone "$DOMAIN" "$BIND_DIR/db.$DOMAIN" >/dev/null
+  systemctl enable named >/dev/null 2>&1 || systemctl enable bind9 >/dev/null 2>&1 || true
+  systemctl restart named 2>/dev/null || systemctl restart bind9
+  if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then
+    ufw allow 53 >/dev/null
+  fi
+  local answer
+  answer="$(dig +short @127.0.0.1 "$DOMAIN" A)"
+  [ "$answer" = "$ip" ] || die "the DNS server answers '$answer' for $DOMAIN instead of $ip"
+  echo "$DOMAIN -> $answer (answered by this server)"
+}
+
 check_dns() {
   local ip host found ok=1
-  ip="$(curl -fsS --max-time 10 https://api.ipify.org || true)"
+  ip="$(public_ip)"
   say "Checking DNS (this server: ${ip:-unknown})"
   for host in "$(grep '^PANEL_DOMAIN=' "$DIR/.env" | cut -d= -f2)" \
     "$(grep '^API_DOMAIN=' "$DIR/.env" | cut -d= -f2)"; do
@@ -148,11 +214,16 @@ start() {
 
 main() {
   [ "$(id -u)" = 0 ] || die "run as root"
-  [ -n "$DOMAIN" ] || [ -f "$DIR/.env" ] || die "usage: bash setup-server.sh <domain>"
+  [ -n "$DOMAIN" ] || [ -f "$DIR/.env" ] || die "usage: bash setup-server.sh <domain> [--dns]"
+  case "$DOMAIN" in -*) die "usage: bash setup-server.sh <domain> [--dns]" ;; esac
+  case "$DNS" in "" | --dns) ;; *) die "unknown option $DNS (use --dns)" ;; esac
   install_tools
   fetch_code
   write_env
   open_firewall
+  if [ "$DNS" = --dns ]; then
+    setup_dns
+  fi
   check_dns
   start
 }
