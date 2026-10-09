@@ -37,7 +37,7 @@ fix_clock() {
   timedatectl set-ntp true >/dev/null 2>&1 || true
   local now drift
   now="$(curl -sSI --max-time 10 http://www.google.com 2>/dev/null |
-    awk -F': ' 'tolower($1) == "date" { print $2 }' | tr -d '\r')"
+    awk -F': ' 'tolower($1) == "date" { print $2 }' | tr -d '\r' || true)"
   [ -n "$now" ] || return 0
   drift=$(($(date -u +%s) - $(date -u -d "$now" +%s)))
   if [ "${drift#-}" -gt 60 ]; then
@@ -68,26 +68,36 @@ install_tools() {
   docker info >/dev/null 2>&1 || die "Docker is installed but not running (try: systemctl status docker)"
 }
 
+save_token() {
+  git config --global credential.helper store
+  printf 'https://x-access-token:%s@github.com\n' "$1" >"$HOME/.git-credentials"
+  chmod 600 "$HOME/.git-credentials"
+}
+
 fetch_code() {
+  # Never ask for a username or password: a private repository is read with the token.
+  export GIT_TERMINAL_PROMPT=0
+  if [ -n "${GITHUB_TOKEN:-}" ]; then
+    save_token "$GITHUB_TOKEN"
+  fi
   if [ -d "$DIR/.git" ]; then
     say "Downloading the latest code into $DIR"
-    git -C "$DIR" pull --ff-only origin "$BRANCH"
+    git -C "$DIR" pull --ff-only origin "$BRANCH" ||
+      die "could not download the latest code (a private repository needs GITHUB_TOKEN=<token>)"
     return
   fi
   say "Downloading the code into $DIR"
   if git clone --quiet --branch "$BRANCH" "$REPO" "$DIR" 2>/dev/null; then
     return
   fi
-  local token="${GITHUB_TOKEN:-}"
-  if [ -z "$token" ]; then
+  if [ -z "${GITHUB_TOKEN:-}" ]; then
     echo "The repository is private (or unreachable)."
+    local token
     read -rsp "GitHub token with read access to the repository: " token </dev/tty
     echo
+    [ -n "$token" ] || die "no token given"
+    save_token "$token"
   fi
-  [ -n "$token" ] || die "no token given"
-  git config --global credential.helper store
-  printf 'https://x-access-token:%s@github.com\n' "$token" >"$HOME/.git-credentials"
-  chmod 600 "$HOME/.git-credentials"
   git clone --quiet --branch "$BRANCH" "$REPO" "$DIR" || die "could not download $REPO"
 }
 
@@ -137,7 +147,7 @@ open_firewall() {
 }
 
 public_ip() {
-  curl -fsS --max-time 10 https://api.ipify.org || true
+  curl -fsS --max-time 10 https://api.ipify.org 2>/dev/null || true
 }
 
 # The domain's zone: the site, the API and the two nameservers, all on this server.
@@ -189,7 +199,7 @@ setup_dns() {
     ufw allow 53 >/dev/null
   fi
   local answer
-  answer="$(dig +short @127.0.0.1 "$DOMAIN" A)"
+  answer="$(dig +short @127.0.0.1 "$DOMAIN" A || true)"
   [ "$answer" = "$ip" ] || die "the DNS server answers '$answer' for $DOMAIN instead of $ip"
   echo "$DOMAIN -> $answer (answered by this server)"
 }
@@ -200,7 +210,7 @@ check_dns() {
   say "Checking DNS (this server: ${ip:-unknown})"
   for host in "$(grep '^PANEL_DOMAIN=' "$DIR/.env" | cut -d= -f2)" \
     "$(grep '^API_DOMAIN=' "$DIR/.env" | cut -d= -f2)"; do
-    found="$(getent ahostsv4 "$host" | awk 'NR == 1 { print $1 }')"
+    found="$(getent ahostsv4 "$host" | awk 'NR == 1 { print $1 }' || true)"
     if [ -z "$found" ]; then
       warn "$host has no A record yet. Add one pointing to ${ip:-this server}."
       ok=0
@@ -219,7 +229,7 @@ check_dns() {
 check_ports() {
   local busy
   busy="$(ss -Hltnp '( sport = :80 or sport = :443 )' 2>/dev/null |
-    grep -o 'users:(("[^"]*"' | cut -d'"' -f2 | grep -v '^docker-proxy$' | sort -u | tr '\n' ' ')"
+    grep -o 'users:(("[^"]*"' | cut -d'"' -f2 | grep -v '^docker-proxy$' | sort -u | tr '\n' ' ' || true)"
   [ -z "$busy" ] || die "ports 80/443 are used by: $busy- stop it first, e.g. systemctl disable --now ${busy%% *}"
 }
 
