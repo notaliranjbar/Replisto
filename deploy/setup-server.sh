@@ -32,8 +32,23 @@ say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 warn() { printf '\033[33mWARNING: %s\033[0m\n' "$*"; }
 die() { printf '\033[31mERROR: %s\033[0m\n' "$*" >&2; exit 1; }
 
+# A wrong clock breaks apt ("Release file ... is not valid yet") and HTTPS certificates.
+fix_clock() {
+  timedatectl set-ntp true >/dev/null 2>&1 || true
+  local now drift
+  now="$(curl -sSI --max-time 10 http://www.google.com 2>/dev/null |
+    awk -F': ' 'tolower($1) == "date" { print $2 }' | tr -d '\r')"
+  [ -n "$now" ] || return 0
+  drift=$(($(date -u +%s) - $(date -u -d "$now" +%s)))
+  if [ "${drift#-}" -gt 60 ]; then
+    say "Correcting the server clock (it was ${drift#-} seconds off)"
+    date -u -s "$now" >/dev/null
+  fi
+}
+
 install_tools() {
   command -v apt-get >/dev/null || die "this script needs Ubuntu or Debian (apt-get not found)"
+  fix_clock
   say "Installing git, curl and Docker"
   export DEBIAN_FRONTEND=noninteractive
   apt-get update -qq
