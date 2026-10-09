@@ -165,5 +165,8 @@ def house_facts() -> str:
         lines.append(
             f"- New shops get {usd(settings.signup_credit_cents)} of free credit once their "
             "mobile number is verified, once per person."
+            if settings.gift_requires_phone
+            else f"- New shops get {usd(settings.signup_credit_cents)} of free credit right "
+            "when they sign up."
         )
     return "\n".join(lines)

@@ -181,8 +181,8 @@ const launch: Dict["launch"] = {
 
   ask: {
     botName: "Replisto assistant",
-    status: "Online · the same assistant your shop gets",
-    empty: "Ask anything about Replisto, and see how it answers while you're at it.",
+    status: "Online · Replisto, answering for Replisto",
+    empty: "We're a business too, and this is our Replisto. Ask it anything you'd ask us.",
     suggestions: ["What exactly does Replisto do?", "How much does it cost?", "How do I connect Instagram?", "What if it doesn't know the answer?"],
     placeholder: "Type your question…",
     send: "Send",

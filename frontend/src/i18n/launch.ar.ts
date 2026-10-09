@@ -181,8 +181,8 @@ const launch = {
 
   ask: {
     botName: "مساعد Replisto",
-    status: "متصل · نفس المساعد الذي سيعمل لمتجرك",
-    empty: "اسأل أي شيء عن Replisto، وشاهد بنفسك كيف يرد.",
+    status: "متصل · Replisto يجيب عن Replisto",
+    empty: "نحن أيضًا شركة، وهذا هو Replisto الخاص بنا. اسأله أي شيء قد تسألنا عنه.",
     suggestions: ["ماذا يفعل Replisto بالضبط؟", "كم يكلّف؟", "كيف أربطه بإنستغرام؟", "ماذا لو لم يعرف الجواب؟"],
     placeholder: "اكتب سؤالك…",
     send: "إرسال",

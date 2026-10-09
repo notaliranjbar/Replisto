@@ -74,7 +74,8 @@ export function AskReplisto({ compact, onClose }: { compact?: boolean; onClose?:
   const key = ["site-chat", visitor, loggedIn] as const;
   const [text, setText] = useState("");
   const [pending, setPending] = useState<string | null>(null);
-  const bottom = useRef<HTMLDivElement>(null);
+  // the message list scrolls by itself; scrollIntoView would scroll the whole page to the chat
+  const list = useRef<HTMLDivElement>(null);
 
   const chat = useQuery({
     queryKey: key,
@@ -93,7 +94,8 @@ export function AskReplisto({ compact, onClose }: { compact?: boolean; onClose?:
 
   const messages = chat.data?.messages ?? [];
   useEffect(() => {
-    bottom.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+    const el = list.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages.length, pending]);
 
   function ask(message: string) {
@@ -130,7 +132,7 @@ export function AskReplisto({ compact, onClose }: { compact?: boolean; onClose?:
         )}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4" aria-live="polite">
+      <div ref={list} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4" aria-live="polite">
         {unavailable ? (
           <div className="flex flex-1 items-center justify-center text-center text-sm text-slate-500">{A.unavailable}</div>
         ) : messages.length === 0 && !pending ? (
@@ -191,7 +193,6 @@ export function AskReplisto({ compact, onClose }: { compact?: boolean; onClose?:
           </>
         )}
         {send.error && <Alert kind="error">{errorMessage(send.error, t)}</Alert>}
-        <div ref={bottom} />
       </div>
 
       {exhausted && quota ? (
