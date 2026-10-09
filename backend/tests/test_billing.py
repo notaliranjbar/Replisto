@@ -54,9 +54,6 @@ class RecordingNotifier:
     async def wallet_empty(self, shop: Shop) -> None:
         self.events.append("empty")
 
-    async def message(self, shop: Shop, text: str, keyboard=None) -> None:
-        self.events.append(text)
-
 
 @pytest.fixture
 async def shop(db: AsyncSession) -> Shop:

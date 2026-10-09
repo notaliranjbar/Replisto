@@ -129,7 +129,6 @@ const launch = {
     stockPlus: "زيادة واحد",
     stockMinus: "إنقاص واحد",
     empty: "لا توجد منتجات بعد. عرّف البوت بمنتجاتك من المربع أعلاه، أو أضفها يدويًا.",
-    viewPost: "عرض المنشور",
   },
 
   teach: {
@@ -168,8 +167,6 @@ const launch = {
     applied: "تم الحفظ",
     discarded: "تم التجاهل",
     undo: "تراجع",
-    undone: "تم التراجع",
-    recentTitle: "آخر ما تعلّمه",
     fields: {
       name: "الاسم",
       price: "السعر",

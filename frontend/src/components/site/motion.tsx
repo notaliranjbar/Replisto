@@ -30,7 +30,7 @@ function observe(el: Element, onEnter: () => void): () => void {
 }
 
 /** True once the element has scrolled into view (never goes back to false). */
-export function useInView(ref: RefObject<Element | null>): boolean {
+function useInView(ref: RefObject<Element | null>): boolean {
   const [inView, setInView] = useState(false);
   useEffect(() => {
     const el = ref.current;

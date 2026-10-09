@@ -16,7 +16,7 @@ type PhoneStart = { phone: string; minutes: number };
 type PhoneVerified = { phone: string; gift_cents: number };
 
 /** "Resend the link" for an unverified email. */
-export function useResendEmail() {
+function useResendEmail() {
   const { t } = useI18n();
   const toast = useToast();
   return useMutation({

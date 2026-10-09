@@ -7,8 +7,6 @@ const landing: Dict["landing"] = {
   },
 
   nav: {
-    roles: "Capabilities",
-    channels: "Channels",
     how: "Setup",
     features: "Features",
     try: "Try it",
@@ -32,9 +30,6 @@ const landing: Dict["landing"] = {
     lead: "Replisto talks to your customers using your own info and products: it answers questions, guides purchases and keeps requests on track. When it should, it hands the conversation to you.",
     primary: "Create account",
     secondary: "See what it does",
-    rolesLabel: "Replisto's roles",
-    roles: ["Sales", "Support", "Advisor", "Assistant", "Follow-up"],
-    channelsLabel: "On your channels",
   },
 
   home: {
@@ -46,7 +41,6 @@ const landing: Dict["landing"] = {
     primary: "Start free",
     secondary: "Try it live",
     perks: ["$5 free credit", "No subscription", "Ready in 15 minutes"],
-    languages: "Replies in English, Arabic, Arabizi and French",
     tryEyebrow: "Try it yourself",
     tryTitle: "Ask Replisto anything",
     tryLead: "This chat is answered by the same assistant your shop gets. Ask about prices, setup or what it can do.",
@@ -98,7 +92,6 @@ const landing: Dict["landing"] = {
         { name: "rami.b", text: "How much is delivery to Saida?", time: "12m" },
       ],
       auto: "Auto-reply",
-      handedOff: "Waiting for you",
       reply: "Replisto replies automatically…",
     },
   },
@@ -114,60 +107,8 @@ const landing: Dict["landing"] = {
     m1: "Hi, do you have the black linen coat in size 44?",
     m2: "Hi! Yes, it's in stock. There are 2 left in black, size 44, and it's $125.",
     lookup: "Stock checked in your product list",
-    postTitle: "Product card",
-    postCaption: "Summer linen coat, in 4 colours",
     m3: "How long does delivery to Jounieh take?",
     m4: "Delivery to Jounieh takes 2 to 3 working days, and it costs $4.",
-    m5: "Can you issue an official invoice for a company?",
-    m6: "Let me check that with my colleague — we'll reply right here.",
-    handedOff: "Handed to you",
-    notifyWaiting: "is waiting for your reply",
-    notifyBody: "Can you issue an official invoice for a company?",
-    replay: "Replay conversation",
-  },
-
-  roles: {
-    eyebrow: "Capabilities",
-    title: "One teammate, several roles",
-    lead: "Replisto works the way your business needs it to — from sales and support to guidance and follow-up.",
-    items: [
-      { title: "Sales", body: "Answers buyers' questions about products, prices and stock, and stays with them until they decide." },
-      { title: "Support", body: "Handles customers' everyday questions and requests around the clock, using your own information." },
-      { title: "Advisor", body: "Knows your products and terms, and guides each customer toward the right choice." },
-      { title: "Assistant", body: "Takes care of the repetitive parts of conversations and only brings you what needs you." },
-      { title: "Follow-up", body: "Keeps each conversation on track until it's resolved, so no customer request gets lost." },
-    ],
-  },
-
-  channels: {
-    eyebrow: "Channels",
-    title: "Works where your customers already are",
-    lead: "Connect your business's messaging channels; Replisto works across all of them with the same knowledge and the same voice.",
-    names: { instagram: "Instagram", whatsapp: "WhatsApp" },
-    connect: (name) => `Connect ${name}`,
-    live: "Live",
-    soon: "Coming soon",
-  },
-
-  problem: {
-    eyebrow: "Why Replisto",
-    title: "Most customer messages are the same few questions",
-    lead: "Price, size, stock, shipping cost, payment. Customers want the answer now, even at 2 a.m. — and a message left unanswered is usually a sale that doesn't happen.",
-    inboxTitle: "Last night's messages",
-    unread: "Unread",
-    answered: "Answered",
-    questions: [
-      { q: "How much is this one?", time: "01:12" },
-      { q: "Do you have it in size 46?", time: "01:40" },
-      { q: "How many days to Tripoli?", time: "02:05" },
-      { q: "Can I pay cash on delivery?", time: "02:31" },
-      { q: "Can I exchange it if it doesn't fit?", time: "03:18" },
-    ],
-    points: [
-      { title: "Replies in seconds, around the clock", body: "Every customer message is answered right away — at night, on holidays, or in the middle of a rush." },
-      { title: "Only from your own information", body: "Replisto doesn't make things up. Answers come from your business info and your product list." },
-      { title: "When it doesn't know, it doesn't guess", body: "A question your info doesn't cover is handed to you instead of getting a wrong answer." },
-    ],
   },
 
   features: {
@@ -351,7 +292,6 @@ const landing: Dict["landing"] = {
       { title: "Your data isn't sold", body: "We don't use your data for advertising or to train models, and we don't sell it to anyone." },
       { title: "Full deletion, any time", body: "Deleting your account permanently removes conversations, info, products and channel connections." },
     ],
-    privacyLink: "Privacy policy",
   },
 
   faq: {

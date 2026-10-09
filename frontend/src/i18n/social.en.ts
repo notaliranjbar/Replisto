@@ -164,7 +164,6 @@ const social: Dict["social"] = {
     reach: "Reach (7 days)",
     interactions: "Interactions (7 days)",
     views: "Views (7 days)",
-    linkTaps: "Link taps (7 days)",
     vsLastWeek: "vs. the week before",
     reachChart: "Daily reach",
     reachChartHint: "Accounts that saw your content, last 30 days",
@@ -180,7 +179,6 @@ const social: Dict["social"] = {
     postsPerWeek: (n: string) => `You post about ${n} times a week`,
     engagementRate: (n: string) => `Engagement rate ${n}% of reach`,
     topPosts: "Top posts",
-    perPost: "per post",
     formats: { reel: "Reel", carousel: "Carousel", video: "Video", photo: "Photo", post: "Post", story: "Story" },
     days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
     daysShort: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -192,11 +190,8 @@ const social: Dict["social"] = {
     engagement: "engagement",
     rate: "rate",
     noNumbers: "—",
-    tableView: "Show as table",
-    chartView: "Show as chart",
     date: "Date",
     value: "Value",
-    demoNote: "",
   },
 
   assistant: {

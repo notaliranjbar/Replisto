@@ -2,7 +2,7 @@
 // the tokens once (shared by concurrent requests) and retries; if that fails the user is
 // logged out.
 
-export const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
+const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 const BASE = `${API_URL}/api/v1`;
 
 const ACCESS_KEY = "dm.access_token";
@@ -44,7 +44,7 @@ export function onSessionExpired(fn: Listener): () => void {
   return () => logoutListeners.delete(fn);
 }
 
-export type FieldErrors = Record<string, string>;
+type FieldErrors = Record<string, string>;
 
 export class ApiError extends Error {
   /** 0 means the request never reached the server. */
@@ -64,7 +64,7 @@ export class ApiError extends Error {
 
 type Query = Record<string, string | number | boolean | null | undefined>;
 
-export type RequestOptions = {
+type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   json?: unknown;
   form?: FormData;
