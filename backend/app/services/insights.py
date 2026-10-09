@@ -22,6 +22,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.security import decrypt_secret
 from app.core.timeutil import utcnow
 from app.models import (
@@ -83,6 +84,13 @@ async def refresh(
         db.add(row)
     elif not force and row.fetched_at and utcnow() - row.fetched_at < REFRESH_COOLDOWN:
         return row
+    if get_settings().instagram_dry_run:
+        # Nothing to read without Instagram: keep the numbers we have (the demo shop's).
+        if row.data:
+            return row
+        raise InsightsError(
+            "Couldn't read your page's numbers from Instagram. Please try again in a moment."
+        )
     token = decrypt_secret(account.access_token_encrypted)
     try:
         profile = await instagram.get_account(token)

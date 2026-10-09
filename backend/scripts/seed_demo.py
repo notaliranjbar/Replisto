@@ -3,7 +3,8 @@
   uv run python -m scripts.seed_demo
   uv run python -m scripts.seed_demo --language ar     # an owner using the panel in Arabic
 
-Log in with  demo@shop.com / demopass123 . Safe to re-run: it recreates the demo account.
+Log in with  demo@shop.com / demopass123  (or the --password given). Safe to re-run: it
+recreates the demo account.
 """
 
 import argparse
@@ -163,7 +164,7 @@ HANDOFFS = {
 }
 
 
-async def main(language: str) -> None:
+async def main(language: str, password: str) -> None:
     async with SessionLocal() as db:
         old = await db.scalar(select(User.id).where(User.email == EMAIL))
         if old is not None:
@@ -172,7 +173,7 @@ async def main(language: str) -> None:
         now = utcnow()
         user = User(
             email=EMAIL,
-            password_hash=hash_password(PASSWORD),
+            password_hash=hash_password(password),
             full_name="Layla",
             email_verified_at=now,
         )
@@ -273,10 +274,13 @@ async def main(language: str) -> None:
                 )
         await demo_social.seed(db, shop_id, language, now)
         await db.commit()
-    print(f"demo shop ready: {EMAIL} / {PASSWORD}")
+    print(f"demo shop ready: {EMAIL}" + (f" / {password}" if password == PASSWORD else ""))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create the demo shop.")
     parser.add_argument("--language", choices=["en", "ar"], default="en")
-    asyncio.run(main(parser.parse_args().language))
+    # On a server people can reach, give the demo account its own password.
+    parser.add_argument("--password", default=PASSWORD)
+    args = parser.parse_args()
+    asyncio.run(main(args.language, args.password))

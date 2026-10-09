@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.security import decrypt_secret
 from app.core.text import normalize
 from app.core.timeutil import utcnow
@@ -62,6 +63,8 @@ async def sync_posts(
     db: AsyncSession, account: InstagramAccount, instagram: InstagramClient
 ) -> int:
     """Replace the shop's stored posts with what Instagram has now."""
+    if get_settings().instagram_dry_run:
+        return 0  # nothing to read; keep the posts we have (the demo shop's)
     media = await instagram.list_media(decrypt_secret(account.access_token_encrypted))
     await db.execute(delete(InstagramPost).where(InstagramPost.shop_id == account.shop_id))
     for item in media:
