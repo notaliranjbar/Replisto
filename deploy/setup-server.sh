@@ -56,8 +56,16 @@ install_tools() {
   if ! command -v docker >/dev/null; then
     curl -fsSL https://get.docker.com | sh
   fi
+  # Docker installed earlier may lack Compose: Docker's own package or Ubuntu's (which works
+  # with either Docker without replacing it).
+  if ! docker compose version >/dev/null 2>&1; then
+    say "Adding Docker Compose"
+    apt-get install -y -qq docker-compose-plugin >/dev/null 2>&1 ||
+      apt-get install -y -qq --no-install-recommends docker-compose-v2 >/dev/null 2>&1 || true
+  fi
   docker compose version >/dev/null 2>&1 || die "Docker Compose is missing (docker compose version failed)"
   systemctl enable --now docker >/dev/null 2>&1 || true
+  docker info >/dev/null 2>&1 || die "Docker is installed but not running (try: systemctl status docker)"
 }
 
 fetch_code() {
@@ -206,8 +214,18 @@ check_dns() {
   [ "$ok" = 1 ] || warn "HTTPS starts working a few minutes after the DNS records point here."
 }
 
+# The site needs ports 80 and 443; another web server (nginx, apache2...) holding them would make
+# the start fail with "address already in use".
+check_ports() {
+  local busy
+  busy="$(ss -Hltnp '( sport = :80 or sport = :443 )' 2>/dev/null |
+    grep -o 'users:(("[^"]*"' | cut -d'"' -f2 | grep -v '^docker-proxy$' | sort -u | tr '\n' ' ')"
+  [ -z "$busy" ] || die "ports 80/443 are used by: $busy- stop it first, e.g. systemctl disable --now ${busy%% *}"
+}
+
 start() {
   cd "$DIR"
+  check_ports
   say "Building and starting (the first build takes a few minutes)"
   docker compose up -d --build --remove-orphans
   say "Waiting for the API"
