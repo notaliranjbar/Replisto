@@ -179,6 +179,14 @@ cd ../frontend && npm run gen:api
 
 ## Deploy
 
+On a fresh Ubuntu/Debian server, as root, one script does everything below (installs Docker, downloads the code to `/opt/replisto`, writes `.env` with fresh secrets and starts it); run it again to update:
+
+```bash
+bash deploy/setup-server.sh example.com
+```
+
+By hand:
+
 ```bash
 cp .env.example .env
 ```
