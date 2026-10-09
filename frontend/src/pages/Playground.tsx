@@ -53,7 +53,7 @@ export default function Playground() {
   }
 
   function retry() {
-    if (turns.at(-1)?.role === "customer") chat.mutate(turns);
+    if (turns[turns.length - 1]?.role === "customer") chat.mutate(turns);
   }
 
   function restart() {

@@ -13,6 +13,7 @@ import { errorMessage } from "../lib/errors";
 import { LogoMark } from "./Logo";
 import { MessageText } from "./conversation";
 import { Alert, Button, buttonClass, cx } from "./ui";
+import { randomId } from "../lib/randomId";
 
 type SiteChat = components["schemas"]["SiteChatOut"];
 type Quota = components["schemas"]["QuotaOut"];
@@ -25,11 +26,11 @@ function visitorId(): string {
   try {
     const saved = localStorage.getItem(VISITOR_KEY);
     if (saved) return saved;
-    const fresh = crypto.randomUUID();
+    const fresh = randomId();
     localStorage.setItem(VISITOR_KEY, fresh);
     return fresh;
   } catch {
-    memoryVisitor ??= crypto.randomUUID();
+    memoryVisitor ??= randomId();
     return memoryVisitor;
   }
 }

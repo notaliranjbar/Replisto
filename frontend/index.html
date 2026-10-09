@@ -32,6 +32,25 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- If the app can't start (a very old browser), say so instead of showing a blank page. -->
+    <div id="boot-fallback" hidden style="max-width:28rem;margin:4rem auto;padding:0 1rem;font-family:system-ui,sans-serif;text-align:center;color:#1d2939;line-height:1.7">
+      <p style="font-size:1.125rem;font-weight:600">Replisto</p>
+      <p>This page needs a newer browser. Please update Chrome or Safari, or open the link in another browser.</p>
+      <p dir="rtl">تحتاج هذه الصفحة إلى متصفح أحدث. يرجى تحديث Chrome أو Safari، أو فتح الرابط في متصفح آخر.</p>
+    </div>
+    <script>
+      (function () {
+        function showFallback() {
+          var root = document.getElementById("root");
+          if (root && !root.firstChild) document.getElementById("boot-fallback").hidden = false;
+        }
+        window.addEventListener("error", function () { setTimeout(showFallback, 0); });
+        setTimeout(showFallback, 8000);
+      })();
+    </script>
+    <script nomodule>
+      document.getElementById("boot-fallback").hidden = false;
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
