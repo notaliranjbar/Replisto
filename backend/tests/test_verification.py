@@ -200,13 +200,25 @@ async def test_email_verification(client: AsyncClient, monkeypatch: pytest.Monke
     assert "already confirmed" in resp.json()["message"]
 
 
-async def test_resending_the_verification_email_is_limited(client: AsyncClient) -> None:
+async def test_resending_the_verification_email_is_limited(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(get_settings(), "require_verified_email", True)
     headers = await _register(client)
     assert (await client.post("/api/v1/auth/email/resend", headers=headers)).status_code == 202
     assert (await client.post("/api/v1/auth/email/resend", headers=headers)).status_code == 429
 
 
 # ---------------------------------------------------------------------------- login
+
+
+async def test_without_required_verification_accounts_start_verified(
+    client: AsyncClient,
+) -> None:
+    """A test server without email (REQUIRE_VERIFIED_EMAIL=false): no confirmation step."""
+    headers = await _register(client)
+    me = (await client.get("/api/v1/me", headers=headers)).json()
+    assert me["email_verified_at"] is not None
 
 
 async def test_wrong_passwords_lock_the_login_for_a_while(client: AsyncClient) -> None:

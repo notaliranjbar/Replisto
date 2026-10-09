@@ -95,10 +95,14 @@ async def register(body: RegisterRequest, db: DbSession) -> TokenPair:
     if await db.scalar(select(User.id).where(User.email == body.email)):
         raise email_taken
 
+    # With REQUIRE_VERIFIED_EMAIL off (e.g. a test server without email), accounts start out
+    # verified and no confirmation email is sent.
+    verify = get_settings().require_verified_email
     user = User(
         email=body.email,
         password_hash=hash_password(body.password),
         full_name=body.full_name.strip(),
+        email_verified_at=None if verify else utcnow(),
     )
     # The shop starts in the language the owner signed up in.
     language = i18n.current()
@@ -112,7 +116,8 @@ async def register(body: RegisterRequest, db: DbSession) -> TokenPair:
         await db.rollback()
         raise email_taken from None
     # No credit yet: the sign-up gift comes after verifying a phone number (services/gifts.py).
-    await _send_verification(user)
+    if verify:
+        await _send_verification(user)
     logger.info("new sign-up: shop %s", user.shop.id)
     return _tokens_for(user)
 
