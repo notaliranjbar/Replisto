@@ -1,9 +1,11 @@
+import json
 import logging
 from datetime import UTC, datetime
 from urllib.parse import urlencode
 
+import httpx
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import delete, select
 
@@ -33,23 +35,19 @@ INSTAGRAM_OFF = "Instagram is switched off on this server for now."
 
 
 class InstagramFeatures(BaseModel):
-    messages: bool  # answer DMs and story replies
-    comments: bool  # answer comments publicly or privately, hide spam
-    stories: bool  # publish scheduled stories
-    insights: bool  # read the page's numbers
+    messages: bool
+    comments: bool
+    stories: bool
+    insights: bool
 
 
 class InstagramStatusOut(BaseModel):
-    # False while Instagram is switched off on the server (waiting for Meta's approval).
     available: bool = True
     connected: bool
-    # False when Meta revoked access (password change, app removed): owner must reconnect.
     active: bool = False
     username: str | None = None
     ig_user_id: str | None = None
     token_expires_at: datetime | None = None
-    # What the bot may do on this account, from the permissions the owner granted. Accounts
-    # connected before a feature existed reconnect to turn it on.
     features: InstagramFeatures | None = None
 
 
@@ -77,7 +75,6 @@ async def get_status(shop: CurrentShop, db: DbSession) -> InstagramStatusOut:
 
 @router.get("/connect-url", response_model=ConnectUrlOut)
 async def connect_url(shop: CurrentShop, instagram: Instagram) -> ConnectUrlOut:
-    """URL of Instagram's consent screen. The panel sends the browser there."""
     if not get_settings().instagram_enabled:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, INSTAGRAM_OFF)
     return ConnectUrlOut(url=instagram.authorize_url(create_token(shop.id, "ig_oauth")))
@@ -90,11 +87,10 @@ async def callback(
     code: str | None = None,
     state: str | None = None,
     error: str | None = None,
-) -> RedirectResponse:
-    """Instagram redirects the browser here; we finish the connection and bounce to the panel.
+) -> Response:
+    if state and state.startswith("javab:"):
+        return await _handle_javab_callback(code=code, state=state, error=error)
 
-    This request carries no auth header, so the shop is identified by the signed `state`.
-    """
     if error:
         return _back_to_panel("denied")
     if not code or not state:
@@ -107,7 +103,6 @@ async def callback(
     if shop is None:
         return _back_to_panel("error", "invalid_state")
 
-    # Instagram appends "#_" to the code in some redirects.
     code = code.removesuffix("#_")
     try:
         await connect_account(db, shop, code, instagram)
@@ -117,6 +112,46 @@ async def callback(
         logger.warning("instagram connect failed for shop %s: %s", shop.id, exc)
         return _back_to_panel("error", "instagram")
     return _back_to_panel("connected")
+
+
+async def _handle_javab_callback(
+    code: str | None,
+    state: str,
+    error: str | None,
+) -> HTMLResponse:
+    settings = get_settings()
+    backend_base = settings.javab_backend_url.rstrip("/")
+    frontend_base = settings.javab_frontend_url.rstrip("/")
+
+    result = "error"
+    reason: str | None = "instagram"
+
+    if backend_base:
+        try:
+            async with httpx.AsyncClient(timeout=25.0) as client:
+                resp = await client.post(
+                    f"{backend_base}/api/v1/instagram/bridge-exchange",
+                    json={"code": code, "state": state, "error": error},
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    result = data.get("status", "error")
+                    reason = data.get("reason")
+        except Exception:
+            logger.exception("Failed to exchange OAuth callback with Javab backend")
+
+    params = {"status": result} | ({"reason": reason} if reason else {})
+    target_url = f"{frontend_base}/instagram/callback?{urlencode(params)}"
+    safe_url_js = json.dumps(target_url)
+
+    html = (
+        "<!doctype html><html><head>"
+        '<meta charset="utf-8">'
+        '<meta name="referrer" content="no-referrer">'
+        f"<script>window.location.replace({safe_url_js});</script>"
+        "</head><body></body></html>"
+    )
+    return HTMLResponse(content=html, status_code=200)
 
 
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)
@@ -139,21 +174,18 @@ class PostOut(BaseModel):
     preview_url: str | None
     media_type: str
     posted_at: datetime | None
-    # Products the bot connects to this post (shares it when recommending them).
     products: list[str]
 
 
 class PostsOut(BaseModel):
     synced_at: datetime | None
     total: int
-    # Products with no post: the owner can add a post link in the product sheet.
     products_without_post: list[str]
     items: list[PostOut]
 
 
 @router.get("/posts", response_model=PostsOut)
 async def list_posts(shop: CurrentShop, db: DbSession) -> PostsOut:
-    """The page's posts and which products the bot links to each (newest 60)."""
     account = await db.scalar(select(InstagramAccount).where(InstagramAccount.shop_id == shop.id))
     all_posts = await load_posts(db, shop.id)
     items = (await db.scalars(select(Product).where(Product.shop_id == shop.id))).all()
@@ -185,7 +217,6 @@ async def list_posts(shop: CurrentShop, db: DbSession) -> PostsOut:
 
 @router.post("/posts/sync", response_model=PostsOut)
 async def sync_posts_now(shop: CurrentShop, db: DbSession, instagram: Instagram) -> PostsOut:
-    """Read the page's posts again now (they are also refreshed daily)."""
     account = await db.scalar(select(InstagramAccount).where(InstagramAccount.shop_id == shop.id))
     if account is None or not account.is_active:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Connect your Instagram account first.")

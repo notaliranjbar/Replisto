@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     meta_graph_api_version: str = "v23.0"
     # Log outgoing DMs instead of sending them (local testing with the webhook simulator).
     instagram_dry_run: bool = False
+    javab_backend_url: str = ""
+    javab_frontend_url: str = ""
 
     # Any OpenAI-compatible provider (OpenAI directly, or a gateway such as OpenRouter).
     llm_base_url: str = "https://api.openai.com/v1"

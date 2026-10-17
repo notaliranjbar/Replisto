@@ -1,15 +1,33 @@
+import asyncio
 import json
 import logging
 
+import httpx
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from fastapi.responses import PlainTextResponse
+from sqlalchemy import select
 
-from app.api.deps import JobQueue
+from app.api.deps import DbSession, JobQueue
 from app.core.config import get_settings
+from app.models import InstagramAccount
 from app.services.webhook import parse_comment_events, parse_messaging_events, verify_signature
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["webhooks"], include_in_schema=False)
+
+
+async def _forward_to_javab(body: bytes, signature: str | None) -> None:
+    base = get_settings().javab_backend_url.rstrip("/")
+    if not base:
+        return
+    headers = {"Content-Type": "application/json"}
+    if signature:
+        headers["X-Hub-Signature-256"] = signature
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(f"{base}/api/v1/webhooks/instagram", content=body, headers=headers)
+    except Exception:
+        logger.exception("Failed to forward Instagram webhook to Javab")
 
 
 @router.get("/instagram")
@@ -18,7 +36,6 @@ async def verify_subscription(
     verify_token: str = Query(alias="hub.verify_token"),
     challenge: str = Query(alias="hub.challenge"),
 ) -> PlainTextResponse:
-    """Meta calls this once when the webhook URL is saved in the App Dashboard."""
     expected = get_settings().meta_webhook_verify_token
     if mode != "subscribe" or not expected or verify_token != expected:
         raise HTTPException(status.HTTP_403_FORBIDDEN)
@@ -26,16 +43,37 @@ async def verify_subscription(
 
 
 @router.post("/instagram")
-async def receive(request: Request, queue: JobQueue) -> dict[str, str]:
+async def receive(request: Request, queue: JobQueue, db: DbSession) -> dict[str, str]:
     body = await request.body()
     signature = request.headers.get("X-Hub-Signature-256")
     if not verify_signature(body, signature, get_settings().meta_app_secret):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "invalid signature")
     payload = _json_object(body)
     if not get_settings().instagram_enabled:
-        return {"status": "ignored"}  # Instagram is switched off; acknowledge so Meta stops
+        return {"status": "ignored"}
 
-    # Only enqueue here: Meta disables webhooks that answer slowly.
+    entries = payload.get("entry")
+    entry_ids = {
+        str(e.get("id"))
+        for e in (entries if isinstance(entries, list) else [])
+        if isinstance(e, dict) and e.get("id")
+    }
+
+    local_ig_ids: set[str] = set()
+    if entry_ids:
+        rows = (
+            await db.scalars(
+                select(InstagramAccount.ig_user_id).where(InstagramAccount.ig_user_id.in_(entry_ids))
+            )
+        ).all()
+        local_ig_ids = set(rows)
+
+    if entry_ids - local_ig_ids:
+        asyncio.create_task(_forward_to_javab(body, signature))
+
+    if not local_ig_ids:
+        return {"status": "ok"}
+
     for event in parse_messaging_events(payload):
         await queue.enqueue("process_event", event, job_id=f"event:{event.mid}")
     for comment in parse_comment_events(payload):
